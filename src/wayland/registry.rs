@@ -1,22 +1,11 @@
 use wayland_client::{
-    protocol::{
-        wl_compositor,
-        wl_registry,
-    },
-    Connection,
-    Dispatch,
-    QueueHandle,
+    Connection, Dispatch, QueueHandle,
+    protocol::{wl_compositor, wl_registry},
 };
 
-use crate::wayland::{
-    surface,
-    WaylandState,
-};
+use super::{WaylandState, surface};
 
-pub fn request(
-    connection: &Connection,
-    qh: &QueueHandle<WaylandState>,
-) -> wl_registry::WlRegistry {
+pub fn request(connection: &Connection, qh: &QueueHandle<WaylandState>) -> wl_registry::WlRegistry {
     let display = connection.display();
 
     display.get_registry(qh, ())
@@ -31,33 +20,27 @@ impl Dispatch<wl_registry::WlRegistry, ()> for WaylandState {
         _: &Connection,
         qh: &QueueHandle<Self>,
     ) {
-        if let wl_registry::Event::Global {
+        let wl_registry::Event::Global {
             name,
             interface,
             version,
         } = event
-        {
-            println!("{interface} v{version}");
+        else {
+            return;
+        };
 
-            if interface == "wl_compositor" {
-                let compositor =
-                    registry.bind::<wl_compositor::WlCompositor, _, _>(
-                        name,
-                        1,
-                        qh,
-                        (),
-                    );
+        println!("{interface} v{version}");
 
-                let surface = surface::create(
-                    &compositor,
-                    qh,
-                );
+        if interface == "wl_compositor" {
+            let compositor = registry.bind::<wl_compositor::WlCompositor, _, _>(name, 1, qh, ());
 
-                state.compositor = Some(compositor);
-                state.surface = Some(surface);
+            let surface = surface::create(&compositor, qh);
 
-                println!("Created wl_surface!");
-            }
+            state.compositor = Some(compositor);
+
+            state.surface = Some(surface);
+
+            println!("Created wl_surface!");
         }
     }
 }

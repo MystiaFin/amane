@@ -1,33 +1,13 @@
 mod wayland;
 
-use wayland::WaylandState;
+use wayland::WaylandApp;
 
 fn main() {
-    let connection =
-        wayland::connection::connect();
+    let app = WaylandApp::new();
 
-    println!("Connected!");
+    println!("Wayland initialized!");
 
-    let mut event_queue =
-        connection.new_event_queue();
-
-    let qh =
-        event_queue.handle();
-
-    let mut state =
-        WaylandState::new();
-
-    let _registry =
-        wayland::registry::request(
-            &connection,
-            &qh,
-        );
-
-    event_queue
-        .roundtrip(&mut state)
-        .expect("failed to process Wayland events");
-
-    if state.surface.is_some() {
+    if app.has_surface() {
         println!("We have a surface!");
     }
 }
