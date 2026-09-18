@@ -1,0 +1,10 @@
+[package]
+name = "amane-lab"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+smithay-client-toolkit = { version = "0.21.1", default-features = false }
+thiserror = "2"
+tiny-skia = { version = "0.12.0", default-features = false, features = ["simd", "std"] }
+wayland-client = "0.31.15"
