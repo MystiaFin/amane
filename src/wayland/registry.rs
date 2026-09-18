@@ -1,17 +1,37 @@
 use wayland_client::{
-    Connection, Dispatch, QueueHandle,
-    protocol::{wl_compositor, wl_registry},
+    protocol::{
+        wl_compositor,
+        wl_registry,
+        wl_shm,
+    },
+    Connection,
+    Dispatch,
+    QueueHandle,
 };
 
-use super::{WaylandState, surface};
+use wayland_protocols_wlr::layer_shell::v1::client::{
+    zwlr_layer_shell_v1,
+};
 
-pub fn request(connection: &Connection, qh: &QueueHandle<WaylandState>) -> wl_registry::WlRegistry {
-    let display = connection.display();
+use super::WaylandState;
 
-    display.get_registry(qh, ())
+pub fn request(
+    connection: &Connection,
+    qh: &QueueHandle<WaylandState>,
+) -> wl_registry::WlRegistry {
+    connection
+        .display()
+        .get_registry(
+            qh,
+            (),
+        )
 }
 
-impl Dispatch<wl_registry::WlRegistry, ()> for WaylandState {
+impl Dispatch<
+    wl_registry::WlRegistry,
+    (),
+> for WaylandState
+{
     fn event(
         state: &mut Self,
         registry: &wl_registry::WlRegistry,
@@ -23,24 +43,65 @@ impl Dispatch<wl_registry::WlRegistry, ()> for WaylandState {
         let wl_registry::Event::Global {
             name,
             interface,
-            version,
+            ..
         } = event
         else {
             return;
         };
 
-        println!("{interface} v{version}");
+        match interface.as_str() {
+            "wl_compositor" => {
+                let compositor =
+                    registry.bind::<
+                        wl_compositor::WlCompositor,
+                        _,
+                        _
+                    >(
+                        name,
+                        1,
+                        qh,
+                        (),
+                    );
 
-        if interface == "wl_compositor" {
-            let compositor = registry.bind::<wl_compositor::WlCompositor, _, _>(name, 1, qh, ());
+                state.compositor =
+                    Some(compositor);
+            }
 
-            let surface = surface::create(&compositor, qh);
+            "wl_shm" => {
+                let shm =
+                    registry.bind::<
+                        wl_shm::WlShm,
+                        _,
+                        _
+                    >(
+                        name,
+                        1,
+                        qh,
+                        (),
+                    );
 
-            state.compositor = Some(compositor);
+                state.shm =
+                    Some(shm);
+            }
 
-            state.surface = Some(surface);
+            "zwlr_layer_shell_v1" => {
+                let layer_shell =
+                    registry.bind::<
+                        zwlr_layer_shell_v1::ZwlrLayerShellV1,
+                        _,
+                        _
+                    >(
+                        name,
+                        1,
+                        qh,
+                        (),
+                    );
 
-            println!("Created wl_surface!");
+                state.layer_shell =
+                    Some(layer_shell);
+            }
+
+            _ => {}
         }
     }
 }
