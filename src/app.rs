@@ -1,13 +1,16 @@
-use crate::{ui::Widget, wayland::WaylandApp};
+use crate::{LayerWindow, ui::Widget, wayland::WaylandApp};
 
 pub struct App {
     backend: WaylandApp,
 }
 
 impl App {
-    pub fn new(root: impl Widget + 'static) -> Self {
+    pub fn new<W>(window: LayerWindow<W>) -> Self
+    where
+        W: Widget + 'static,
+    {
         Self {
-            backend: WaylandApp::new(root),
+            backend: WaylandApp::new(window),
         }
     }
 

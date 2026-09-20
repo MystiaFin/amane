@@ -9,11 +9,15 @@ use wayland_client::{
     protocol::{wl_buffer, wl_compositor, wl_registry, wl_shm, wl_shm_pool, wl_surface},
 };
 
-use crate::ui::Widget;
+use crate::{LayerWindow, ui::Widget};
 use wayland_protocols_wlr::layer_shell::v1::client::{zwlr_layer_shell_v1, zwlr_layer_surface_v1};
 
 struct WaylandState {
     root: Box<dyn Widget>,
+
+    requested_width: u32,
+    requested_height: u32,
+
     compositor: Option<wl_compositor::WlCompositor>,
     shm: Option<wl_shm::WlShm>,
 
@@ -29,9 +33,11 @@ struct WaylandState {
 }
 
 impl WaylandState {
-    fn new(root: Box<dyn Widget>) -> Self {
+    fn new(root: Box<dyn Widget>, requested_width: u32, requested_height: u32) -> Self {
         Self {
             root,
+            requested_width,
+            requested_height,
             compositor: None,
             shm: None,
             layer_shell: None,
@@ -65,7 +71,13 @@ impl WaylandState {
 
         let surface = surface::create(compositor, qh);
 
-        let layer_surface = layer::create(layer_shell, &surface, qh);
+        let layer_surface = layer::create(
+            layer_shell,
+            &surface,
+            qh,
+            self.requested_width,
+            self.requested_height,
+        );
 
         self.surface = Some(surface);
 
@@ -84,14 +96,22 @@ pub struct WaylandApp {
 }
 
 impl WaylandApp {
-    pub fn new(root: impl Widget + 'static) -> Self {
+    pub fn new<W>(window: LayerWindow<W>) -> Self
+    where
+        W: Widget + 'static,
+    {
+        let LayerWindow {
+            width,
+            height,
+            child,
+        } = window;
         let connection = connection::connect();
 
         let mut event_queue = connection.new_event_queue();
 
         let qh = event_queue.handle();
 
-        let mut state = WaylandState::new(Box::new(root));
+        let mut state = WaylandState::new(Box::new(child), width, height);
 
         let registry = registry::request(&connection, &qh);
 

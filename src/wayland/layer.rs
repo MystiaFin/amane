@@ -9,18 +9,16 @@ use super::{WaylandState, shm};
 
 use crate::graphics::{Color, Renderer};
 
-const DEFAULT_WIDTH: u32 = 300;
-const DEFAULT_HEIGHT: u32 = 120;
-
 pub fn create(
     layer_shell: &ZwlrLayerShellV1,
     surface: &WlSurface,
     qh: &QueueHandle<WaylandState>,
+    width: u32,
+    height: u32,
 ) -> ZwlrLayerSurfaceV1 {
     let layer_surface = layer_shell.get_layer_surface(
         surface,
-        // Let the compositor choose
-        // which monitor to use.
+        // Let the compositor choose the monitor.
         None,
         Layer::Overlay,
         "amane".into(),
@@ -28,18 +26,8 @@ pub fn create(
         (),
     );
 
-    layer_surface.set_size(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    layer_surface.set_size(width, height);
 
-    /*
-     * IMPORTANT:
-     *
-     * First commit MUST NOT have
-     * a buffer attached.
-     *
-     * This asks the compositor:
-     *
-     * "please configure my layer surface."
-     */
     surface.commit();
 
     layer_surface
@@ -60,57 +48,56 @@ impl Dispatch<ZwlrLayerSurfaceV1, ()> for WaylandState {
                 width,
                 height,
             } => {
-                /*
-                 * Tell the compositor:
-                 *
-                 * "I received this configuration."
-                 */
                 layer_surface.ack_configure(serial);
 
-                /*
-                 * For this first experiment,
-                 * draw only once.
-                 */
                 if state.buffer.is_some() {
                     return;
                 }
 
-                let width = if width == 0 { DEFAULT_WIDTH } else { width };
+                /*
+                 * The compositor is allowed to send 0
+                 * for width or height.
+                 */
+                let width = if width == 0 {
+                    state.requested_width
+                } else {
+                    width
+                };
 
-                let height = if height == 0 { DEFAULT_HEIGHT } else { height };
+                let height = if height == 0 {
+                    state.requested_height
+                } else {
+                    height
+                };
 
                 let shm = state.shm.as_ref().unwrap();
 
                 let surface = state.surface.as_ref().unwrap();
 
+                /*
+                 * Create a pixel canvas using
+                 * the actual resolved surface size.
+                 */
                 let mut renderer = Renderer::new(width, height);
 
+                /*
+                 * Start with a transparent background.
+                 */
                 renderer.clear(Color::TRANSPARENT);
 
                 state.root.draw(&mut renderer, 0.0, 0.0);
-
                 let pixels = renderer.into_argb8888();
 
                 let buffer = shm::create_buffer(shm, qh, width, height, &pixels);
-                /*
-                 * Put our pixels on the surface.
-                 */
                 surface.attach(Some(&buffer), 0, 0);
 
-                /*
-                 * Tell compositor the whole
-                 * surface changed.
-                 */
                 surface.damage(0, 0, width as i32, height as i32);
 
-                /*
-                 * Present it.
-                 */
                 surface.commit();
 
                 state.buffer = Some(buffer);
 
-                println!("Amane rectangle: {width}x{height}");
+                println!("Amane layer window: {width}x{height}");
             }
 
             zwlr_layer_surface_v1::Event::Closed => {
