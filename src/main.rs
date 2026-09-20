@@ -1,4 +1,5 @@
 mod wayland;
+mod graphics;
 
 use wayland::WaylandApp;
 

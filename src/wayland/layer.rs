@@ -7,6 +7,8 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
 
 use super::{WaylandState, shm};
 
+use crate::graphics::{Color, Renderer};
+
 const DEFAULT_WIDTH: u32 = 300;
 const DEFAULT_HEIGHT: u32 = 120;
 
@@ -81,8 +83,15 @@ impl Dispatch<ZwlrLayerSurfaceV1, ()> for WaylandState {
 
                 let surface = state.surface.as_ref().unwrap();
 
-                let buffer = shm::create_solid_buffer(shm, qh, width, height);
+                let mut renderer = Renderer::new(width, height);
 
+                renderer.clear(Color::TRANSPARENT);
+
+                renderer.rectangle(50.0, 30.0, 200.0, 60.0, Color::RED);
+
+                let pixels = renderer.into_argb8888();
+
+                let buffer = shm::create_buffer(shm, qh, width, height, &pixels);
                 /*
                  * Put our pixels on the surface.
                  */
