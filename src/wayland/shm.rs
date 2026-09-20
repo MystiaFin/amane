@@ -10,72 +10,33 @@ use wayland_client::{
 
 use super::WaylandState;
 
-pub fn create_solid_buffer(
+pub fn create_buffer(
     shm: &WlShm,
     qh: &QueueHandle<WaylandState>,
     width: u32,
     height: u32,
+    pixels: &[u8],
 ) -> WlBuffer {
-    let width_i32 = i32::try_from(width).expect("buffer width too large");
+    let width = i32::try_from(width).expect("width too large");
 
-    let height_i32 = i32::try_from(height).expect("buffer height too large");
+    let height = i32::try_from(height).expect("height too large");
 
-    let stride = width_i32.checked_mul(4).expect("buffer stride overflow");
+    let stride = width.checked_mul(4).expect("stride overflow");
 
-    let size = stride
-        .checked_mul(height_i32)
-        .expect("buffer size overflow");
+    let size = stride.checked_mul(height).expect("buffer size overflow");
 
-    /*
-     * Temporary file backing our shared memory.
-     */
+    assert_eq!(pixels.len(), size as usize, "pixel buffer has wrong size",);
+
     let mut file = tempfile::tempfile().expect("failed to create shm file");
 
-    /*
-     * ARGB8888:
-     *
-     * A = FF
-     * R = FF
-     * G = 00
-     * B = 00
-     *
-     * → opaque red
-     */
-    let red = 0xFFFF0000u32.to_ne_bytes();
+    file.write_all(pixels).expect("failed to write pixels");
 
-    for _ in 0..(u64::from(width) * u64::from(height)) {
-        file.write_all(&red).expect("failed to write pixel data");
-    }
+    file.flush().expect("failed to flush pixels");
 
-    file.flush().expect("failed to flush pixel data");
-
-    /*
-     * Tell Wayland:
-     *
-     * "this file contains memory
-     *  that we can share."
-     */
     let pool = shm.create_pool(file.as_fd(), size, qh, ());
 
-    /*
-     * Define a rectangular wl_buffer
-     * inside that memory.
-     */
-    let buffer = pool.create_buffer(
-        0,
-        width_i32,
-        height_i32,
-        stride,
-        wl_shm::Format::Argb8888,
-        qh,
-        (),
-    );
+    let buffer = pool.create_buffer(0, width, height, stride, wl_shm::Format::Argb8888, qh, ());
 
-    /*
-     * The wl_buffer keeps the server-side
-     * memory alive, so the pool object itself
-     * is no longer needed.
-     */
     pool.destroy();
 
     buffer
