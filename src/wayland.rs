@@ -5,36 +5,23 @@ mod shm;
 mod surface;
 
 use wayland_client::{
-    delegate_noop,
-    protocol::{
-        wl_buffer,
-        wl_compositor,
-        wl_registry,
-        wl_shm,
-        wl_shm_pool,
-        wl_surface,
-    },
-    Connection,
-    EventQueue,
-    QueueHandle,
+    Connection, EventQueue, QueueHandle, delegate_noop,
+    protocol::{wl_buffer, wl_compositor, wl_registry, wl_shm, wl_shm_pool, wl_surface},
 };
 
-use wayland_protocols_wlr::layer_shell::v1::client::{
-    zwlr_layer_shell_v1,
-    zwlr_layer_surface_v1,
-};
+use crate::ui::Widget;
+use wayland_protocols_wlr::layer_shell::v1::client::{zwlr_layer_shell_v1, zwlr_layer_surface_v1};
 
 struct WaylandState {
+    root: Box<dyn Widget>,
     compositor: Option<wl_compositor::WlCompositor>,
     shm: Option<wl_shm::WlShm>,
 
-    layer_shell:
-        Option<zwlr_layer_shell_v1::ZwlrLayerShellV1>,
+    layer_shell: Option<zwlr_layer_shell_v1::ZwlrLayerShellV1>,
 
     surface: Option<wl_surface::WlSurface>,
 
-    layer_surface:
-        Option<zwlr_layer_surface_v1::ZwlrLayerSurfaceV1>,
+    layer_surface: Option<zwlr_layer_surface_v1::ZwlrLayerSurfaceV1>,
 
     buffer: Option<wl_buffer::WlBuffer>,
 
@@ -42,8 +29,9 @@ struct WaylandState {
 }
 
 impl WaylandState {
-    fn new() -> Self {
+    fn new(root: Box<dyn Widget>) -> Self {
         Self {
+            root,
             compositor: None,
             shm: None,
             layer_shell: None,
@@ -62,10 +50,7 @@ impl WaylandState {
             "compositor does not provide wl_compositor"
         );
 
-        assert!(
-            self.shm.is_some(),
-            "compositor does not provide wl_shm"
-        );
+        assert!(self.shm.is_some(), "compositor does not provide wl_shm");
 
         assert!(
             self.layer_shell.is_some(),
@@ -73,95 +58,49 @@ impl WaylandState {
         );
     }
 
-    fn create_layer_surface(
-        &mut self,
-        qh: &QueueHandle<Self>,
-    ) {
-        let compositor =
-            self.compositor
-                .as_ref()
-                .unwrap();
+    fn create_layer_surface(&mut self, qh: &QueueHandle<Self>) {
+        let compositor = self.compositor.as_ref().unwrap();
 
-        let layer_shell =
-            self.layer_shell
-                .as_ref()
-                .unwrap();
+        let layer_shell = self.layer_shell.as_ref().unwrap();
 
-        let surface =
-            surface::create(
-                compositor,
-                qh,
-            );
+        let surface = surface::create(compositor, qh);
 
-        let layer_surface =
-            layer::create(
-                layer_shell,
-                &surface,
-                qh,
-            );
+        let layer_surface = layer::create(layer_shell, &surface, qh);
 
-        self.surface =
-            Some(surface);
+        self.surface = Some(surface);
 
-        self.layer_surface =
-            Some(layer_surface);
+        self.layer_surface = Some(layer_surface);
     }
 }
 
 pub struct WaylandApp {
     _connection: Connection,
 
-    event_queue:
-        EventQueue<WaylandState>,
+    event_queue: EventQueue<WaylandState>,
 
-    state:
-        WaylandState,
+    state: WaylandState,
 
-    _registry:
-        wl_registry::WlRegistry,
+    _registry: wl_registry::WlRegistry,
 }
 
 impl WaylandApp {
-    pub fn new() -> Self {
-        let connection =
-            connection::connect();
+    pub fn new(root: impl Widget + 'static) -> Self {
+        let connection = connection::connect();
 
-        let mut event_queue =
-            connection.new_event_queue();
+        let mut event_queue = connection.new_event_queue();
 
-        let qh =
-            event_queue.handle();
+        let qh = event_queue.handle();
 
-        let mut state =
-            WaylandState::new();
+        let mut state = WaylandState::new(Box::new(root));
 
-        let registry =
-            registry::request(
-                &connection,
-                &qh,
-            );
+        let registry = registry::request(&connection, &qh);
 
-        /*
-         * Process the initial registry advertisement.
-         *
-         * After this we should know about:
-         *
-         *     wl_compositor
-         *     wl_shm
-         *     zwlr_layer_shell_v1
-         */
         event_queue
             .roundtrip(&mut state)
-            .expect(
-                "failed to discover Wayland globals"
-            );
+            .expect("failed to discover Wayland globals");
 
         state.ensure_required_globals();
 
-        /*
-         * Now that the required globals exist,
-         * create our shell layer.
-         */
         state.create_layer_surface(&qh);
 
         Self {
@@ -175,12 +114,8 @@ impl WaylandApp {
     pub fn run(&mut self) {
         while self.state.running {
             self.event_queue
-                .blocking_dispatch(
-                    &mut self.state,
-                )
-                .expect(
-                    "Wayland event loop failed"
-                );
+                .blocking_dispatch(&mut self.state)
+                .expect("Wayland event loop failed");
         }
     }
 }

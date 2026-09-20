@@ -87,7 +87,7 @@ impl Dispatch<ZwlrLayerSurfaceV1, ()> for WaylandState {
 
                 renderer.clear(Color::TRANSPARENT);
 
-                renderer.rectangle(50.0, 30.0, 200.0, 60.0, Color::RED);
+                state.root.draw(&mut renderer, 0.0, 0.0);
 
                 let pixels = renderer.into_argb8888();
 
