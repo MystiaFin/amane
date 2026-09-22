@@ -9,7 +9,10 @@ use wayland_client::{
     protocol::{wl_buffer, wl_compositor, wl_registry, wl_shm, wl_shm_pool, wl_surface},
 };
 
-use crate::{LayerWindow, ui::Widget};
+use crate::{
+    LayerWindow,
+    ui::{Layout, Widget},
+};
 use wayland_protocols_wlr::layer_shell::v1::client::{zwlr_layer_shell_v1, zwlr_layer_surface_v1};
 
 struct WaylandState {
@@ -96,22 +99,22 @@ pub struct WaylandApp {
 }
 
 impl WaylandApp {
-    pub fn new<W>(window: LayerWindow<W>) -> Self
-    where
-        W: Widget + 'static,
-    {
+    pub fn new(window: LayerWindow) -> Self {
         let LayerWindow {
             width,
             height,
-            child,
+            direction,
+            children,
         } = window;
+
+        let root = Layout::new(direction, children);
         let connection = connection::connect();
 
         let mut event_queue = connection.new_event_queue();
 
         let qh = event_queue.handle();
 
-        let mut state = WaylandState::new(Box::new(child), width, height);
+        let mut state = WaylandState::new(Box::new(root), width, height);
 
         let registry = registry::request(&connection, &qh);
 

@@ -7,4 +7,4 @@ mod wayland;
 pub use app::App;
 pub use graphics::Color;
 pub use layer_window::LayerWindow;
-pub use ui::{Column, Rectangle, Widget};
+pub use ui::{Direction, Rectangle, Widget};
