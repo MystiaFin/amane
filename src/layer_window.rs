@@ -1,6 +1,6 @@
-use create::ui::{Direction, Widget};
+use crate::ui::{Direction, Widget};
 
-pub struct LayerWindow<W> {
+pub struct LayerWindow {
     pub width: u32,
     pub height: u32,
 

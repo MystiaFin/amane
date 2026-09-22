@@ -1,6 +1,7 @@
 mod app;
 mod graphics;
 mod layer_window;
+mod macros;
 mod ui;
 mod wayland;
 

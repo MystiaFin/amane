@@ -2,7 +2,7 @@ use crate::graphics::Renderer;
 
 use super::{Direction, Widget};
 
-pub(crate) struct layout {
+pub(crate) struct Layout {
     direction: Direction,
     children: Vec<Box<dyn Widget>>,
 }
