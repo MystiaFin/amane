@@ -58,7 +58,9 @@ impl Renderer {
         };
 
         for (pixel, &amount) in glyph.pixels_mut().iter_mut().zip(coverage) {
-            let alpha = (u16::from(color.a) * u16::from(amount) / 255) as u8;
+            let color_alpha = u16::from(color.a);
+            let coverage = u16::from(amount);
+            let alpha = (color_alpha * coverage / 255) as u8;
 
             *pixel = ColorU8::from_rgba(color.r, color.g, color.b, alpha).premultiply();
         }
