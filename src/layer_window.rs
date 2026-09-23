@@ -1,25 +1,18 @@
-use crate::ui::{Direction, Widget};
+use crate::ui::Widget;
 
 pub struct LayerWindow {
     pub width: u32,
     pub height: u32,
 
-    pub(crate) direction: Direction,
-    pub(crate) children: Vec<Box<dyn Widget>>,
+    pub(crate) root: Box<dyn Widget>,
 }
 
 impl LayerWindow {
-    pub fn new(width: u32, height: u32, children: Vec<Box<dyn Widget>>) -> Self {
+    pub fn new(width: u32, height: u32, root: impl Widget + 'static) -> Self {
         Self {
             width,
             height,
-            direction: Direction::Row,
-            children,
+            root: Box::new(root),
         }
-    }
-
-    pub fn direction(mut self, direction: Direction) -> Self {
-        self.direction = direction;
-        self
     }
 }

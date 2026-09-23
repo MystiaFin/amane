@@ -11,7 +11,7 @@ use wayland_client::{
 
 use crate::{
     LayerWindow,
-    ui::{Layout, Widget},
+    ui::Widget,
 };
 
 use crate::graphics::{Color, Renderer};
@@ -130,18 +130,16 @@ impl WaylandApp {
         let LayerWindow {
             width,
             height,
-            direction,
-            children,
+            root,
         } = window;
 
-        let root = Layout::new(direction, children);
         let connection = connection::connect();
 
         let mut event_queue = connection.new_event_queue();
 
         let qh = event_queue.handle();
 
-        let mut state = WaylandState::new(Box::new(root), width, height);
+        let mut state = WaylandState::new(root, width, height);
 
         let registry = registry::request(&connection, &qh);
 
