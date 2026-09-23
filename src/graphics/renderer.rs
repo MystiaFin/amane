@@ -1,4 +1,4 @@
-use tiny_skia::{Paint, Pixmap, Rect as SkiaRect, Transform};
+use tiny_skia::{ColorU8, Paint, Pixmap, PixmapPaint, Rect as SkiaRect, Transform};
 
 use super::{Color, Rect};
 
@@ -42,5 +42,34 @@ impl Renderer {
         }
 
         pixels
+    }
+
+    pub fn glyph(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        coverage: &[u8],
+        color: Color,
+    ) {
+        let Some(mut glyph) = Pixmap::new(width, height) else {
+            return;
+        };
+
+        for (pixel, &amount) in glyph.pixels_mut().iter_mut().zip(coverage) {
+            let alpha = (u16::from(color.a) * u16::from(amount) / 255) as u8;
+
+            *pixel = ColorU8::from_rgba(color.r, color.g, color.b, alpha).premultiply();
+        }
+
+        self.pixmap.draw_pixmap(
+            x,
+            y,
+            glyph.as_ref(),
+            &PixmapPaint::default(),
+            Transform::identity(),
+            None,
+        );
     }
 }
