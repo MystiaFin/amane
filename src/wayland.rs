@@ -6,13 +6,16 @@ mod surface;
 
 use wayland_client::{
     Connection, EventQueue, QueueHandle, delegate_noop,
-    protocol::{wl_buffer, wl_compositor, wl_registry, wl_shm, wl_shm_pool, wl_surface},
+    protocol::{wl_compositor, wl_registry, wl_shm, wl_shm_pool, wl_surface},
 };
 
 use crate::{
     LayerWindow,
     ui::{Layout, Widget},
 };
+
+use crate::graphics::{Color, Renderer};
+
 use wayland_protocols_wlr::layer_shell::v1::client::{zwlr_layer_shell_v1, zwlr_layer_surface_v1};
 
 struct WaylandState {
@@ -20,6 +23,9 @@ struct WaylandState {
 
     requested_width: u32,
     requested_height: u32,
+
+    width: u32,
+    height: u32,
 
     compositor: Option<wl_compositor::WlCompositor>,
     shm: Option<wl_shm::WlShm>,
@@ -30,8 +36,6 @@ struct WaylandState {
 
     layer_surface: Option<zwlr_layer_surface_v1::ZwlrLayerSurfaceV1>,
 
-    buffer: Option<wl_buffer::WlBuffer>,
-
     running: bool,
 }
 
@@ -41,16 +45,39 @@ impl WaylandState {
             root,
             requested_width,
             requested_height,
+
+            width: 0,
+            height: 0,
+
             compositor: None,
             shm: None,
             layer_shell: None,
 
             surface: None,
             layer_surface: None,
-            buffer: None,
 
             running: true,
         }
+    }
+
+    fn redraw(&mut self, qh: &QueueHandle<Self>) {
+        let (width, height) = (self.width, self.height);
+        if width == 0 || height == 0 {
+            return;
+        }
+
+        let mut renderer = Renderer::new(width, height);
+        renderer.clear(Color::TRANSPARENT);
+        self.root.draw(&mut renderer, 0.0, 0.0);
+        let pixels = renderer.into_argb8888();
+
+        let shm = self.shm.as_ref().unwrap();
+        let surface = self.surface.as_ref().unwrap();
+
+        let buffer = shm::create_buffer(shm, qh, width, height, &pixels);
+        surface.attach(Some(&buffer), 0, 0);
+        surface.damage(0, 0, width as i32, height as i32);
+        surface.commit();
     }
 
     fn ensure_required_globals(&self) {
@@ -166,11 +193,6 @@ delegate_noop!(
 delegate_noop!(
     WaylandState:
     ignore wl_shm_pool::WlShmPool
-);
-
-delegate_noop!(
-    WaylandState:
-    ignore wl_buffer::WlBuffer
 );
 
 delegate_noop!(

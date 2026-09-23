@@ -5,9 +5,7 @@ use wayland_protocols_wlr::layer_shell::v1::client::{
     zwlr_layer_surface_v1::{self, ZwlrLayerSurfaceV1},
 };
 
-use super::{WaylandState, shm};
-
-use crate::graphics::{Color, Renderer};
+use super::WaylandState;
 
 pub fn create(
     layer_shell: &ZwlrLayerShellV1,
@@ -50,52 +48,21 @@ impl Dispatch<ZwlrLayerSurfaceV1, ()> for WaylandState {
             } => {
                 layer_surface.ack_configure(serial);
 
-                if state.buffer.is_some() {
-                    return;
-                }
-
-                /*
-                 * The compositor is allowed to send 0
-                 * for width or height.
-                 */
                 let width = if width == 0 {
                     state.requested_width
                 } else {
                     width
                 };
-
                 let height = if height == 0 {
                     state.requested_height
                 } else {
                     height
                 };
 
-                let shm = state.shm.as_ref().unwrap();
+                state.width = width;
+                state.height = height;
 
-                let surface = state.surface.as_ref().unwrap();
-
-                /*
-                 * Create a pixel canvas using
-                 * the actual resolved surface size.
-                 */
-                let mut renderer = Renderer::new(width, height);
-
-                /*
-                 * Start with a transparent background.
-                 */
-                renderer.clear(Color::TRANSPARENT);
-
-                state.root.draw(&mut renderer, 0.0, 0.0);
-                let pixels = renderer.into_argb8888();
-
-                let buffer = shm::create_buffer(shm, qh, width, height, &pixels);
-                surface.attach(Some(&buffer), 0, 0);
-
-                surface.damage(0, 0, width as i32, height as i32);
-
-                surface.commit();
-
-                state.buffer = Some(buffer);
+                state.redraw(qh);
 
                 println!("Amane layer window: {width}x{height}");
             }

@@ -1,9 +1,9 @@
 use std::{io::Write, os::fd::AsFd};
 
 use wayland_client::{
-    QueueHandle,
+    Connection, Dispatch, QueueHandle,
     protocol::{
-        wl_buffer::WlBuffer,
+        wl_buffer::{self, WlBuffer},
         wl_shm::{self, WlShm},
     },
 };
@@ -40,4 +40,19 @@ pub fn create_buffer(
     pool.destroy();
 
     buffer
+}
+
+impl Dispatch<WlBuffer, ()> for WaylandState {
+    fn event(
+        _: &mut Self,
+        buffer: &WlBuffer,
+        event: wl_buffer::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
+        if let wl_buffer::Event::Release = event {
+            buffer.destroy();
+        }
+    }
 }
