@@ -1,4 +1,4 @@
-use crate::ui::Widget;
+use crate::Widget;
 
 pub struct LayerWindow {
     pub width: u32,

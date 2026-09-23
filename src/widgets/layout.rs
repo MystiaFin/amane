@@ -1,14 +1,20 @@
 use crate::graphics::Renderer;
 
-use super::{Direction, Widget};
+use super::Widget;
 
-pub(crate) struct Layout {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    Row,
+    Column,
+}
+
+pub struct Layout {
     direction: Direction,
     children: Vec<Box<dyn Widget>>,
 }
 
 impl Layout {
-    pub(crate) fn new(direction: Direction, children: Vec<Box<dyn Widget>>) -> Self {
+    pub fn new(direction: Direction, children: Vec<Box<dyn Widget>>) -> Self {
         Self {
             direction,
             children,
