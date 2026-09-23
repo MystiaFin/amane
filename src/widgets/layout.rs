@@ -1,37 +1,82 @@
-fn width(&self) -> f32 {
-    let mut total = 0.0;
-    let mut widest = 0.0;
+use crate::graphics::Renderer;
 
-    for child in &self.children {
-        total += child.width();
+use super::Widget;
 
-        widest = f32::max(widest, child.width());
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    Row,
+    Column,
+}
 
-    match self.direction {
-        // side by side: widths add up
-        Direction::Row => total,
+pub struct Layout {
+    direction: Direction,
+    children: Vec<Box<dyn Widget>>,
+}
 
-        // stacked: as wide as the widest child
-        Direction::Column => widest,
+impl Layout {
+    pub fn new(direction: Direction, children: Vec<Box<dyn Widget>>) -> Self {
+        Self {
+            direction,
+            children,
+        }
     }
 }
 
-fn height(&self) -> f32 {
-    let mut total = 0.0;
-    let mut tallest = 0.0;
+impl Widget for Layout {
+    fn width(&self) -> f32 {
+        let mut total = 0.0;
+        let mut widest = 0.0;
 
-    for child in &self.children {
-        total += child.height();
+        for child in &self.children {
+            total += child.width();
 
-        tallest = f32::max(tallest, child.height());
+            widest = f32::max(widest, child.width());
+        }
+
+        match self.direction {
+            // side by side: widths add up
+            Direction::Row => total,
+
+            // stacked: as wide as the widest child
+            Direction::Column => widest,
+        }
     }
 
-    match self.direction {
-        // side by side: as tall as the tallest child
-        Direction::Row => tallest,
+    fn height(&self) -> f32 {
+        let mut total = 0.0;
+        let mut tallest = 0.0;
 
-        // stacked: heights add up
-        Direction::Column => total,
+        for child in &self.children {
+            total += child.height();
+
+            tallest = f32::max(tallest, child.height());
+        }
+
+        match self.direction {
+            // side by side: as tall as the tallest child
+            Direction::Row => tallest,
+
+            // stacked: heights add up
+            Direction::Column => total,
+        }
+    }
+
+    fn draw(&self, renderer: &mut Renderer, x: f32, y: f32) {
+        let mut current_x = x;
+        let mut current_y = y;
+
+        for child in &self.children {
+            child.draw(renderer, current_x, current_y);
+
+            match self.direction {
+                Direction::Row => {
+                    current_x += child.width();
+                }
+
+                Direction::Column => {
+                    current_y += child.height();
+                }
+            }
+        }
     }
 }
