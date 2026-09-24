@@ -1,5 +1,5 @@
 use crate::Color;
-use crate::graphics::{FONT, Renderer};
+use crate::graphics::{Renderer, font};
 
 use super::Widget;
 
@@ -7,14 +7,17 @@ pub struct Text {
     pub content: String,
     pub size: f32,
     pub color: Color,
+    pub font: Option<String>,
 }
 
 impl Widget for Text {
     fn width(&self) -> f32 {
+        let font = font::load(self.font.as_deref());
+
         let mut total = 0.0;
 
         for letter in self.content.chars() {
-            let metrics = FONT.metrics(letter, self.size);
+            let metrics = font.metrics(letter, self.size);
 
             total += metrics.advance_width;
         }
@@ -23,7 +26,9 @@ impl Widget for Text {
     }
 
     fn height(&self) -> f32 {
-        let line = FONT
+        let font = font::load(self.font.as_deref());
+
+        let line = font
             .horizontal_line_metrics(self.size)
             .expect("failed to read line metrics");
 
@@ -32,7 +37,9 @@ impl Widget for Text {
     }
 
     fn draw(&self, renderer: &mut Renderer, x: f32, y: f32) {
-        let line = FONT
+        let font = font::load(self.font.as_deref());
+
+        let line = font
             .horizontal_line_metrics(self.size)
             .expect("failed to read line metrics");
 
@@ -41,7 +48,7 @@ impl Widget for Text {
         let mut pen_x = x;
 
         for letter in self.content.chars() {
-            let (metrics, coverage) = FONT.rasterize(letter, self.size);
+            let (metrics, coverage) = font.rasterize(letter, self.size);
 
             /*
              * fontdue measures the letter from the baseline upward,

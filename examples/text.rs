@@ -9,6 +9,7 @@ fn main() {
                 content: "Hello, Amane".into(),
                 size: 48.0,
                 color: Color::RED,
+                font: None,
             },
             Rectangle {
                 width: 200.0,
@@ -16,11 +17,13 @@ fn main() {
                 color: Color::GREEN,
             },
             Text {
-                content: "gyp jumps below the line".into(),
+                content: "this one overrides the default".into(),
                 size: 24.0,
                 color: Color::BLUE,
+                font: Some("serif".into()),
             },
         ]),
     ))
+    .font("monospace")
     .run();
 }
