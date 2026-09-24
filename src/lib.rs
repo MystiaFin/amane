@@ -8,4 +8,4 @@ mod widgets;
 pub use app::App;
 pub use graphics::Color;
 pub use layer_window::LayerWindow;
-pub use widgets::{Column, Rectangle, Row, Widget};
+pub use widgets::{Column, Rectangle, Row, Text, Widget};

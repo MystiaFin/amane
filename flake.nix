@@ -23,6 +23,7 @@
           rust-analyzer
 
           pkg-config
+					fontconfig
         ];
 
         buildInputs = with pkgs; [
