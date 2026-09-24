@@ -81,12 +81,6 @@ pub struct WaylandApp {
 
 impl WaylandApp {
     pub fn new(window: LayerWindow) -> Self {
-        let LayerWindow {
-            width,
-            height,
-            root,
-        } = window;
-
         let connection = connection::connect();
 
         let (globals, event_queue) =
@@ -104,9 +98,17 @@ impl WaylandApp {
 
         let surface = compositor.create_surface(&qh);
 
-        let layer_surface = layer::create(&layer_shell, surface, &qh, width, height);
+        let layer_surface = layer::create(&layer_shell, surface, &qh, &window);
 
-        let pool_size = (width * height * 4) as usize;
+        let width = layer::pixels(window.width);
+        let height = layer::pixels(window.height);
+
+        let Some(root) = window.root else {
+            panic!("failed to create window: no root set");
+        };
+
+        // the pool grows on its own once the real size is known
+        let pool_size = (width * height * 4).max(4) as usize;
 
         let pool = SlotPool::new(pool_size, &shm).expect("failed to create shm pool");
 

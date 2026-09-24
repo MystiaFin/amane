@@ -17,7 +17,7 @@ pub fn create_buffer(pool: &mut SlotPool, width: u32, height: u32, pixels: &[u8]
         .create_buffer(width, height, stride, Format::Argb8888)
         .expect("failed to create buffer");
 
-    canvas.copy_from_slice(pixels);
+    canvas[..pixels.len()].copy_from_slice(pixels);
 
     buffer
 }
