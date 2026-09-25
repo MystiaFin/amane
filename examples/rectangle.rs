@@ -10,7 +10,7 @@ fn main() {
                     Rectangle::new()
                         .width(Parent)
                         .height(Parent)
-                        .radius(30.0)
+                        .radius(20.0)
                         .color(Color::RED)
                 ])),
         )

@@ -1,5 +1,6 @@
 mod column;
 mod layout;
+mod radius;
 mod rectangle;
 mod row;
 mod size;
@@ -9,6 +10,7 @@ use crate::graphics::{Rect, Renderer};
 
 pub use column::Column;
 pub use layout::{Direction, Layout};
+pub use radius::Radius;
 pub use rectangle::Rectangle;
 pub use row::Row;
 pub use size::Size;

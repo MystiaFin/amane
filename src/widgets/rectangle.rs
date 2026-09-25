@@ -1,8 +1,8 @@
 mod needs_height;
 mod needs_width;
 
-use crate::Size;
 use crate::graphics::{Color, Rect, Renderer};
+use crate::{Radius, Size};
 
 use super::Widget;
 
@@ -13,7 +13,7 @@ pub struct Rectangle {
     pub(crate) width: Size,
     pub(crate) height: Size,
     pub(crate) color: Color,
-    pub(crate) radius: f32,
+    pub(crate) radius: Radius,
     pub(crate) child: Option<Box<dyn Widget>>,
 }
 
@@ -29,8 +29,8 @@ impl Rectangle {
         self
     }
 
-    pub fn radius(mut self, radius: f32) -> Self {
-        self.radius = radius;
+    pub fn radius(mut self, radius: impl Into<Radius>) -> Self {
+        self.radius = radius.into();
 
         self
     }
@@ -52,7 +52,9 @@ impl Widget for Rectangle {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        renderer.rectangle(area, self.color, self.radius);
+        let radius = self.radius.resolve(area.width, area.height);
+
+        renderer.rectangle(area, self.color, radius);
 
         let Some(child) = &self.child else {
             return;

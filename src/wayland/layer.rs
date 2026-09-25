@@ -114,8 +114,6 @@ impl LayerShellHandler for WaylandState {
         self.height = height;
 
         self.redraw();
-
-        println!("Amane layer window: {width}x{height}");
     }
 
     fn closed(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &LayerSurface) {
