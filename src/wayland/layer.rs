@@ -7,7 +7,7 @@ use smithay_client_toolkit::shell::{
 };
 use wayland_client::{Connection, QueueHandle, protocol::wl_surface::WlSurface};
 
-use crate::{Horizontal, Keyboard, Layer, LayerWindow, Size, Vertical};
+use crate::{Horizontal, Keyboard, Layer, LayerWindow, Vertical, WindowSize};
 
 use super::WaylandState;
 
@@ -36,11 +36,10 @@ pub fn create(
     layer_surface
 }
 
-// 0 tells the compositor to stretch between the anchored edges
-pub fn pixels(size: Size) -> u32 {
+pub fn pixels(size: WindowSize) -> u32 {
     match size {
-        Size::Full => 0,
-        Size::Fixed(pixels) => pixels,
+        WindowSize::Full => 0,
+        WindowSize::Fixed(pixels) => pixels.round() as u32,
     }
 }
 
@@ -60,11 +59,11 @@ fn anchor(window: &LayerWindow) -> Anchor {
     }
 
     // stretching only works between two opposite anchored edges
-    if window.width == Size::Full {
+    if window.width == WindowSize::Full {
         anchor |= Anchor::LEFT | Anchor::RIGHT;
     }
 
-    if window.height == Size::Full {
+    if window.height == WindowSize::Full {
         anchor |= Anchor::TOP | Anchor::BOTTOM;
     }
 

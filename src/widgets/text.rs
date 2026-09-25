@@ -1,17 +1,46 @@
-use crate::Color;
-use crate::graphics::{Renderer, font};
+use crate::graphics::{Rect, Renderer, font};
+use crate::{Color, Size};
 
 use super::Widget;
 
 pub struct Text {
-    pub content: String,
-    pub size: f32,
-    pub color: Color,
-    pub font: Option<String>,
+    content: String,
+    size: f32,
+    color: Color,
+    font: Option<String>,
+}
+
+impl Text {
+    pub fn new(content: impl Into<String>) -> Self {
+        Self {
+            content: content.into(),
+            size: 16.0,
+            color: Color::BLACK,
+            font: None,
+        }
+    }
+
+    pub fn size(mut self, size: f32) -> Self {
+        self.size = size;
+
+        self
+    }
+
+    pub fn color(mut self, color: Color) -> Self {
+        self.color = color;
+
+        self
+    }
+
+    pub fn font(mut self, family: &str) -> Self {
+        self.font = Some(String::from(family));
+
+        self
+    }
 }
 
 impl Widget for Text {
-    fn width(&self) -> f32 {
+    fn width(&self) -> Size {
         let font = font::load(self.font.as_deref());
 
         let mut total = 0.0;
@@ -22,10 +51,10 @@ impl Widget for Text {
             total += metrics.advance_width;
         }
 
-        total
+        Size::Fixed(total)
     }
 
-    fn height(&self) -> f32 {
+    fn height(&self) -> Size {
         let font = font::load(self.font.as_deref());
 
         let line = font
@@ -33,19 +62,19 @@ impl Widget for Text {
             .expect("failed to read line metrics");
 
         // descent is negative, so this adds the part below the baseline
-        line.ascent - line.descent
+        Size::Fixed(line.ascent - line.descent)
     }
 
-    fn draw(&self, renderer: &mut Renderer, x: f32, y: f32) {
+    fn draw(&self, renderer: &mut Renderer, area: Rect) {
         let font = font::load(self.font.as_deref());
 
         let line = font
             .horizontal_line_metrics(self.size)
             .expect("failed to read line metrics");
 
-        let baseline = y + line.ascent;
+        let baseline = area.y + line.ascent;
 
-        let mut pen_x = x;
+        let mut pen_x = area.x;
 
         for letter in self.content.chars() {
             let (metrics, coverage) = font.rasterize(letter, self.size);

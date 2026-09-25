@@ -1,4 +1,5 @@
-use crate::graphics::Renderer;
+use crate::Size;
+use crate::graphics::{Rect, Renderer};
 
 use super::Widget;
 
@@ -20,61 +21,114 @@ impl Layout {
             children,
         }
     }
+
+    // the size of a child along the direction the layout grows in
+    fn along(&self, child: &dyn Widget) -> Size {
+        match self.direction {
+            Direction::Row => child.width(),
+            Direction::Column => child.height(),
+        }
+    }
+
+    // the space each Parent-sized child gets: what the fixed children leave, split evenly
+    fn share(&self, area: Rect) -> f32 {
+        let mut used = 0.0;
+        let mut filling = 0;
+
+        for child in &self.children {
+            match self.along(child.as_ref()) {
+                Size::Fixed(pixels) => used += pixels,
+                Size::Parent => filling += 1,
+            }
+        }
+
+        if filling == 0 {
+            return 0.0;
+        }
+
+        let available = match self.direction {
+            Direction::Row => area.width,
+            Direction::Column => area.height,
+        };
+
+        f32::max(available - used, 0.0) / filling as f32
+    }
 }
 
 impl Widget for Layout {
-    fn width(&self) -> f32 {
+    fn width(&self) -> Size {
         let mut total = 0.0;
         let mut widest = 0.0;
 
         for child in &self.children {
-            total += child.width();
+            // one child that fills makes the whole layout fill
+            let Size::Fixed(width) = child.width() else {
+                return Size::Parent;
+            };
 
-            widest = f32::max(widest, child.width());
+            total += width;
+
+            widest = f32::max(widest, width);
         }
 
         match self.direction {
             // side by side: widths add up
-            Direction::Row => total,
+            Direction::Row => Size::Fixed(total),
 
             // stacked: as wide as the widest child
-            Direction::Column => widest,
+            Direction::Column => Size::Fixed(widest),
         }
     }
 
-    fn height(&self) -> f32 {
+    fn height(&self) -> Size {
         let mut total = 0.0;
         let mut tallest = 0.0;
 
         for child in &self.children {
-            total += child.height();
+            // one child that fills makes the whole layout fill
+            let Size::Fixed(height) = child.height() else {
+                return Size::Parent;
+            };
 
-            tallest = f32::max(tallest, child.height());
+            total += height;
+
+            tallest = f32::max(tallest, height);
         }
 
         match self.direction {
-            // side by side: as tall as the tallest child
-            Direction::Row => tallest,
-
-            // stacked: heights add up
-            Direction::Column => total,
+            Direction::Row => Size::Fixed(tallest),
+            Direction::Column => Size::Fixed(total),
         }
     }
 
-    fn draw(&self, renderer: &mut Renderer, x: f32, y: f32) {
-        let mut current_x = x;
-        let mut current_y = y;
+    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+        let share = self.share(area);
+
+        let mut current_x = area.x;
+        let mut current_y = area.y;
 
         for child in &self.children {
-            child.draw(renderer, current_x, current_y);
+            let (width, height) = match self.direction {
+                Direction::Row => (
+                    child.width().resolve(share),
+                    child.height().resolve(area.height),
+                ),
+
+                Direction::Column => (
+                    child.width().resolve(area.width),
+                    child.height().resolve(share),
+                ),
+            };
+
+            child.draw(renderer, Rect::new(current_x, current_y, width, height));
 
             match self.direction {
                 Direction::Row => {
-                    current_x += child.width();
+                    current_x += width;
                 }
 
                 Direction::Column => {
-                    current_y += child.height();
+                    current_y += height;
                 }
             }
         }

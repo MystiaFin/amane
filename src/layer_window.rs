@@ -2,8 +2,10 @@ mod horizontal;
 mod keyboard;
 mod layer;
 mod margin;
-mod size;
+mod needs_height;
+mod needs_width;
 mod vertical;
+mod window_size;
 
 use crate::Widget;
 
@@ -11,12 +13,14 @@ pub use horizontal::Horizontal;
 pub use keyboard::Keyboard;
 pub use layer::Layer;
 pub use margin::Margin;
-pub use size::Size;
+pub use needs_height::NeedsHeight;
+pub use needs_width::NeedsWidth;
 pub use vertical::Vertical;
+pub use window_size::WindowSize;
 
 pub struct LayerWindow {
-    pub(crate) width: Size,
-    pub(crate) height: Size,
+    pub(crate) width: WindowSize,
+    pub(crate) height: WindowSize,
 
     pub(crate) vertical: Vertical,
     pub(crate) horizontal: Horizontal,
@@ -29,20 +33,9 @@ pub struct LayerWindow {
 }
 
 impl LayerWindow {
-    pub fn new(width: impl Into<Size>, height: impl Into<Size>) -> Self {
-        Self {
-            width: width.into(),
-            height: height.into(),
-
-            vertical: Vertical::default(),
-            horizontal: Horizontal::default(),
-
-            margin: Margin::default(),
-            layer: Layer::default(),
-            keyboard: Keyboard::default(),
-
-            root: None,
-        }
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new() -> NeedsWidth {
+        NeedsWidth
     }
 
     pub fn anchor_vertical(mut self, vertical: Vertical) -> Self {
@@ -75,8 +68,8 @@ impl LayerWindow {
         self
     }
 
-    pub fn root(mut self, root: impl Widget + 'static) -> Self {
-        self.root = Some(Box::new(root));
+    pub fn child(mut self, child: impl Widget + 'static) -> Self {
+        self.root = Some(Box::new(child));
 
         self
     }

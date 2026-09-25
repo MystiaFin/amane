@@ -1,4 +1,5 @@
-use crate::graphics::Renderer;
+use crate::Size;
+use crate::graphics::{Rect, Renderer};
 
 use super::{Direction, Layout, Widget};
 
@@ -15,15 +16,15 @@ impl Row {
 }
 
 impl Widget for Row {
-    fn width(&self) -> f32 {
+    fn width(&self) -> Size {
         self.layout.width()
     }
 
-    fn height(&self) -> f32 {
+    fn height(&self) -> Size {
         self.layout.height()
     }
 
-    fn draw(&self, renderer: &mut Renderer, x: f32, y: f32) {
-        self.layout.draw(renderer, x, y);
+    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+        self.layout.draw(renderer, area);
     }
 }

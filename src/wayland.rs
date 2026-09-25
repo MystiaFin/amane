@@ -20,7 +20,7 @@ use wayland_client::{Connection, EventQueue, globals::registry_queue_init};
 
 use crate::{
     LayerWindow, Widget,
-    graphics::{Color, Renderer},
+    graphics::{Color, Rect, Renderer},
 };
 
 struct WaylandState {
@@ -55,7 +55,14 @@ impl WaylandState {
 
         renderer.clear(Color::TRANSPARENT);
 
-        self.root.draw(&mut renderer, 0.0, 0.0);
+        let area = Rect::new(
+            0.0,
+            0.0,
+            self.root.width().resolve(width as f32),
+            self.root.height().resolve(height as f32),
+        );
+
+        self.root.draw(&mut renderer, area);
 
         let pixels = renderer.into_argb8888();
 
@@ -104,7 +111,7 @@ impl WaylandApp {
         let height = layer::pixels(window.height);
 
         let Some(root) = window.root else {
-            panic!("failed to create window: no root set");
+            panic!("failed to create window: no child set");
         };
 
         // the pool grows on its own once the real size is known

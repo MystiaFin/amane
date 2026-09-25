@@ -2,20 +2,22 @@ mod column;
 mod layout;
 mod rectangle;
 mod row;
+mod size;
 mod text;
 
-use crate::graphics::Renderer;
+use crate::graphics::{Rect, Renderer};
 
 pub use column::Column;
 pub use layout::{Direction, Layout};
 pub use rectangle::Rectangle;
 pub use row::Row;
+pub use size::Size;
 pub use text::Text;
 
 pub trait Widget {
-    fn width(&self) -> f32;
+    fn width(&self) -> Size;
 
-    fn height(&self) -> f32;
+    fn height(&self) -> Size;
 
-    fn draw(&self, renderer: &mut Renderer, x: f32, y: f32);
+    fn draw(&self, renderer: &mut Renderer, area: Rect);
 }

@@ -7,5 +7,8 @@ mod widgets;
 
 pub use app::App;
 pub use graphics::Color;
-pub use layer_window::{Horizontal, Keyboard, Layer, LayerWindow, Margin, Size, Vertical};
-pub use widgets::{Column, Rectangle, Row, Text, Widget};
+pub use layer_window::{Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize};
+pub use widgets::{Column, Rectangle, Row, Size, Text, Widget};
+
+pub use layer_window::WindowSize::Full;
+pub use widgets::Size::Parent;
