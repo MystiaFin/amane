@@ -1,4 +1,4 @@
-use tiny_skia::{ColorU8, Paint, Pixmap, PixmapPaint, Rect as SkiaRect, Transform};
+use tiny_skia::{ColorU8, Pixmap, PixmapPaint, Transform};
 
 use super::{Color, Rect};
 
@@ -19,19 +19,39 @@ impl Renderer {
         ));
     }
 
-    pub fn rectangle(&mut self, rect: Rect, color: Color) {
-        let Some(rect) = SkiaRect::from_xywh(rect.x, rect.y, rect.width, rect.height) else {
+    pub fn rectangle(&mut self, rect: Rect, color: Color, radius: f32) {
+        let left = rect.x.floor() as i32;
+        let top = rect.y.floor() as i32;
+        let right = (rect.x + rect.width).ceil() as i32;
+        let bottom = (rect.y + rect.height).ceil() as i32;
+
+        let width = i32::max(right - left, 0) as u32;
+        let height = i32::max(bottom - top, 0) as u32;
+
+        if width == 0 || height == 0 {
             return;
-        };
+        }
 
-        let mut paint = Paint::default();
+        let mut coverage = Vec::with_capacity((width * height) as usize);
 
-        paint.set_color_rgba8(color.r, color.g, color.b, color.a);
+        for row in 0..height {
+            for column in 0..width {
+                // sample the middle of the pixel, not its top-left corner
+                let x = left as f32 + column as f32 + 0.5;
+                let y = top as f32 + row as f32 + 0.5;
 
-        paint.anti_alias = true;
+                let distance = rect.distance(x, y, radius);
 
-        self.pixmap
-            .fill_rect(rect, &paint, Transform::identity(), None);
+                // pixels within half a pixel of the edge are partly covered
+                let fraction = (0.5 - distance).clamp(0.0, 1.0);
+
+                let amount = (fraction * 255.0).round() as u8;
+
+                coverage.push(amount);
+            }
+        }
+
+        self.glyph(left, top, width, height, &coverage, color);
     }
 
     pub fn into_argb8888(self) -> Vec<u8> {

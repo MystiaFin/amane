@@ -9,6 +9,7 @@ impl NeedsHeight {
         Rectangle {
             width: self.width,
             height: height.into(),
+            radius: 0.0,
             color: Color::TRANSPARENT,
             child: None,
         }

@@ -13,6 +13,7 @@ pub struct Rectangle {
     pub(crate) width: Size,
     pub(crate) height: Size,
     pub(crate) color: Color,
+    pub(crate) radius: f32,
     pub(crate) child: Option<Box<dyn Widget>>,
 }
 
@@ -24,6 +25,12 @@ impl Rectangle {
 
     pub fn color(mut self, color: Color) -> Self {
         self.color = color;
+
+        self
+    }
+
+    pub fn radius(mut self, radius: f32) -> Self {
+        self.radius = radius;
 
         self
     }
@@ -45,7 +52,7 @@ impl Widget for Rectangle {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        renderer.rectangle(area, self.color);
+        renderer.rectangle(area, self.color, self.radius);
 
         let Some(child) = &self.child else {
             return;
