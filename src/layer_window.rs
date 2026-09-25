@@ -6,6 +6,7 @@ mod needs_height;
 mod needs_width;
 mod vertical;
 mod window_size;
+mod zone;
 
 use crate::Widget;
 
@@ -17,6 +18,7 @@ pub use needs_height::NeedsHeight;
 pub use needs_width::NeedsWidth;
 pub use vertical::Vertical;
 pub use window_size::WindowSize;
+pub use zone::Zone;
 
 pub struct LayerWindow {
     pub(crate) width: WindowSize,
@@ -28,6 +30,7 @@ pub struct LayerWindow {
     pub(crate) margin: Margin,
     pub(crate) layer: Layer,
     pub(crate) keyboard: Keyboard,
+    pub(crate) zone: Zone,
 
     pub(crate) root: Option<Box<dyn Widget>>,
 }
@@ -64,6 +67,12 @@ impl LayerWindow {
 
     pub fn keyboard(mut self, keyboard: Keyboard) -> Self {
         self.keyboard = keyboard;
+
+        self
+    }
+
+    pub fn space(mut self, zone: Zone) -> Self {
+        self.zone = zone;
 
         self
     }

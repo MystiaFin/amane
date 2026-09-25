@@ -7,7 +7,7 @@ use smithay_client_toolkit::shell::{
 };
 use wayland_client::{Connection, QueueHandle, protocol::wl_surface::WlSurface};
 
-use crate::{Horizontal, Keyboard, Layer, LayerWindow, Vertical, WindowSize};
+use crate::{Horizontal, Keyboard, Layer, LayerWindow, Vertical, WindowSize, Zone};
 
 use super::WaylandState;
 
@@ -30,6 +30,8 @@ pub fn create(
     layer_surface.set_margin(margin.top, margin.right, margin.bottom, margin.left);
 
     layer_surface.set_keyboard_interactivity(keyboard(window.keyboard));
+
+    layer_surface.set_exclusive_zone(zone(window));
 
     layer_surface.commit();
 
@@ -86,6 +88,26 @@ fn keyboard(keyboard: Keyboard) -> KeyboardInteractivity {
         Keyboard::Exclusive => KeyboardInteractivity::Exclusive,
         Keyboard::OnDemand => KeyboardInteractivity::OnDemand,
     }
+}
+
+fn zone(window: &LayerWindow) -> i32 {
+    match window.zone {
+        Zone::Reserve => reserve(window),
+        Zone::Respect => 0,
+        Zone::Ignore => -1,
+    }
+}
+
+// a bar on the left or right edge is as thick as its width, any other bar as its height
+fn reserve(window: &LayerWindow) -> i32 {
+    let size = match (window.horizontal, window.width) {
+        (Horizontal::Left | Horizontal::Right, WindowSize::Fixed(_)) => window.width,
+        _ => window.height,
+    };
+
+    let reserved = pixels(size);
+
+    i32::try_from(reserved).expect("failed to convert reserved space")
 }
 
 impl LayerShellHandler for WaylandState {

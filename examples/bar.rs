@@ -1,4 +1,4 @@
-use amane::{App, Color, Full, Layer, LayerWindow, Parent, Rectangle, Text, Vertical};
+use amane::{App, Color, Full, Layer, LayerWindow, Parent, Rectangle, Text, Vertical, Zone};
 
 fn main() {
     App::new()
@@ -8,6 +8,7 @@ fn main() {
                 .height(30.0)
                 .anchor_vertical(Vertical::Top)
                 .layer(Layer::Top)
+                .space(Zone::Reserve)
                 .child(
                     Rectangle::new()
                         .width(Parent)
