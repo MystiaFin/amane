@@ -16,6 +16,7 @@ pub struct Rectangle {
     pub(crate) radius: Radius,
     pub(crate) border_thickness: f32,
     pub(crate) border_color: Color,
+    pub(crate) blur: f32,
     pub(crate) opacity: f32,
     pub(crate) child: Option<Box<dyn Widget>>,
 }
@@ -45,6 +46,12 @@ impl Rectangle {
         self
     }
 
+    pub fn blur(mut self, amount: f32) -> Self {
+        self.blur = amount;
+
+        self
+    }
+
     pub fn opacity(mut self, opacity: f32) -> Self {
         self.opacity = opacity;
 
@@ -68,23 +75,25 @@ impl Widget for Rectangle {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
+        let radius = self.radius.resolve(area.width, area.height);
+
+        renderer.blur(area, radius, self.blur);
+
         if self.opacity == 1.0 {
-            paint(self, renderer, area);
+            paint(self, renderer, area, radius);
 
             return;
         }
 
         let mut layer = renderer.layer();
 
-        paint(self, &mut layer, area);
+        paint(self, &mut layer, area, radius);
 
         renderer.blend(layer, self.opacity);
     }
 }
 
-fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect) {
-    let radius = rectangle.radius.resolve(area.width, area.height);
-
+fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
     renderer.rectangle(
         area,
         rectangle.color,

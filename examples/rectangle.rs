@@ -14,6 +14,7 @@ fn main() {
                         .border(2.0, Color::WHITE)
                         .color(Color::RED)
                         .opacity(0.5)
+                        .blur(0.5)
                 ])),
         )
         .run();
