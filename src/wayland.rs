@@ -32,6 +32,8 @@ struct WaylandState {
     width: u32,
     height: u32,
 
+    scale: f32,
+
     registry: RegistryState,
     output: OutputState,
     shm: Shm,
@@ -51,7 +53,10 @@ impl WaylandState {
             return;
         }
 
-        let mut renderer = Renderer::new(width, height);
+        let buffer_width = (width as f32 * self.scale) as u32;
+        let buffer_height = (height as f32 * self.scale) as u32;
+
+        let mut renderer = Renderer::new(buffer_width, buffer_height, self.scale);
 
         renderer.clear(Color::TRANSPARENT);
 
@@ -66,13 +71,15 @@ impl WaylandState {
 
         let pixels = renderer.into_argb8888();
 
-        let buffer = shm::create_buffer(&mut self.pool, width, height, &pixels);
+        let buffer = shm::create_buffer(&mut self.pool, buffer_width, buffer_height, &pixels);
 
         let surface = self.layer_surface.wl_surface();
 
-        surface.damage_buffer(0, 0, width as i32, height as i32);
+        surface.damage_buffer(0, 0, buffer_width as i32, buffer_height as i32);
 
         buffer.attach_to(surface).expect("failed to attach buffer");
+
+        surface.set_buffer_scale(self.scale as i32);
 
         self.layer_surface.commit();
     }
@@ -127,6 +134,8 @@ impl WaylandApp {
 
             width: 0,
             height: 0,
+
+            scale: 1.0,
 
             registry: RegistryState::new(&globals),
             output: OutputState::new(&globals, &qh),

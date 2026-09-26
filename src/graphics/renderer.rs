@@ -4,13 +4,14 @@ use super::{Color, Rect};
 
 pub struct Renderer {
     pixmap: Pixmap,
+    pub scale: f32,
 }
 
 impl Renderer {
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(width: u32, height: u32, scale: f32) -> Self {
         let pixmap = Pixmap::new(width, height).expect("failed to create pixmap");
 
-        Self { pixmap }
+        Self { pixmap, scale }
     }
 
     pub fn clear(&mut self, color: Color) {
@@ -20,6 +21,14 @@ impl Renderer {
     }
 
     pub fn rectangle(&mut self, rect: Rect, color: Color, radius: f32) {
+        let rect = Rect::new(
+            rect.x * self.scale,
+            rect.y * self.scale,
+            rect.width * self.scale,
+            rect.height * self.scale,
+        );
+        let radius = radius * self.scale;
+
         let left = rect.x.floor() as i32;
         let top = rect.y.floor() as i32;
         let right = (rect.x + rect.width).ceil() as i32;

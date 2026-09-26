@@ -9,11 +9,13 @@ use super::WaylandState;
 impl CompositorHandler for WaylandState {
     fn scale_factor_changed(
         &mut self,
-        _: &Connection,
-        _: &QueueHandle<Self>,
-        _: &WlSurface,
-        _: i32,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _surface: &WlSurface,
+        new_factor: i32,
     ) {
+        self.scale = new_factor as f32;
+        self.redraw();
     }
 
     fn transform_changed(

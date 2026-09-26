@@ -68,16 +68,20 @@ impl Widget for Text {
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
         let font = font::load(self.font.as_deref());
 
+        let size = self.size * renderer.scale;
+
         let line = font
-            .horizontal_line_metrics(self.size)
+            .horizontal_line_metrics(size)
             .expect("failed to read line metrics");
 
-        let baseline = area.y + line.ascent;
+        let area_top = area.y * renderer.scale;
 
-        let mut pen_x = area.x;
+        let baseline = area_top + line.ascent;
+
+        let mut pen_x = area.x * renderer.scale;
 
         for letter in self.content.chars() {
-            let (metrics, coverage) = font.rasterize(letter, self.size);
+            let (metrics, coverage) = font.rasterize(letter, size);
 
             /*
              * fontdue measures the letter from the baseline upward,
