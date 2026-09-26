@@ -16,6 +16,7 @@ pub struct Rectangle {
     pub(crate) radius: Radius,
     pub(crate) border_thickness: f32,
     pub(crate) border_color: Color,
+    pub(crate) opacity: f32,
     pub(crate) child: Option<Box<dyn Widget>>,
 }
 
@@ -44,6 +45,12 @@ impl Rectangle {
         self
     }
 
+    pub fn opacity(mut self, opacity: f32) -> Self {
+        self.opacity = opacity;
+
+        self
+    }
+
     pub fn child(mut self, child: impl Widget + 'static) -> Self {
         self.child = Some(Box::new(child));
 
@@ -61,27 +68,41 @@ impl Widget for Rectangle {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        let radius = self.radius.resolve(area.width, area.height);
+        if self.opacity == 1.0 {
+            paint(self, renderer, area);
 
-        renderer.rectangle(
-            area,
-            self.color,
-            radius,
-            self.border_thickness,
-            self.border_color,
-        );
-
-        let Some(child) = &self.child else {
             return;
-        };
+        }
 
-        let child_area = Rect::new(
-            area.x,
-            area.y,
-            child.width().resolve(area.width),
-            child.height().resolve(area.height),
-        );
+        let mut layer = renderer.layer();
 
-        child.draw(renderer, child_area);
+        paint(self, &mut layer, area);
+
+        renderer.blend(layer, self.opacity);
     }
+}
+
+fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect) {
+    let radius = rectangle.radius.resolve(area.width, area.height);
+
+    renderer.rectangle(
+        area,
+        rectangle.color,
+        radius,
+        rectangle.border_thickness,
+        rectangle.border_color,
+    );
+
+    let Some(child) = &rectangle.child else {
+        return;
+    };
+
+    let child_area = Rect::new(
+        area.x,
+        area.y,
+        child.width().resolve(area.width),
+        child.height().resolve(area.height),
+    );
+
+    child.draw(renderer, child_area);
 }
