@@ -8,7 +8,7 @@ name = "amane"
 path = "src/lib.rs"
 
 [dependencies]
-smithay-client-toolkit = { version = "0.21.1", default-features = false }
+smithay-client-toolkit = { version = "0.21.1", default-features = false, features = ["calloop"] }
 thiserror = "2"
 tiny-skia = "=0.12.0"
 tempfile = "3"
@@ -17,3 +17,6 @@ wayland-protocols-wlr = { version = "=0.3.12", features = ["client"] }
 fontdue = "0.9.4"
 fontconfig = "0.11"
 ttf-parser = "0.25.1"
+
+[dev-dependencies]
+chrono = "0.4"

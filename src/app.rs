@@ -3,7 +3,7 @@ use crate::{LayerWindow, graphics::font, wayland::WaylandApp};
 #[derive(Default)]
 pub struct App {
     font: Option<String>,
-    window: Option<LayerWindow>,
+    window: Option<fn() -> LayerWindow>,
 }
 
 impl App {
@@ -17,14 +17,14 @@ impl App {
         self
     }
 
-    pub fn window(mut self, window: LayerWindow) -> Self {
-        self.window = Some(window);
+    pub fn window(mut self, view: fn() -> LayerWindow) -> Self {
+        self.window = Some(view);
 
         self
     }
 
     pub fn run(self) {
-        let Some(window) = self.window else {
+        let Some(view) = self.window else {
             panic!("failed to run: no window set");
         };
 
@@ -32,7 +32,7 @@ impl App {
             font::set_default(family);
         }
 
-        let mut backend = WaylandApp::new(window);
+        let mut backend = WaylandApp::new(view);
 
         backend.run();
     }

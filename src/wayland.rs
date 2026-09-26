@@ -4,11 +4,13 @@ mod layer;
 mod output;
 mod registry;
 mod shm;
+mod timer;
 
 use smithay_client_toolkit::{
-    compositor::CompositorState,
+    compositor::{CompositorState, FrameCallbackData},
     delegate_dispatch2, delegate_registry,
     output::OutputState,
+    reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
     shell::{
         WaylandSurface,
@@ -16,15 +18,16 @@ use smithay_client_toolkit::{
     },
     shm::{Shm, slot::SlotPool},
 };
-use wayland_client::{Connection, EventQueue, globals::registry_queue_init};
+use wayland_client::{QueueHandle, globals::registry_queue_init};
 
 use crate::{
-    LayerWindow, Widget,
+    LayerWindow,
     graphics::{Color, Rect, Renderer},
+    services::store,
 };
 
 struct WaylandState {
-    root: Box<dyn Widget>,
+    view: fn() -> LayerWindow,
 
     requested_width: u32,
     requested_height: u32,
@@ -34,6 +37,8 @@ struct WaylandState {
 
     scale: f32,
 
+    frame_requested: bool,
+
     registry: RegistryState,
     output: OutputState,
     shm: Shm,
@@ -41,6 +46,8 @@ struct WaylandState {
     pool: SlotPool,
 
     layer_surface: LayerSurface,
+
+    qh: QueueHandle<WaylandState>,
 
     running: bool,
 }
@@ -53,8 +60,16 @@ impl WaylandState {
             return;
         }
 
-        let buffer_width = (width as f32 * self.scale) as u32;
-        let buffer_height = (height as f32 * self.scale) as u32;
+        // the view runs again on every redraw, so it shows the services as they are now
+        let window = (self.view)();
+
+        let Some(root) = window.root else {
+            panic!("failed to draw window: no child set");
+        };
+
+        // the window is measured in logical pixels, the buffer in real ones
+        let buffer_width = width * self.scale as u32;
+        let buffer_height = height * self.scale as u32;
 
         let mut renderer = Renderer::new(buffer_width, buffer_height, self.scale);
 
@@ -63,11 +78,11 @@ impl WaylandState {
         let area = Rect::new(
             0.0,
             0.0,
-            self.root.width().resolve(width as f32),
-            self.root.height().resolve(height as f32),
+            root.width().resolve(width as f32),
+            root.height().resolve(height as f32),
         );
 
-        self.root.draw(&mut renderer, area);
+        root.draw(&mut renderer, area);
 
         let pixels = renderer.into_argb8888();
 
@@ -75,26 +90,39 @@ impl WaylandState {
 
         let surface = self.layer_surface.wl_surface();
 
+        surface.set_buffer_scale(self.scale as i32);
+
         surface.damage_buffer(0, 0, buffer_width as i32, buffer_height as i32);
 
         buffer.attach_to(surface).expect("failed to attach buffer");
 
-        surface.set_buffer_scale(self.scale as i32);
+        self.layer_surface.commit();
+    }
+
+    fn request_frame(&mut self) {
+        // changes that land before the next frame all draw together in it
+        if self.frame_requested {
+            return;
+        }
+
+        self.frame_requested = true;
+
+        let surface = self.layer_surface.wl_surface();
+
+        surface.frame(&self.qh, FrameCallbackData(surface.clone()));
 
         self.layer_surface.commit();
     }
 }
 
 pub struct WaylandApp {
-    _connection: Connection,
-
-    event_queue: EventQueue<WaylandState>,
+    event_loop: EventLoop<'static, WaylandState>,
 
     state: WaylandState,
 }
 
 impl WaylandApp {
-    pub fn new(window: LayerWindow) -> Self {
+    pub fn new(view: fn() -> LayerWindow) -> Self {
         let connection = connection::connect();
 
         let (globals, event_queue) =
@@ -112,14 +140,13 @@ impl WaylandApp {
 
         let surface = compositor.create_surface(&qh);
 
+        // the window's settings are read once here, only its child changes later
+        let window = view();
+
         let layer_surface = layer::create(&layer_shell, surface, &qh, &window);
 
         let width = layer::pixels(window.width);
         let height = layer::pixels(window.height);
-
-        let Some(root) = window.root else {
-            panic!("failed to create window: no child set");
-        };
 
         // the pool grows on its own once the real size is known
         let pool_size = (width * height * 4).max(4) as usize;
@@ -127,7 +154,7 @@ impl WaylandApp {
         let pool = SlotPool::new(pool_size, &shm).expect("failed to create shm pool");
 
         let state = WaylandState {
-            root,
+            view,
 
             requested_width: width,
             requested_height: height,
@@ -137,6 +164,8 @@ impl WaylandApp {
 
             scale: 1.0,
 
+            frame_requested: false,
+
             registry: RegistryState::new(&globals),
             output: OutputState::new(&globals, &qh),
             shm,
@@ -145,21 +174,30 @@ impl WaylandApp {
 
             layer_surface,
 
+            qh,
+
             running: true,
         };
 
-        Self {
-            _connection: connection,
-            event_queue,
-            state,
-        }
+        let event_loop = EventLoop::try_new().expect("failed to create event loop");
+
+        WaylandSource::new(connection, event_queue)
+            .insert(event_loop.handle())
+            .expect("failed to insert Wayland source");
+
+        Self { event_loop, state }
     }
 
     pub fn run(&mut self) {
         while self.state.running {
-            self.event_queue
-                .blocking_dispatch(&mut self.state)
-                .expect("Wayland event loop failed");
+            self.event_loop
+                .dispatch(None, &mut self.state)
+                .expect("failed to dispatch events");
+
+            // services read for the first time during that dispatch start ticking now
+            for ticker in store::take_started() {
+                timer::insert(&self.event_loop.handle(), ticker);
+            }
         }
     }
 }

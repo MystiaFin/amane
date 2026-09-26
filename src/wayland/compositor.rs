@@ -27,7 +27,11 @@ impl CompositorHandler for WaylandState {
     ) {
     }
 
-    fn frame(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &WlSurface, _: u32) {}
+    fn frame(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &WlSurface, _: u32) {
+        self.frame_requested = false;
+
+        self.redraw();
+    }
 
     fn surface_enter(
         &mut self,
