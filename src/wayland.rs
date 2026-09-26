@@ -1,5 +1,6 @@
 mod compositor;
 mod connection;
+mod frame;
 mod layer;
 mod output;
 mod registry;
@@ -7,24 +8,17 @@ mod shm;
 mod timer;
 
 use smithay_client_toolkit::{
-    compositor::{CompositorState, FrameCallbackData},
+    compositor::CompositorState,
     delegate_dispatch2, delegate_registry,
     output::OutputState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
-    shell::{
-        WaylandSurface,
-        wlr_layer::{LayerShell, LayerSurface},
-    },
+    shell::wlr_layer::{LayerShell, LayerSurface},
     shm::{Shm, slot::SlotPool},
 };
 use wayland_client::{QueueHandle, globals::registry_queue_init};
 
-use crate::{
-    LayerWindow,
-    graphics::{Color, Rect, Renderer},
-    services::store,
-};
+use crate::{LayerWindow, services::store};
 
 struct WaylandState {
     view: fn() -> LayerWindow,
@@ -50,69 +44,6 @@ struct WaylandState {
     qh: QueueHandle<WaylandState>,
 
     running: bool,
-}
-
-impl WaylandState {
-    fn redraw(&mut self) {
-        let (width, height) = (self.width, self.height);
-
-        if width == 0 || height == 0 {
-            return;
-        }
-
-        // the view runs again on every redraw, so it shows the services as they are now
-        let window = (self.view)();
-
-        let Some(root) = window.root else {
-            panic!("failed to draw window: no child set");
-        };
-
-        // the window is measured in logical pixels, the buffer in real ones
-        let buffer_width = width * self.scale as u32;
-        let buffer_height = height * self.scale as u32;
-
-        let mut renderer = Renderer::new(buffer_width, buffer_height, self.scale);
-
-        renderer.clear(Color::TRANSPARENT);
-
-        let area = Rect::new(
-            0.0,
-            0.0,
-            root.width().resolve(width as f32),
-            root.height().resolve(height as f32),
-        );
-
-        root.draw(&mut renderer, area);
-
-        let pixels = renderer.into_argb8888();
-
-        let buffer = shm::create_buffer(&mut self.pool, buffer_width, buffer_height, &pixels);
-
-        let surface = self.layer_surface.wl_surface();
-
-        surface.set_buffer_scale(self.scale as i32);
-
-        surface.damage_buffer(0, 0, buffer_width as i32, buffer_height as i32);
-
-        buffer.attach_to(surface).expect("failed to attach buffer");
-
-        self.layer_surface.commit();
-    }
-
-    fn request_frame(&mut self) {
-        // changes that land before the next frame all draw together in it
-        if self.frame_requested {
-            return;
-        }
-
-        self.frame_requested = true;
-
-        let surface = self.layer_surface.wl_surface();
-
-        surface.frame(&self.qh, FrameCallbackData(surface.clone()));
-
-        self.layer_surface.commit();
-    }
 }
 
 pub struct WaylandApp {
