@@ -11,6 +11,8 @@ impl NeedsHeight {
             height: height.into(),
             radius: Radius::Fixed(0.0),
             color: Color::TRANSPARENT,
+            border_thickness: 0.0,
+            border_color: Color::TRANSPARENT,
             child: None,
         }
     }

@@ -11,6 +11,7 @@ fn main() {
                         .width(Parent)
                         .height(Parent)
                         .radius(20.0)
+                        .border(2.0, Color::WHITE)
                         .color(Color::RED)
                 ])),
         )
