@@ -43,12 +43,20 @@ impl Widget for Text {
     fn width(&self) -> Size {
         let font = font::load(self.font.as_deref());
 
+        // fonts measure in their own units, this turns them into pixels
+        let units = self.size / f32::from(font.units_per_em());
+
         let mut total = 0.0;
 
         for letter in self.content.chars() {
-            let metrics = font.metrics(letter, self.size);
+            // a letter the font lacks draws as its placeholder box
+            let id = font.glyph_index(letter).unwrap_or_default();
 
-            total += metrics.advance_width;
+            let advance = font
+                .glyph_hor_advance(id)
+                .expect("failed to read letter advance");
+
+            total += f32::from(advance) * units;
         }
 
         Size::Fixed(total)
@@ -57,49 +65,19 @@ impl Widget for Text {
     fn height(&self) -> Size {
         let font = font::load(self.font.as_deref());
 
-        let line = font
-            .horizontal_line_metrics(self.size)
-            .expect("failed to read line metrics");
+        // fonts measure in their own units, this turns them into pixels
+        let units = self.size / f32::from(font.units_per_em());
+
+        let ascent = f32::from(font.ascender()) * units;
+        let descent = f32::from(font.descender()) * units;
 
         // descent is negative, so this adds the part below the baseline
-        Size::Fixed(line.ascent - line.descent)
+        Size::Fixed(ascent - descent)
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
         let font = font::load(self.font.as_deref());
 
-        let size = self.size * renderer.scale;
-
-        let line = font
-            .horizontal_line_metrics(size)
-            .expect("failed to read line metrics");
-
-        let area_top = area.y * renderer.scale;
-
-        let baseline = area_top + line.ascent;
-
-        let mut pen_x = area.x * renderer.scale;
-
-        for letter in self.content.chars() {
-            let (metrics, coverage) = font.rasterize(letter, size);
-
-            /*
-             * fontdue measures the letter from the baseline upward,
-             * the renderer wants its top-left corner
-             */
-            let left = pen_x + metrics.xmin as f32;
-            let top = baseline - (metrics.ymin as f32 + metrics.height as f32);
-
-            renderer.glyph(
-                left.round() as i32,
-                top.round() as i32,
-                metrics.width as u32,
-                metrics.height as u32,
-                &coverage,
-                self.color,
-            );
-
-            pen_x += metrics.advance_width;
-        }
+        renderer.text(&self.content, font, self.size, self.color, area);
     }
 }

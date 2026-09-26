@@ -24,6 +24,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tiny-skia",
+ "ttf-parser",
  "wayland-client",
  "wayland-protocols-wlr",
 ]
