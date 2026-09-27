@@ -6,7 +6,7 @@ use vello::wgpu::{Extent3d, Origin3d, TexelCopyTextureInfo, Texture, TextureAspe
 use crate::graphics::{Path, Transform};
 
 use super::convert::{affine, bezier};
-use super::{Gpu, pass};
+use super::{Gpu, texture};
 
 impl Gpu {
     /*
@@ -47,8 +47,8 @@ impl Gpu {
 
         let reach = transform * Point::new(amount, amount) - transform * Point::ZERO;
 
-        let first = pass::blur(&self.device, width, height);
-        let second = pass::blur(&self.device, width, height);
+        let first = texture::blur(&self.device, width, height);
+        let second = texture::blur(&self.device, width, height);
 
         let mut encoder = self.device.create_command_encoder(&Default::default());
 
@@ -67,8 +67,8 @@ impl Gpu {
 
         encoder.copy_texture_to_texture(area, first.as_image_copy(), size);
 
-        let first_view = pass::view(&first);
-        let second_view = pass::view(&second);
+        let first_view = texture::view(&first);
+        let second_view = texture::view(&second);
 
         let horizontal_reach = reach.x.round() as f32;
         let vertical_reach = reach.y.round() as f32;
