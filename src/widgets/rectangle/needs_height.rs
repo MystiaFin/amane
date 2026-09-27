@@ -1,4 +1,4 @@
-use crate::{Color, Radius, Rectangle, Size};
+use crate::{Color, Fill, Radius, Rectangle, Size};
 
 pub struct NeedsHeight {
     pub(crate) width: Size,
@@ -10,7 +10,7 @@ impl NeedsHeight {
             width: self.width,
             height: height.into(),
             radius: Radius::Fixed(0.0),
-            color: Color::TRANSPARENT,
+            fill: Fill::Color(Color::TRANSPARENT),
             border_thickness: 0.0,
             border_color: Color::TRANSPARENT,
             blur: 0.0,

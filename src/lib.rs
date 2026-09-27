@@ -14,6 +14,6 @@ pub use layer_window::{
     Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
 };
 pub use services::Service;
-pub use widgets::{Column, Radius, Rectangle, Row, Size, Text, Widget};
+pub use widgets::{Column, Fill, Image, Radius, Rectangle, Row, Size, Text, Widget};
 
 pub use widgets::Size::Parent;

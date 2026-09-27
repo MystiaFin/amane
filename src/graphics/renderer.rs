@@ -1,4 +1,6 @@
 mod blur;
+mod border;
+mod image;
 mod layer;
 mod rectangle;
 mod text;

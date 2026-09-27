@@ -14,7 +14,7 @@ fn view() -> LayerWindow {
             Rectangle::new()
                 .width(Parent)
                 .height(Parent)
-                .color(Color::BLUE)
+                .fill(Color::BLUE)
                 .child(Text::new("Amane bar").size(20.0).color(Color::WHITE)),
         )
 }

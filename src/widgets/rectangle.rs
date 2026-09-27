@@ -1,8 +1,8 @@
 mod needs_height;
 mod needs_width;
 
-use crate::graphics::{Color, Rect, Renderer};
-use crate::{Radius, Size};
+use crate::graphics::{Color, Rect, Renderer, image};
+use crate::{Fill, Image, Radius, Size};
 
 use super::Widget;
 
@@ -12,7 +12,7 @@ pub use needs_width::NeedsWidth;
 pub struct Rectangle {
     pub(crate) width: Size,
     pub(crate) height: Size,
-    pub(crate) color: Color,
+    pub(crate) fill: Fill,
     pub(crate) radius: Radius,
     pub(crate) border_thickness: f32,
     pub(crate) border_color: Color,
@@ -27,8 +27,8 @@ impl Rectangle {
         NeedsWidth
     }
 
-    pub fn color(mut self, color: Color) -> Self {
-        self.color = color;
+    pub fn fill(mut self, fill: impl Into<Fill>) -> Self {
+        self.fill = fill.into();
 
         self
     }
@@ -39,9 +39,9 @@ impl Rectangle {
         self
     }
 
-    pub fn border(mut self, thickness: f32, color: Color) -> Self {
+    pub fn border(mut self, thickness: f32, color: impl Into<Color>) -> Self {
         self.border_thickness = thickness;
-        self.border_color = color;
+        self.border_color = color.into();
 
         self
     }
@@ -94,9 +94,13 @@ impl Widget for Rectangle {
 }
 
 fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
-    renderer.rectangle(
+    match &rectangle.fill {
+        Fill::Color(color) => renderer.rectangle(area, *color, radius),
+        Fill::Image(image) => paint_image(image, renderer, area, radius),
+    }
+
+    renderer.border(
         area,
-        rectangle.color,
         radius,
         rectangle.border_thickness,
         rectangle.border_color,
@@ -114,4 +118,15 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
     );
 
     child.draw(renderer, child_area);
+}
+
+fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
+    let image = image::load(&fill.path);
+
+    let image_width = image.width() as f32;
+    let image_height = image.height() as f32;
+
+    let placement = fill.fit.place(area, image_width, image_height);
+
+    renderer.image(area, radius, image, placement);
 }

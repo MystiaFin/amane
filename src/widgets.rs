@@ -1,4 +1,7 @@
 mod column;
+mod fill;
+mod fit;
+mod image;
 mod layout;
 mod radius;
 mod rectangle;
@@ -9,6 +12,8 @@ mod text;
 use crate::graphics::{Rect, Renderer};
 
 pub use column::Column;
+pub use fill::Fill;
+pub use image::Image;
 pub use layout::{Direction, Layout};
 pub use radius::Radius;
 pub use rectangle::Rectangle;

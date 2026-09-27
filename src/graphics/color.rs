@@ -27,3 +27,34 @@ impl Color {
         Self { r, g, b, a }
     }
 }
+
+// accepts "#rgb", "#rrggbb" and "#rrggbbaa", the # is optional
+impl From<&str> for Color {
+    fn from(hex: &str) -> Self {
+        let digits = hex.trim_start_matches('#');
+
+        let channels: Vec<u8> = match digits.len() {
+            3 => digits.chars().map(short_channel).collect(),
+            6 | 8 => digits.as_bytes().chunks(2).map(long_channel).collect(),
+            _ => panic!("failed to parse hex color: {hex}"),
+        };
+
+        // six digits leave out alpha, which means fully opaque
+        let alpha = channels.get(3).copied().unwrap_or(255);
+
+        Self::rgba(channels[0], channels[1], channels[2], alpha)
+    }
+}
+
+// one digit stands for itself repeated, so "f" means "ff"
+fn short_channel(digit: char) -> u8 {
+    let value = digit.to_digit(16).expect("failed to parse hex color") as u8;
+
+    value * 17
+}
+
+fn long_channel(pair: &[u8]) -> u8 {
+    let pair = std::str::from_utf8(pair).expect("failed to parse hex color");
+
+    u8::from_str_radix(pair, 16).expect("failed to parse hex color")
+}

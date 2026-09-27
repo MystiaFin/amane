@@ -13,6 +13,6 @@ fn view() -> LayerWindow {
                 .width(Parent)
                 .height(Parent)
                 .radius(20.0)
-                .color(Color::RED)
+                .fill(Color::RED)
         ]))
 }

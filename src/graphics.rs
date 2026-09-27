@@ -1,6 +1,7 @@
 mod color;
 pub mod font;
 mod geometry;
+pub mod image;
 mod outline;
 mod renderer;
 

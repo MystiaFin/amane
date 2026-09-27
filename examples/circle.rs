@@ -12,17 +12,17 @@ fn view() -> LayerWindow {
             Rectangle::new()
                 .width(100.0)
                 .height(100.0)
-                .color(Color::RED)
+                .fill(Color::RED)
                 .radius(Full),
             Rectangle::new()
                 .width(200.0)
                 .height(40.0)
-                .color(Color::BLUE)
+                .fill(Color::BLUE)
                 .radius(Full),
             Rectangle::new()
                 .width(80.0)
                 .height(80.0)
-                .color(Color::GREEN)
+                .fill(Color::GREEN)
                 .radius(12.0),
         ]))
 }
