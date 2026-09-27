@@ -4,6 +4,7 @@ mod command;
 mod image;
 mod layer;
 mod rectangle;
+mod shadow;
 mod text;
 
 use super::Transform;

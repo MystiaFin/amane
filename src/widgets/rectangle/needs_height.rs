@@ -15,6 +15,7 @@ impl NeedsHeight {
             border_color: Color::TRANSPARENT,
             blur: 0.0,
             opacity: 1.0,
+            shadow: None,
             child: None,
         }
     }

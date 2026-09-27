@@ -6,6 +6,7 @@ mod layout;
 mod radius;
 mod rectangle;
 mod row;
+mod shadow;
 mod size;
 mod text;
 
@@ -18,6 +19,7 @@ pub use layout::{Direction, Layout};
 pub use radius::Radius;
 pub use rectangle::Rectangle;
 pub use row::Row;
+pub use shadow::Shadow;
 pub use size::Size;
 pub use text::Text;
 

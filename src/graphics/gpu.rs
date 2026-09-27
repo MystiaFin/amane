@@ -1,27 +1,28 @@
 mod blur;
+mod convert;
+mod frame;
+mod image;
+mod layer;
 mod paint;
 mod pass;
+mod shadow;
+mod shape;
+mod surface;
+mod texture;
+mod wait;
 
 use std::collections::HashMap;
 use std::ffi::c_void;
-use std::pin::pin;
-use std::ptr::NonNull;
-use std::task::{Context, Poll, Waker};
 
 use vello::peniko::ImageData;
-use vello::wgpu::rwh::{
-    RawDisplayHandle, RawWindowHandle, WaylandDisplayHandle, WaylandWindowHandle,
-};
 use vello::wgpu::{
-    Adapter, BlendState, CompositeAlphaMode, CurrentSurfaceTexture, Device, DeviceDescriptor,
-    Instance, InstanceDescriptor, PresentMode, Queue, RequestAdapterOptions, Surface,
-    SurfaceConfiguration, SurfaceTargetUnsafe, SurfaceTexture, TextureFormat, TextureUsages,
+    BlendState, Device, DeviceDescriptor, Instance, InstanceDescriptor, Queue,
+    RequestAdapterOptions, Surface, SurfaceConfiguration, TextureFormat,
 };
 use vello::{AaSupport, RendererOptions};
 
-use super::renderer::Command;
-
 use pass::Pass;
+use wait::wait;
 
 /*
  * the only part of amane that knows how drawing is done,
@@ -48,21 +49,9 @@ pub struct Gpu {
 impl Gpu {
     // the pointers are libwayland's display and surface, which have to outlive the gpu
     pub fn new(display: *mut c_void, surface: *mut c_void) -> Self {
-        let display = NonNull::new(display).expect("failed to read the wayland display");
-        let surface = NonNull::new(surface).expect("failed to read the wayland surface");
-
-        let target = SurfaceTargetUnsafe::RawHandle {
-            raw_display_handle: Some(RawDisplayHandle::Wayland(WaylandDisplayHandle::new(
-                display,
-            ))),
-            raw_window_handle: RawWindowHandle::Wayland(WaylandWindowHandle::new(surface)),
-        };
-
         let instance = Instance::new(InstanceDescriptor::new_without_display_handle_from_env());
 
-        // the caller keeps the wayland objects alive for longer than the gpu
-        let surface = unsafe { instance.create_surface_unsafe(target) }
-            .expect("failed to create gpu surface");
+        let surface = surface::create(&instance, display, surface);
 
         let adapter_options = RequestAdapterOptions {
             compatible_surface: Some(&surface),
@@ -75,7 +64,7 @@ impl Gpu {
         let (device, queue) =
             wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
 
-        let config = configure(&surface, &adapter);
+        let config = surface::configure(&surface, &adapter);
 
         // area anti-aliasing matches how edges looked with the cpu renderer
         let vello_options = RendererOptions {
@@ -109,119 +98,4 @@ impl Gpu {
             box_blur,
         }
     }
-
-    pub fn draw(&mut self, commands: Vec<Command>, width: u32, height: u32) {
-        if self.config.width != width || self.config.height != height {
-            self.config.width = width;
-            self.config.height = height;
-
-            self.surface.configure(&self.device, &self.config);
-        }
-
-        let Some(frame) = self.next_frame() else {
-            return;
-        };
-
-        let canvas = pass::canvas(&self.device, width, height);
-
-        self.run(commands, &canvas);
-
-        let target = frame.texture.create_view(&Default::default());
-
-        let mut encoder = self.device.create_command_encoder(&Default::default());
-
-        self.present.run(
-            &self.device,
-            &mut encoder,
-            &pass::view(&canvas),
-            &target,
-            [1.0, 0.0, 0.0, 0.0],
-        );
-
-        self.queue.submit([encoder.finish()]);
-
-        // presenting attaches the frame to the wayland surface and commits it
-        frame.present();
-    }
-
-    fn next_frame(&mut self) -> Option<SurfaceTexture> {
-        match self.surface.get_current_texture() {
-            CurrentSurfaceTexture::Success(frame) => Some(frame),
-
-            CurrentSurfaceTexture::Suboptimal(frame) => Some(frame),
-
-            // the swapchain no longer fits the surface, a fresh one takes its place
-            CurrentSurfaceTexture::Outdated | CurrentSurfaceTexture::Lost => {
-                self.surface.configure(&self.device, &self.config);
-
-                match self.surface.get_current_texture() {
-                    CurrentSurfaceTexture::Success(frame) => Some(frame),
-
-                    _ => None,
-                }
-            }
-
-            // a hidden or busy window skips this frame, the next redraw catches up
-            CurrentSurfaceTexture::Timeout | CurrentSurfaceTexture::Occluded => None,
-
-            CurrentSurfaceTexture::Validation => panic!("failed to get the next frame"),
-        }
-    }
-}
-
-// the size stays 0 until the compositor says how big the window is
-fn configure(surface: &Surface, adapter: &Adapter) -> SurfaceConfiguration {
-    let capabilities = surface.get_capabilities(adapter);
-
-    // the canvas already holds display ready values, an srgb format would convert them twice
-    let format = capabilities
-        .formats
-        .iter()
-        .copied()
-        .find(|format| {
-            matches!(
-                format,
-                TextureFormat::Bgra8Unorm | TextureFormat::Rgba8Unorm
-            )
-        })
-        .expect("failed to find a surface format without srgb conversion");
-
-    // premultiplied lets the compositor show the desktop through transparent pixels
-    let alpha_mode = if capabilities
-        .alpha_modes
-        .contains(&CompositeAlphaMode::PreMultiplied)
-    {
-        CompositeAlphaMode::PreMultiplied
-    } else {
-        capabilities.alpha_modes[0]
-    };
-
-    // amane waits for frame callbacks itself, so presenting should not wait again
-    let present_mode = if capabilities.present_modes.contains(&PresentMode::Mailbox) {
-        PresentMode::Mailbox
-    } else {
-        PresentMode::Fifo
-    };
-
-    SurfaceConfiguration {
-        usage: TextureUsages::RENDER_ATTACHMENT,
-        format,
-        width: 0,
-        height: 0,
-        present_mode,
-        desired_maximum_frame_latency: 2,
-        alpha_mode,
-        view_formats: Vec::new(),
-    }
-}
-
-// wgpu's native futures are already done when they are made, so one poll finishes them
-fn wait<T>(future: impl Future<Output = T>) -> T {
-    let mut context = Context::from_waker(Waker::noop());
-
-    let Poll::Ready(value) = pin!(future).poll(&mut context) else {
-        panic!("failed to wait for the gpu");
-    };
-
-    value
 }

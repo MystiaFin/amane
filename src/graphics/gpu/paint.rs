@@ -1,16 +1,10 @@
-use vello::kurbo::{self, Affine, BezPath, Join, Stroke};
-use vello::peniko::{
-    self, Blob, Fill, ImageAlphaType, ImageBrush, ImageData, ImageFormat, ImageQuality, Mix,
-};
+use vello::peniko::{self, ImageData};
 use vello::wgpu::Texture;
 use vello::{AaConfig, RenderParams, Scene};
 
-use crate::graphics::image::Bitmap;
-use crate::graphics::path::Segment;
 use crate::graphics::renderer::Command;
-use crate::graphics::{Color, Path, Transform};
 
-use super::{Gpu, pass};
+use super::{Gpu, shadow, shape, texture};
 
 impl Gpu {
     // draws each command over what the commands before it left on the canvas
@@ -38,7 +32,7 @@ impl Gpu {
                 Command::Layer { commands, opacity } if blurs(&commands) => {
                     self.paint(&mut scene, canvas, &mut borrowed);
 
-                    let layer = pass::canvas(&self.device, canvas.width(), canvas.height());
+                    let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
 
                     self.run(commands, &layer);
 
@@ -52,76 +46,47 @@ impl Gpu {
         self.paint(&mut scene, canvas, &mut borrowed);
     }
 
-    fn add(&mut self, scene: &mut Scene, command: Command, canvas: &Texture) {
+    // hands each command to the file that knows how to draw it
+    pub(super) fn add(&mut self, scene: &mut Scene, command: Command, canvas: &Texture) {
         match command {
             Command::Fill {
                 path,
                 transform,
                 color,
-            } => scene.fill(
-                Fill::NonZero,
-                affine(transform),
-                paint(color),
-                None,
-                &bezier(&path),
-            ),
+            } => shape::fill(scene, &path, transform, color),
 
             Command::Stroke {
                 path,
                 transform,
                 thickness,
                 color,
-            } => {
-                // square corners stay square instead of being rounded off by the line
-                let stroke = Stroke::new(f64::from(thickness)).with_join(Join::Miter);
-
-                scene.stroke(
-                    &stroke,
-                    affine(transform),
-                    paint(color),
-                    None,
-                    &bezier(&path),
-                );
-            }
+            } => shape::stroke(scene, &path, transform, thickness, color),
 
             Command::Image {
                 image,
                 transform,
                 clip,
                 clip_transform,
-            } => {
-                // bicubic keeps a large image smooth when it shrinks to fit
-                let brush = ImageBrush::new(self.image(image)).with_quality(ImageQuality::High);
+            } => self.draw_image(scene, image, transform, &clip, clip_transform),
 
-                scene.push_clip_layer(Fill::NonZero, affine(clip_transform), &bezier(&clip));
+            Command::Shadow {
+                rect,
+                radius,
+                transform,
+                color,
+                blur,
+            } => shadow::drop_shadow(scene, rect, radius, transform, color, blur),
 
-                scene.draw_image(&brush, affine(transform));
+            Command::InnerShadow {
+                clip,
+                hole,
+                radius,
+                transform,
+                color,
+                blur,
+            } => shadow::inner_shadow(scene, &clip, hole, radius, transform, color, blur),
 
-                scene.pop_layer();
-            }
-
-            Command::Layer { commands, opacity } => {
-                let window = kurbo::Rect::new(
-                    0.0,
-                    0.0,
-                    f64::from(canvas.width()),
-                    f64::from(canvas.height()),
-                );
-
-                scene.push_layer(
-                    Fill::NonZero,
-                    Mix::Normal,
-                    opacity,
-                    Affine::IDENTITY,
-                    &window,
-                );
-
-                for command in commands {
-                    self.add(scene, command, canvas);
-                }
-
-                scene.pop_layer();
-            }
+            Command::Layer { commands, opacity } => self.layer(scene, commands, opacity, canvas),
 
             // blurs split the drawing, so run handles them before they get here
             Command::Blur { .. } => {}
@@ -136,7 +101,7 @@ impl Gpu {
 
         self.keep_atlas(scene);
 
-        let scratch = pass::scratch(&self.device, canvas.width(), canvas.height());
+        let scratch = texture::scratch(&self.device, canvas.width(), canvas.height());
 
         let params = RenderParams {
             base_color: peniko::Color::TRANSPARENT,
@@ -150,7 +115,7 @@ impl Gpu {
                 &self.device,
                 &self.queue,
                 scene,
-                &pass::view(&scratch),
+                &texture::view(&scratch),
                 &params,
             )
             .expect("failed to draw scene");
@@ -164,28 +129,6 @@ impl Gpu {
         }
     }
 
-    /*
-     * vello throws its image atlas away after a scene without images,
-     * but still counts the images in it as uploaded, so they are sent again
-     */
-    fn keep_atlas(&mut self, scene: &Scene) {
-        if scene.encoding().resources.patches.is_empty() {
-            self.atlas_dropped = true;
-
-            return;
-        }
-
-        if !self.atlas_dropped {
-            return;
-        }
-
-        for image in self.images.values() {
-            self.vello.mark_override_image_dirty(image);
-        }
-
-        self.atlas_dropped = false;
-    }
-
     pub(super) fn lay(&self, source: &Texture, canvas: &Texture, opacity: f32, premultiply: bool) {
         let premultiply = if premultiply { 1.0 } else { 0.0 };
 
@@ -194,27 +137,12 @@ impl Gpu {
         self.composite.run(
             &self.device,
             &mut encoder,
-            &pass::view(source),
-            &pass::view(canvas),
+            &texture::view(source),
+            &texture::view(canvas),
             [opacity, premultiply, 0.0, 0.0],
         );
 
         self.queue.submit([encoder.finish()]);
-    }
-
-    // images live until the program exits, so where one lives says which image it is
-    fn image(&mut self, image: &'static Bitmap) -> ImageData {
-        let key = std::ptr::from_ref(image) as usize;
-
-        let converted = self.images.entry(key).or_insert_with(|| ImageData {
-            data: Blob::from(image.pixels.clone()),
-            format: ImageFormat::Rgba8,
-            alpha_type: ImageAlphaType::Alpha,
-            width: image.width(),
-            height: image.height(),
-        });
-
-        converted.clone()
     }
 }
 
@@ -224,45 +152,4 @@ fn blurs(commands: &[Command]) -> bool {
         Command::Layer { commands, .. } => blurs(commands),
         _ => false,
     })
-}
-
-pub(super) fn bezier(path: &Path) -> BezPath {
-    let mut bezier = BezPath::new();
-
-    for segment in &path.segments {
-        match *segment {
-            Segment::MoveTo(x, y) => bezier.move_to(point(x, y)),
-
-            Segment::LineTo(x, y) => bezier.line_to(point(x, y)),
-
-            Segment::QuadTo(x1, y1, x, y) => bezier.quad_to(point(x1, y1), point(x, y)),
-
-            Segment::CubicTo(x1, y1, x2, y2, x, y) => {
-                bezier.curve_to(point(x1, y1), point(x2, y2), point(x, y))
-            }
-
-            Segment::Close => bezier.close_path(),
-        }
-    }
-
-    bezier
-}
-
-pub(super) fn affine(transform: Transform) -> Affine {
-    Affine::new([
-        f64::from(transform.sx),
-        f64::from(transform.ky),
-        f64::from(transform.kx),
-        f64::from(transform.sy),
-        f64::from(transform.tx),
-        f64::from(transform.ty),
-    ])
-}
-
-fn paint(color: Color) -> peniko::Color {
-    peniko::Color::from_rgba8(color.r, color.g, color.b, color.a)
-}
-
-fn point(x: f32, y: f32) -> (f64, f64) {
-    (f64::from(x), f64::from(y))
 }

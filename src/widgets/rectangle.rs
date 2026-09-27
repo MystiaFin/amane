@@ -1,8 +1,9 @@
+mod draw;
 mod needs_height;
 mod needs_width;
 
-use crate::graphics::{Color, Rect, Renderer, image};
-use crate::{Fill, Image, Radius, Size};
+use crate::graphics::Color;
+use crate::{Fill, Radius, Shadow, Size};
 
 use super::Widget;
 
@@ -18,6 +19,7 @@ pub struct Rectangle {
     pub(crate) border_color: Color,
     pub(crate) blur: f32,
     pub(crate) opacity: f32,
+    pub(crate) shadow: Option<Shadow>,
     pub(crate) child: Option<Box<dyn Widget>>,
 }
 
@@ -58,75 +60,15 @@ impl Rectangle {
         self
     }
 
+    pub fn shadow(mut self, shadow: Shadow) -> Self {
+        self.shadow = Some(shadow);
+
+        self
+    }
+
     pub fn child(mut self, child: impl Widget + 'static) -> Self {
         self.child = Some(Box::new(child));
 
         self
     }
-}
-
-impl Widget for Rectangle {
-    fn width(&self) -> Size {
-        self.width
-    }
-
-    fn height(&self) -> Size {
-        self.height
-    }
-
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        let radius = self.radius.resolve(area.width, area.height);
-
-        renderer.blur(area, radius, self.blur);
-
-        if self.opacity == 1.0 {
-            paint(self, renderer, area, radius);
-
-            return;
-        }
-
-        let mut layer = renderer.layer();
-
-        paint(self, &mut layer, area, radius);
-
-        renderer.blend(layer, self.opacity);
-    }
-}
-
-fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
-    match &rectangle.fill {
-        Fill::Color(color) => renderer.rectangle(area, *color, radius),
-        Fill::Image(image) => paint_image(image, renderer, area, radius),
-    }
-
-    renderer.border(
-        area,
-        radius,
-        rectangle.border_thickness,
-        rectangle.border_color,
-    );
-
-    let Some(child) = &rectangle.child else {
-        return;
-    };
-
-    let child_area = Rect::new(
-        area.x,
-        area.y,
-        child.width().resolve(area.width),
-        child.height().resolve(area.height),
-    );
-
-    child.draw(renderer, child_area);
-}
-
-fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
-    let image = image::load(&fill.path);
-
-    let image_width = image.width() as f32;
-    let image_height = image.height() as f32;
-
-    let placement = fill.fit.place(area, image_width, image_height);
-
-    renderer.image(area, radius, image, placement);
 }

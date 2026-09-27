@@ -5,7 +5,7 @@ use vello::wgpu::{Extent3d, Origin3d, TexelCopyTextureInfo, Texture, TextureAspe
 
 use crate::graphics::{Path, Transform};
 
-use super::paint::{affine, bezier};
+use super::convert::{affine, bezier};
 use super::{Gpu, pass};
 
 impl Gpu {
