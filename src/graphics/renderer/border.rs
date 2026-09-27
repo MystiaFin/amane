@@ -1,6 +1,6 @@
-use tiny_skia::{Paint, Stroke};
-
 use crate::graphics::{Color, Rect, Renderer};
+
+use super::Command;
 
 impl Renderer {
     pub fn border(&mut self, rect: Rect, radius: f32, thickness: f32, color: Color) {
@@ -29,16 +29,11 @@ impl Renderer {
             return;
         };
 
-        let mut paint = Paint::default();
-
-        paint.set_color_rgba8(color.r, color.g, color.b, color.a);
-
-        let stroke = Stroke {
-            width: thickness,
-            ..Stroke::default()
-        };
-
-        self.pixmap
-            .stroke_path(&border_path, &paint, &stroke, self.transform, None);
+        self.commands.push(Command::Stroke {
+            path: border_path,
+            transform: self.transform,
+            thickness,
+            color,
+        });
     }
 }

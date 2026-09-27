@@ -1,18 +1,13 @@
-use tiny_skia::{FillRule, FilterQuality, Mask, Pixmap, PixmapPaint, Transform};
+use crate::graphics::image::Bitmap;
+use crate::graphics::{Rect, Renderer, Transform};
 
-use crate::graphics::{Rect, Renderer};
+use super::Command;
 
 impl Renderer {
-    pub fn image(&mut self, rect: Rect, radius: f32, image: &Pixmap, placement: Rect) {
+    pub fn image(&mut self, rect: Rect, radius: f32, image: &'static Bitmap, placement: Rect) {
         let Some(path) = rect.trace(radius) else {
             return;
         };
-
-        // the image can reach past the rectangle, the mask keeps it inside the rounded shape
-        let mut shape =
-            Mask::new(self.pixmap.width(), self.pixmap.height()).expect("failed to create mask");
-
-        shape.fill_path(&path, FillRule::Winding, true, self.transform);
 
         let horizontal_scale = placement.width / image.width() as f32;
         let vertical_scale = placement.height / image.height() as f32;
@@ -28,13 +23,12 @@ impl Renderer {
 
         let transform = image_transform.post_concat(self.transform);
 
-        // bicubic keeps a large image smooth when it shrinks to fit
-        let paint = PixmapPaint {
-            quality: FilterQuality::Bicubic,
-            ..PixmapPaint::default()
-        };
-
-        self.pixmap
-            .draw_pixmap(0, 0, image.as_ref(), &paint, transform, Some(&shape));
+        // the image can reach past the rectangle, the clip keeps it inside the rounded shape
+        self.commands.push(Command::Image {
+            image,
+            transform,
+            clip: path,
+            clip_transform: self.transform,
+        });
     }
 }

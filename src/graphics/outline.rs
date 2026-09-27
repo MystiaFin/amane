@@ -1,5 +1,6 @@
-use tiny_skia::{Path, PathBuilder};
 use ttf_parser::OutlineBuilder;
+
+use super::{Path, PathBuilder};
 
 pub struct Outline {
     path: PathBuilder,

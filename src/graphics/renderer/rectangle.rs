@@ -1,6 +1,6 @@
-use tiny_skia::{FillRule, Paint};
-
 use crate::graphics::{Color, Rect, Renderer};
+
+use super::Command;
 
 impl Renderer {
     pub fn rectangle(&mut self, rect: Rect, color: Color, radius: f32) {
@@ -8,11 +8,10 @@ impl Renderer {
             return;
         };
 
-        let mut paint = Paint::default();
-
-        paint.set_color_rgba8(color.r, color.g, color.b, color.a);
-
-        self.pixmap
-            .fill_path(&path, &paint, FillRule::Winding, self.transform, None);
+        self.commands.push(Command::Fill {
+            path,
+            transform: self.transform,
+            color,
+        });
     }
 }

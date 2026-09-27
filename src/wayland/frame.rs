@@ -1,8 +1,8 @@
 use smithay_client_toolkit::{compositor::FrameCallbackData, shell::WaylandSurface};
 
-use crate::graphics::{Color, Rect, Renderer};
+use crate::graphics::{Rect, Renderer};
 
-use super::{WaylandState, shm};
+use super::WaylandState;
 
 impl WaylandState {
     pub fn redraw(&mut self) {
@@ -23,9 +23,7 @@ impl WaylandState {
         let buffer_width = width * self.scale as u32;
         let buffer_height = height * self.scale as u32;
 
-        let mut renderer = Renderer::new(buffer_width, buffer_height, self.scale);
-
-        renderer.clear(Color::TRANSPARENT);
+        let mut renderer = Renderer::new(self.scale);
 
         let area = Rect::new(
             0.0,
@@ -36,19 +34,13 @@ impl WaylandState {
 
         root.draw(&mut renderer, area);
 
-        let pixels = renderer.into_argb8888();
-
-        let buffer = shm::create_buffer(&mut self.pool, buffer_width, buffer_height, &pixels);
-
         let surface = self.layer_surface.wl_surface();
 
+        // the scale goes out with the commit that presenting the frame makes
         surface.set_buffer_scale(self.scale as i32);
 
-        surface.damage_buffer(0, 0, buffer_width as i32, buffer_height as i32);
-
-        buffer.attach_to(surface).expect("failed to attach buffer");
-
-        self.layer_surface.commit();
+        self.gpu
+            .draw(renderer.finish(), buffer_width, buffer_height);
     }
 
     pub fn request_frame(&mut self) {
@@ -66,3 +58,4 @@ impl WaylandState {
         self.layer_surface.commit();
     }
 }
+

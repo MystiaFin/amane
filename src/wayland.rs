@@ -4,7 +4,6 @@ mod frame;
 mod layer;
 mod output;
 mod registry;
-mod shm;
 mod timer;
 
 use smithay_client_toolkit::{
@@ -13,12 +12,14 @@ use smithay_client_toolkit::{
     output::OutputState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
-    shell::wlr_layer::{LayerShell, LayerSurface},
-    shm::{Shm, slot::SlotPool},
+    shell::{
+        WaylandSurface,
+        wlr_layer::{LayerShell, LayerSurface},
+    },
 };
-use wayland_client::{QueueHandle, globals::registry_queue_init};
+use wayland_client::{Proxy, QueueHandle, globals::registry_queue_init};
 
-use crate::{LayerWindow, services::store};
+use crate::{LayerWindow, graphics::Gpu, services::store};
 
 struct WaylandState {
     view: fn() -> LayerWindow,
@@ -35,9 +36,9 @@ struct WaylandState {
 
     registry: RegistryState,
     output: OutputState,
-    shm: Shm,
 
-    pool: SlotPool,
+    // the gpu draws into the layer surface, so it has to go first when both are dropped
+    gpu: Gpu,
 
     layer_surface: LayerSurface,
 
@@ -46,10 +47,11 @@ struct WaylandState {
     running: bool,
 }
 
+// the state is dropped before the event loop, which holds the connection the gpu draws through
 pub struct WaylandApp {
-    event_loop: EventLoop<'static, WaylandState>,
-
     state: WaylandState,
+
+    event_loop: EventLoop<'static, WaylandState>,
 }
 
 impl WaylandApp {
@@ -64,8 +66,6 @@ impl WaylandApp {
         let compositor = CompositorState::bind(&globals, &qh)
             .expect("compositor does not provide wl_compositor");
 
-        let shm = Shm::bind(&globals, &qh).expect("compositor does not provide wl_shm");
-
         let layer_shell =
             LayerShell::bind(&globals, &qh).expect("compositor does not support wlr-layer-shell");
 
@@ -79,10 +79,11 @@ impl WaylandApp {
         let width = layer::pixels(window.width);
         let height = layer::pixels(window.height);
 
-        // the pool grows on its own once the real size is known
-        let pool_size = (width * height * 4).max(4) as usize;
+        // the gpu draws straight into the surface, so it gets libwayland's own pointers
+        let display = connection.backend().display_ptr().cast();
+        let surface = layer_surface.wl_surface().id().as_ptr().cast();
 
-        let pool = SlotPool::new(pool_size, &shm).expect("failed to create shm pool");
+        let gpu = Gpu::new(display, surface);
 
         let state = WaylandState {
             view,
@@ -99,9 +100,8 @@ impl WaylandApp {
 
             registry: RegistryState::new(&globals),
             output: OutputState::new(&globals, &qh),
-            shm,
 
-            pool,
+            gpu,
 
             layer_surface,
 
@@ -116,7 +116,7 @@ impl WaylandApp {
             .insert(event_loop.handle())
             .expect("failed to insert Wayland source");
 
-        Self { event_loop, state }
+        Self { state, event_loop }
     }
 
     pub fn run(&mut self) {

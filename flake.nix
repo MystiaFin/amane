@@ -5,7 +5,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { nixpkgs, ... }:
+  outputs =
+    { nixpkgs, ... }:
     let
       system = "x86_64-linux";
 
@@ -23,13 +24,19 @@
           rust-analyzer
 
           pkg-config
-					fontconfig
+          fontconfig
         ];
 
         buildInputs = with pkgs; [
           wayland
           wayland-protocols
           libxkbcommon
+          vulkan-loader
+        ];
+
+        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+          pkgs.vulkan-loader
+          pkgs.wayland
         ];
 
         packages = with pkgs; [
@@ -38,4 +45,3 @@
       };
     };
 }
-

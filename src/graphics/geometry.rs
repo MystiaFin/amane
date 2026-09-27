@@ -1,4 +1,4 @@
-use tiny_skia::{Path, PathBuilder};
+use super::{Path, PathBuilder};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Rect {
