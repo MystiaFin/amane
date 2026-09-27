@@ -1,9 +1,11 @@
-use crate::{LayerWindow, graphics::font, wayland::WaylandApp};
+use crate::{LayerWindow, graphics::font, ipc::Handlers, wayland::WaylandApp};
 
 #[derive(Default)]
 pub struct App {
     font: Option<String>,
     window: Option<fn() -> LayerWindow>,
+
+    handlers: Handlers,
 }
 
 impl App {
@@ -23,6 +25,13 @@ impl App {
         self
     }
 
+    // lets `amane ipc call <name> [arguments...]` run the handler while the shell is running
+    pub fn ipc(mut self, name: &str, handler: fn(&[String]) -> String) -> Self {
+        self.handlers.insert(name, handler);
+
+        self
+    }
+
     pub fn run(self) {
         let Some(view) = self.window else {
             panic!("failed to run: no window set");
@@ -32,7 +41,7 @@ impl App {
             font::set_default(family);
         }
 
-        let mut backend = WaylandApp::new(view);
+        let mut backend = WaylandApp::new(view, self.handlers);
 
         backend.run();
     }

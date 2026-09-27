@@ -4,6 +4,7 @@ mod frame;
 mod layer;
 mod output;
 mod registry;
+mod socket;
 mod timer;
 
 use smithay_client_toolkit::{
@@ -19,7 +20,7 @@ use smithay_client_toolkit::{
 };
 use wayland_client::{Proxy, QueueHandle, globals::registry_queue_init};
 
-use crate::{LayerWindow, graphics::Gpu, services::store};
+use crate::{LayerWindow, graphics::Gpu, ipc::Handlers, services::store};
 
 struct WaylandState {
     view: fn() -> LayerWindow,
@@ -55,7 +56,7 @@ pub struct WaylandApp {
 }
 
 impl WaylandApp {
-    pub fn new(view: fn() -> LayerWindow) -> Self {
+    pub fn new(view: fn() -> LayerWindow, handlers: Handlers) -> Self {
         let connection = connection::connect();
 
         let (globals, event_queue) =
@@ -115,6 +116,8 @@ impl WaylandApp {
         WaylandSource::new(connection, event_queue)
             .insert(event_loop.handle())
             .expect("failed to insert Wayland source");
+
+        socket::insert(&event_loop.handle(), handlers);
 
         Self { state, event_loop }
     }
