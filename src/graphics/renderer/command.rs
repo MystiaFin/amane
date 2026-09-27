@@ -50,6 +50,13 @@ pub enum Command {
         amount: f32,
     },
 
+    // erases the inside of the path from what the commands before it drew, strength 1 erases fully
+    Cut {
+        path: Path,
+        transform: Transform,
+        strength: f32,
+    },
+
     // commands drawn on their own, then laid over the rest at an opacity
     Layer {
         commands: Vec<Command>,

@@ -1,6 +1,7 @@
 mod blur;
 mod border;
 mod command;
+mod cut;
 mod image;
 mod layer;
 mod rectangle;

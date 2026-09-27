@@ -1,6 +1,7 @@
 mod draw;
 mod needs_height;
 mod needs_width;
+mod shadow;
 
 use crate::graphics::Color;
 use crate::{Fill, Radius, Shadow, Size};

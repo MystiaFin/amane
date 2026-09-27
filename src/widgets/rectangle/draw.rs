@@ -1,9 +1,8 @@
 use crate::graphics::{Rect, Renderer, image};
 use crate::widgets::Widget;
-use crate::widgets::shadow::Kind;
 use crate::{Fill, Image, Size};
 
-use super::Rectangle;
+use super::{Rectangle, shadow};
 
 impl Widget for Rectangle {
     fn width(&self) -> Size {
@@ -19,29 +18,32 @@ impl Widget for Rectangle {
 
         renderer.blur(area, radius, self.blur);
 
-        if self.opacity == 1.0 {
-            paint(self, renderer, area, radius);
-
-            return;
+        // the rectangle holding a mask is still drawing into this renderer, so the cut lands in it
+        if let Fill::Mask = self.fill {
+            renderer.cut(area, radius, self.opacity);
         }
 
-        let mut layer = renderer.layer();
+        // collected apart, so a mask inside this rectangle cuts no further than its edge
+        let mut group = renderer.layer();
 
-        paint(self, &mut layer, area, radius);
+        paint(self, &mut group, area, radius);
 
-        renderer.blend(layer, self.opacity);
+        renderer.blend(group, self.opacity);
     }
 }
 
 fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
-    drop_shadow(rectangle, renderer, area, radius);
+    shadow::drop_shadow(rectangle, renderer, area, radius);
 
     match &rectangle.fill {
         Fill::Color(color) => renderer.rectangle(area, *color, radius),
         Fill::Image(image) => paint_image(image, renderer, area, radius),
+
+        // the cut was already made in the rectangle holding this one
+        Fill::Mask => {}
     }
 
-    inner_shadow(rectangle, renderer, area, radius);
+    shadow::inner_shadow(rectangle, renderer, area, radius);
 
     renderer.border(
         area,
@@ -73,34 +75,4 @@ fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
     let placement = fill.fit.place(area, image_width, image_height);
 
     renderer.image(area, radius, image, placement);
-}
-
-// drawn before the fill, so the fill covers the part under the rectangle
-fn drop_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
-    let Some(shadow) = &rectangle.shadow else {
-        return;
-    };
-
-    if shadow.kind != Kind::Drop {
-        return;
-    }
-
-    let shadow_area = shadow.place(area);
-
-    renderer.shadow(shadow_area, radius, shadow.tint(), shadow.blur);
-}
-
-// drawn over the fill but under the border and child
-fn inner_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
-    let Some(shadow) = &rectangle.shadow else {
-        return;
-    };
-
-    if shadow.kind != Kind::Inner {
-        return;
-    }
-
-    let hole = shadow.place(area);
-
-    renderer.inner_shadow(area, hole, radius, shadow.tint(), shadow.blur);
 }

@@ -1,11 +1,14 @@
 use crate::Color;
 
-use super::Image;
+use super::{Image, Mask};
 
 pub enum Fill {
     Color(Color),
 
     Image(Image),
+
+    // paints nothing and cuts its shape out of the rectangle holding it
+    Mask,
 }
 
 impl From<Color> for Fill {
@@ -24,5 +27,11 @@ impl From<&str> for Fill {
 impl From<super::Image> for Fill {
     fn from(image: Image) -> Self {
         Self::Image(image)
+    }
+}
+
+impl From<Mask> for Fill {
+    fn from(_: Mask) -> Self {
+        Self::Mask
     }
 }
