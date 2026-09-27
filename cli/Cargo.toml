@@ -1,0 +1,11 @@
+[package]
+name = "amane-cli"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "amane"
+path = "src/main.rs"
+
+[dependencies]
+amane = { path = ".." }

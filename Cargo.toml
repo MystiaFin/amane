@@ -1,5 +1,5 @@
 [package]
-name = "amane-lab"
+name = "amane"
 version = "0.1.0"
 edition = "2024"
 
@@ -23,3 +23,6 @@ png = "0.18.1"
 
 [dev-dependencies]
 chrono = "0.4"
+
+[workspace]
+members = ["cli"]
