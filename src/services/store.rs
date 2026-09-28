@@ -1,14 +1,12 @@
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, RwLock};
+use std::thread;
 
 use crate::Service;
-use crate::services::Ticker;
 
 static SERVICES: LazyLock<Mutex<HashMap<TypeId, &'static (dyn Any + Send + Sync)>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
-
-static STARTED: LazyLock<Mutex<Vec<Ticker>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
 pub fn find<S: Service>() -> &'static RwLock<S> {
     let id = TypeId::of::<S>();
@@ -28,28 +26,8 @@ pub fn find<S: Service>() -> &'static RwLock<S> {
         .expect("failed to lock services")
         .insert(id, service);
 
-    let ticker = Ticker {
-        interval: S::interval(),
-        update: update::<S>,
-    };
-
-    STARTED
-        .lock()
-        .expect("failed to lock started services")
-        .push(ticker);
+    // stored first, so the thread's own reads and writes find this same service
+    thread::spawn(S::listen);
 
     service
-}
-
-// hands the event loop every service created since it last asked
-pub fn take_started() -> Vec<Ticker> {
-    let mut started = STARTED.lock().expect("failed to lock started services");
-
-    std::mem::take(&mut *started)
-}
-
-fn update<S: Service>() {
-    let mut service = find::<S>().write().expect("failed to lock service");
-
-    service.update();
 }

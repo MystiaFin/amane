@@ -13,8 +13,8 @@ mod scroll;
 mod seat;
 mod settings;
 mod socket;
-mod timer;
 mod update;
+mod wake;
 
 use smithay_client_toolkit::{
     compositor::CompositorState,
@@ -39,7 +39,6 @@ use crate::{
     graphics::Gpu,
     input::{KeyHandler, Pointer},
     ipc::Handlers,
-    services::store,
 };
 
 use settings::Settings;
@@ -155,6 +154,8 @@ impl WaylandApp {
 
         socket::insert(&event_loop.handle(), handlers);
 
+        wake::insert(&event_loop.handle());
+
         Self { state, event_loop }
     }
 
@@ -163,11 +164,6 @@ impl WaylandApp {
             self.event_loop
                 .dispatch(None, &mut self.state)
                 .expect("failed to dispatch events");
-
-            // services read for the first time during that dispatch start ticking now
-            for ticker in store::take_started() {
-                timer::insert(&self.event_loop.handle(), ticker);
-            }
         }
     }
 }
