@@ -14,6 +14,7 @@ mod size;
 mod text;
 
 use crate::graphics::{Rect, Renderer};
+use crate::input::Target;
 
 pub use canvas::Canvas;
 pub use column::Column;
@@ -35,4 +36,7 @@ pub trait Widget {
     fn height(&self) -> Size;
 
     fn draw(&self, renderer: &mut Renderer, area: Rect);
+
+    // widgets that react to the pointer add their area, containers pass theirs on to children
+    fn collect_targets(&self, _: Rect, _: &mut Vec<Target>) {}
 }

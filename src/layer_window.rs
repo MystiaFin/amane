@@ -1,4 +1,5 @@
 mod horizontal;
+mod input;
 mod keyboard;
 mod layer;
 mod margin;
@@ -9,6 +10,7 @@ mod window_size;
 mod zone;
 
 use crate::Widget;
+use crate::input::KeyHandler;
 
 pub use horizontal::Horizontal;
 pub use keyboard::Keyboard;
@@ -33,6 +35,8 @@ pub struct LayerWindow {
     pub(crate) zone: Zone,
 
     pub(crate) root: Option<Box<dyn Widget>>,
+
+    pub(crate) on_key: Option<KeyHandler>,
 }
 
 impl LayerWindow {

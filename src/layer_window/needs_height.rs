@@ -19,6 +19,8 @@ impl NeedsHeight {
             zone: Zone::default(),
 
             root: None,
+
+            on_key: None,
         }
     }
 }

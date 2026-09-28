@@ -1,8 +1,9 @@
 use crate::graphics::{Rect, Renderer, image};
+use crate::input::Target;
 use crate::widgets::Widget;
 use crate::{Fill, Image, Size};
 
-use super::{Rectangle, shadow};
+use super::{Rectangle, child, input, shadow};
 
 impl Widget for Rectangle {
     fn width(&self) -> Size {
@@ -30,6 +31,10 @@ impl Widget for Rectangle {
 
         renderer.blend(group, self.opacity);
     }
+
+    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+        input::collect_targets(self, area, targets);
+    }
 }
 
 fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
@@ -56,12 +61,7 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
         return;
     };
 
-    let child_area = Rect::new(
-        area.x,
-        area.y,
-        child.width().resolve(area.width),
-        child.height().resolve(area.height),
-    );
+    let child_area = child::area(child.as_ref(), area);
 
     child.draw(renderer, child_area);
 }

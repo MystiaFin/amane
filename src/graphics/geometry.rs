@@ -18,6 +18,16 @@ impl Rect {
         }
     }
 
+    pub fn contains(self, x: f32, y: f32) -> bool {
+        let right = self.x + self.width;
+        let bottom = self.y + self.height;
+
+        let inside_horizontally = x >= self.x && x < right;
+        let inside_vertically = y >= self.y && y < bottom;
+
+        inside_horizontally && inside_vertically
+    }
+
     pub fn trace(self, radius: f32) -> Option<Path> {
         // a radius past half a side would make the corners overlap
         let shortest_half = f32::min(self.width, self.height) / 2.0;

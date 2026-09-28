@@ -1,6 +1,7 @@
 mod app;
 mod full;
 mod graphics;
+mod input;
 mod ipc;
 mod layer_window;
 mod macros;
@@ -11,6 +12,7 @@ mod widgets;
 pub use app::App;
 pub use full::Full;
 pub use graphics::{Cap, Color};
+pub use input::{Button, Key, Scroll};
 pub use ipc::{IpcCall, ipc_socket};
 pub use layer_window::{
     Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,

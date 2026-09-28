@@ -34,6 +34,11 @@ impl WaylandState {
 
         root.draw(&mut renderer, area);
 
+        // the handlers are rebuilt with the view, so each frame replaces the last frame's
+        self.pointer.collect(root.as_ref(), area);
+
+        self.on_key = window.on_key;
+
         let surface = self.layer_surface.wl_surface();
 
         // the scale goes out with the commit that presenting the frame makes
@@ -58,4 +63,3 @@ impl WaylandState {
         self.layer_surface.commit();
     }
 }
-

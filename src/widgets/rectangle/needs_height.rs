@@ -1,3 +1,4 @@
+use crate::input::Handlers;
 use crate::{Color, Fill, Radius, Rectangle, Size};
 
 pub struct NeedsHeight {
@@ -17,6 +18,7 @@ impl NeedsHeight {
             opacity: 1.0,
             shadow: None,
             child: None,
+            handlers: Handlers::default(),
         }
     }
 }

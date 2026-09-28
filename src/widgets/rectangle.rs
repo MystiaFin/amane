@@ -1,9 +1,12 @@
+mod child;
 mod draw;
+mod input;
 mod needs_height;
 mod needs_width;
 mod shadow;
 
 use crate::graphics::Color;
+use crate::input::Handlers;
 use crate::{Fill, Radius, Shadow, Size};
 
 use super::Widget;
@@ -22,6 +25,7 @@ pub struct Rectangle {
     pub(crate) opacity: f32,
     pub(crate) shadow: Option<Shadow>,
     pub(crate) child: Option<Box<dyn Widget>>,
+    pub(crate) handlers: Handlers,
 }
 
 impl Rectangle {

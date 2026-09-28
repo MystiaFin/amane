@@ -1,5 +1,6 @@
 use crate::Size;
 use crate::graphics::{Rect, Renderer};
+use crate::input::Target;
 
 use super::Widget;
 
@@ -53,6 +54,44 @@ impl Layout {
 
         f32::max(available - used, 0.0) / filling as f32
     }
+
+    // where each child goes, one after another along the direction
+    fn place(&self, area: Rect) -> Vec<Rect> {
+        let share = self.share(area);
+
+        let mut current_x = area.x;
+        let mut current_y = area.y;
+
+        let mut child_areas = Vec::new();
+
+        for child in &self.children {
+            let (width, height) = match self.direction {
+                Direction::Row => (
+                    child.width().resolve(share),
+                    child.height().resolve(area.height),
+                ),
+
+                Direction::Column => (
+                    child.width().resolve(area.width),
+                    child.height().resolve(share),
+                ),
+            };
+
+            child_areas.push(Rect::new(current_x, current_y, width, height));
+
+            match self.direction {
+                Direction::Row => {
+                    current_x += width;
+                }
+
+                Direction::Column => {
+                    current_y += height;
+                }
+            }
+        }
+
+        child_areas
+    }
 }
 
 impl Widget for Layout {
@@ -102,35 +141,18 @@ impl Widget for Layout {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        let share = self.share(area);
+        let child_areas = self.place(area);
 
-        let mut current_x = area.x;
-        let mut current_y = area.y;
+        for (child, child_area) in self.children.iter().zip(child_areas) {
+            child.draw(renderer, child_area);
+        }
+    }
 
-        for child in &self.children {
-            let (width, height) = match self.direction {
-                Direction::Row => (
-                    child.width().resolve(share),
-                    child.height().resolve(area.height),
-                ),
+    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+        let child_areas = self.place(area);
 
-                Direction::Column => (
-                    child.width().resolve(area.width),
-                    child.height().resolve(share),
-                ),
-            };
-
-            child.draw(renderer, Rect::new(current_x, current_y, width, height));
-
-            match self.direction {
-                Direction::Row => {
-                    current_x += width;
-                }
-
-                Direction::Column => {
-                    current_y += height;
-                }
-            }
+        for (child, child_area) in self.children.iter().zip(child_areas) {
+            child.collect_targets(child_area, targets);
         }
     }
 }

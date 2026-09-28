@@ -1,5 +1,6 @@
 use crate::Size;
 use crate::graphics::{Rect, Renderer};
+use crate::input::Target;
 
 use super::{Direction, Layout, Widget};
 
@@ -26,5 +27,9 @@ impl Widget for Column {
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
         self.layout.draw(renderer, area);
+    }
+
+    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+        self.layout.collect_targets(area, targets);
     }
 }

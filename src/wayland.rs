@@ -1,9 +1,15 @@
+mod button;
 mod compositor;
 mod connection;
 mod frame;
+mod key;
+mod keyboard;
 mod layer;
 mod output;
+mod pointer;
 mod registry;
+mod scroll;
+mod seat;
 mod socket;
 mod timer;
 
@@ -13,14 +19,25 @@ use smithay_client_toolkit::{
     output::OutputState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
+    seat::SeatState,
     shell::{
         WaylandSurface,
         wlr_layer::{LayerShell, LayerSurface},
     },
 };
-use wayland_client::{Proxy, QueueHandle, globals::registry_queue_init};
+use wayland_client::{
+    Proxy, QueueHandle,
+    globals::registry_queue_init,
+    protocol::{wl_keyboard::WlKeyboard, wl_pointer::WlPointer},
+};
 
-use crate::{LayerWindow, graphics::Gpu, ipc::Handlers, services::store};
+use crate::{
+    LayerWindow,
+    graphics::Gpu,
+    input::{KeyHandler, Pointer},
+    ipc::Handlers,
+    services::store,
+};
 
 struct WaylandState {
     view: fn() -> LayerWindow,
@@ -37,6 +54,15 @@ struct WaylandState {
 
     registry: RegistryState,
     output: OutputState,
+    seat: SeatState,
+
+    // kept so they can be released when the mouse or keyboard is unplugged
+    pointer_device: Option<WlPointer>,
+    keyboard_device: Option<WlKeyboard>,
+
+    // both come from the last drawn view, so input matches what is on screen
+    pointer: Pointer,
+    on_key: Option<KeyHandler>,
 
     // the gpu draws into the layer surface, so it has to go first when both are dropped
     gpu: Gpu,
@@ -101,6 +127,13 @@ impl WaylandApp {
 
             registry: RegistryState::new(&globals),
             output: OutputState::new(&globals, &qh),
+            seat: SeatState::new(&globals, &qh),
+
+            pointer_device: None,
+            keyboard_device: None,
+
+            pointer: Pointer::default(),
+            on_key: None,
 
             gpu,
 
