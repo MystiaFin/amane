@@ -2,12 +2,19 @@ mod pulse;
 
 use crate::Service;
 
+use pulse::Device;
+
 #[derive(Default)]
 pub struct Audio {
     // 0 to 100, for the default output
     volume: u8,
 
     muted: bool,
+
+    // 0 to 100, for the default microphone
+    microphone_volume: u8,
+
+    microphone_muted: bool,
 }
 
 // event-driven, the sound server announces every volume change
@@ -21,10 +28,14 @@ impl Service for Audio {
     }
 
     fn update(&mut self) {
-        let sink = pulse::read();
+        let output = pulse::read(Device::Output);
+        let input = pulse::read(Device::Input);
 
-        self.volume = sink.volume;
-        self.muted = sink.muted;
+        self.volume = output.volume;
+        self.muted = output.muted;
+
+        self.microphone_volume = input.volume;
+        self.microphone_muted = input.muted;
     }
 
     fn listen() {
@@ -41,14 +52,33 @@ impl Audio {
         self.muted
     }
 
+    pub fn microphone_volume(&self) -> u8 {
+        self.microphone_volume
+    }
+
+    pub fn microphone_muted(&self) -> bool {
+        self.microphone_muted
+    }
+
     // anything above 100 is treated as 100
     pub fn set_volume(volume: u8) {
-        pulse::set_volume(volume.min(100));
+        pulse::set_volume(Device::Output, volume.min(100));
     }
 
     pub fn toggle_mute() {
-        let sink = pulse::read();
+        let output = pulse::read(Device::Output);
 
-        pulse::set_muted(!sink.muted);
+        pulse::set_muted(Device::Output, !output.muted);
+    }
+
+    // anything above 100 is treated as 100
+    pub fn set_microphone_volume(volume: u8) {
+        pulse::set_volume(Device::Input, volume.min(100));
+    }
+
+    pub fn toggle_microphone_mute() {
+        let input = pulse::read(Device::Input);
+
+        pulse::set_muted(Device::Input, !input.muted);
     }
 }

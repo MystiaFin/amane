@@ -8,18 +8,34 @@ use libpulse_binding::mainloop::standard::{IterateResult, Mainloop};
 use libpulse_binding::operation::{self, Operation};
 use libpulse_binding::volume::{ChannelVolumes, Volume};
 
-// pulse resolves this to whatever output is the default right now
-const DEFAULT_SINK: &str = "@DEFAULT_SINK@";
+#[derive(Clone, Copy)]
+pub enum Device {
+    // speakers or headphones
+    Output,
+
+    // the microphone
+    Input,
+}
+
+impl Device {
+    // pulse resolves these to whatever device is the default right now
+    fn name(self) -> &'static str {
+        match self {
+            Device::Output => "@DEFAULT_SINK@",
+            Device::Input => "@DEFAULT_SOURCE@",
+        }
+    }
+}
 
 #[derive(Default, Clone, Copy)]
-pub struct Sink {
+pub struct Level {
     // 0 to 100
     pub volume: u8,
 
     pub muted: bool,
 }
 
-// what pulse reports for the default output, before converting to percent
+// what pulse reports for a default device, before converting to percent
 #[derive(Clone, Copy)]
 struct Levels {
     volumes: ChannelVolumes,
@@ -31,22 +47,22 @@ thread_local! {
     static CONNECTION: RefCell<Connection> = RefCell::new(Connection::open());
 }
 
-pub fn read() -> Sink {
+pub fn read(device: Device) -> Level {
     CONNECTION.with_borrow_mut(|connection| {
-        let Some(levels) = connection.default_sink() else {
-            return Sink::default();
+        let Some(levels) = connection.levels(device) else {
+            return Level::default();
         };
 
-        Sink {
+        Level {
             volume: percent(levels.volumes.avg()),
             muted: levels.muted,
         }
     })
 }
 
-pub fn set_volume(volume: u8) {
+pub fn set_volume(device: Device, volume: u8) {
     CONNECTION.with_borrow_mut(|connection| {
-        let Some(levels) = connection.default_sink() else {
+        let Some(levels) = connection.levels(device) else {
             return;
         };
 
@@ -56,28 +72,32 @@ pub fn set_volume(volume: u8) {
 
         volumes.set(channels, level(volume));
 
-        let operation = connection
-            .context
-            .introspect()
-            .set_sink_volume_by_name(DEFAULT_SINK, &volumes, None);
+        let mut introspect = connection.context.introspect();
+
+        let operation = match device {
+            Device::Output => introspect.set_sink_volume_by_name(device.name(), &volumes, None),
+            Device::Input => introspect.set_source_volume_by_name(device.name(), &volumes, None),
+        };
 
         connection.wait(operation);
     });
 }
 
-pub fn set_muted(muted: bool) {
+pub fn set_muted(device: Device, muted: bool) {
     CONNECTION.with_borrow_mut(|connection| {
-        let operation = connection
-            .context
-            .introspect()
-            .set_sink_mute_by_name(DEFAULT_SINK, muted, None);
+        let mut introspect = connection.context.introspect();
+
+        let operation = match device {
+            Device::Output => introspect.set_sink_mute_by_name(device.name(), muted, None),
+            Device::Input => introspect.set_source_mute_by_name(device.name(), muted, None),
+        };
 
         connection.wait(operation);
     });
 }
 
 /*
- * calls changed after every change to an output or to the
+ * calls changed after every change to an output, an input or the
  * default choice, and never returns; it keeps its own
  * connection, so changed can still use read()
  */
@@ -95,7 +115,7 @@ pub fn watch(mut changed: impl FnMut()) {
         .context
         .set_subscribe_callback(Some(Box::new(move |_, _, _| marked.set(true))));
 
-    let interests = InterestMaskSet::SINK | InterestMaskSet::SERVER;
+    let interests = InterestMaskSet::SINK | InterestMaskSet::SOURCE | InterestMaskSet::SERVER;
 
     connection.context.subscribe(interests, |_| {});
 
@@ -136,26 +156,45 @@ impl Connection {
         }
     }
 
-    // none when there is no output at all
-    fn default_sink(&mut self) -> Option<Levels> {
+    // none when there is no such device at all
+    fn levels(&mut self, device: Device) -> Option<Levels> {
         let found = Rc::new(Cell::new(None));
         let slot = Rc::clone(&found);
 
-        let operation = self
-            .context
-            .introspect()
-            .get_sink_info_by_name(DEFAULT_SINK, move |result| {
-                let ListResult::Item(sink) = result else {
-                    return;
-                };
+        let introspect = self.context.introspect();
 
-                slot.set(Some(Levels {
-                    volumes: sink.volume,
-                    muted: sink.mute,
-                }));
-            });
+        // outputs and inputs come back as different types, so each gets its own callback
+        match device {
+            Device::Output => {
+                let operation = introspect.get_sink_info_by_name(device.name(), move |result| {
+                    let ListResult::Item(sink) = result else {
+                        return;
+                    };
 
-        self.wait(operation);
+                    slot.set(Some(Levels {
+                        volumes: sink.volume,
+                        muted: sink.mute,
+                    }));
+                });
+
+                self.wait(operation);
+            }
+
+            Device::Input => {
+                let operation = introspect.get_source_info_by_name(device.name(), move |result| {
+                    let ListResult::Item(source) = result else {
+                        return;
+                    };
+
+                    slot.set(Some(Levels {
+                        volumes: source.volume,
+                        muted: source.mute,
+                    }));
+                });
+
+                self.wait(operation);
+            }
+        }
 
         found.take()
     }
