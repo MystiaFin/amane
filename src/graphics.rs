@@ -8,6 +8,7 @@ mod outline;
 mod path;
 mod renderer;
 mod transform;
+mod weight;
 
 pub use cap::Cap;
 pub use color::Color;
@@ -17,3 +18,4 @@ pub use outline::Outline;
 pub use path::{Path, PathBuilder};
 pub use renderer::Renderer;
 pub use transform::Transform;
+pub use weight::Weight;

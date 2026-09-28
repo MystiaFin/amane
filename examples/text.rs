@@ -1,19 +1,21 @@
-use amane::{App, Color, Column, LayerWindow, Rectangle, Text, children};
+use amane::{App, Column, LayerWindow, Text, Weight, children};
 
 fn main() {
-    App::new().font("monospace").window(view).run();
+    App::new().window(view).run();
 }
 
 fn view() -> LayerWindow {
+    let long = "the quick brown fox jumps over the lazy dog, then keeps running far past the edge";
+
     LayerWindow::new()
-        .width(500.0)
-        .height(200.0)
+        .width(260.0)
+        .height(400.0)
         .child(Column::new(children![
-            Text::new("Hello, Amane").size(48.0).color(Color::RED),
-            Rectangle::new().width(200.0).height(4.0).fill(Color::GREEN),
-            Text::new("this one overrides the default")
-                .size(24.0)
-                .color(Color::BLUE)
-                .font("serif"),
+            Text::new("regular"),
+            Text::new("bold").weight(Weight::Bold),
+            Text::new("light, picked by number").weight(300),
+            Text::new(long).elide(),
+            Text::new(long).wrap().max_lines(2).elide(),
+            Text::new(long).wrap()
         ]))
 }

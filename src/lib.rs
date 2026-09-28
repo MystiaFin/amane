@@ -20,7 +20,7 @@ pub use app::App;
 pub use dbus::{Argument, Bus, Method, Signal, Value};
 pub use files::watch_file;
 pub use full::Full;
-pub use graphics::{Cap, Color};
+pub use graphics::{Cap, Color, Weight};
 pub use input::{Button, Key, Point, Scroll};
 pub use ipc::{IpcCall, ipc_socket};
 pub use monitor::Monitor;

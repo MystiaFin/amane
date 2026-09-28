@@ -1,13 +1,21 @@
+mod lines;
+
+use ttf_parser::Face;
+
 use crate::graphics::{Rect, Renderer, font};
-use crate::{Color, Size};
+use crate::{Color, Size, Weight};
 
 use super::Widget;
+
+use lines::Rules;
 
 pub struct Text {
     content: String,
     size: f32,
     color: Color,
     font: Option<String>,
+    weight: Weight,
+    rules: Rules,
 }
 
 impl Text {
@@ -17,6 +25,8 @@ impl Text {
             size: 16.0,
             color: Color::BLACK,
             font: None,
+            weight: Weight::Regular,
+            rules: Rules::default(),
         }
     }
 
@@ -37,47 +47,76 @@ impl Text {
 
         self
     }
+
+    pub fn weight(mut self, weight: impl Into<Weight>) -> Self {
+        self.weight = weight.into();
+
+        self
+    }
+
+    pub fn wrap(mut self) -> Self {
+        self.rules.wrap = true;
+
+        self
+    }
+
+    pub fn elide(mut self) -> Self {
+        self.rules.elide = true;
+
+        self
+    }
+
+    pub fn max_lines(mut self, count: usize) -> Self {
+        self.rules.max_lines = Some(count);
+
+        self
+    }
+
+    fn face(&self) -> &'static Face<'static> {
+        font::load_weighted(self.font.as_deref(), self.weight)
+    }
 }
 
 impl Widget for Text {
     fn width(&self) -> Size {
-        let font = font::load(self.font.as_deref());
-
-        // fonts measure in their own units, this turns them into pixels
-        let units = self.size / f32::from(font.units_per_em());
-
-        let mut total = 0.0;
-
-        for letter in self.content.chars() {
-            // a letter the font lacks draws as its placeholder box
-            let id = font.glyph_index(letter).unwrap_or_default();
-
-            let advance = font
-                .glyph_hor_advance(id)
-                .expect("failed to read letter advance");
-
-            total += f32::from(advance) * units;
+        // wrapped or elided text takes the width it is given and fits itself into it
+        if self.rules.wrap || self.rules.elide {
+            return Size::Parent;
         }
 
-        Size::Fixed(total)
+        Size::Fixed(lines::measure(&self.content, self.face(), self.size))
     }
 
     fn height(&self) -> Size {
-        let font = font::load(self.font.as_deref());
+        /*
+         * the width is only known when drawing,
+         * so wrapped text without a line limit cannot know its height yet
+         */
+        let count = match (self.rules.wrap, self.rules.max_lines) {
+            (false, _) => 1,
+            (true, Some(count)) => count,
+            (true, None) => return Size::Parent,
+        };
 
-        // fonts measure in their own units, this turns them into pixels
-        let units = self.size / f32::from(font.units_per_em());
-
-        let ascent = f32::from(font.ascender()) * units;
-        let descent = f32::from(font.descender()) * units;
-
-        // descent is negative, so this adds the part below the baseline
-        Size::Fixed(ascent - descent)
+        Size::Fixed(lines::stack_height(self.face(), self.size, count))
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        let font = font::load(self.font.as_deref());
+        let font = self.face();
 
-        renderer.text(&self.content, font, self.size, self.color, area);
+        let arranged = lines::arrange(&self.content, font, self.size, area.width, self.rules);
+
+        let line_height = lines::height(font, self.size);
+        let spacing = lines::spacing(font, self.size);
+
+        let mut top = area.y;
+
+        for line in arranged {
+            let line_area = Rect::new(area.x, top, area.width, line_height);
+
+            renderer.text(&line, font, self.size, self.color, line_area);
+
+            top += spacing;
+        }
     }
 }

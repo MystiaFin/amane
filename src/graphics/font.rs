@@ -4,6 +4,8 @@ use std::sync::{LazyLock, Mutex};
 use fontconfig::Fontconfig;
 use ttf_parser::Face;
 
+use crate::Weight;
+
 static DEFAULT_FAMILY: LazyLock<Mutex<String>> =
     LazyLock::new(|| Mutex::new(String::from("sans-serif")));
 
@@ -17,6 +19,10 @@ pub fn set_default(family: &str) {
 }
 
 pub fn load(family: Option<&str>) -> &'static Face<'static> {
+    load_weighted(family, Weight::Regular)
+}
+
+pub fn load_weighted(family: Option<&str>, weight: Weight) -> &'static Face<'static> {
     let family = match family {
         Some(family) => String::from(family),
         None => DEFAULT_FAMILY
@@ -25,9 +31,12 @@ pub fn load(family: Option<&str>) -> &'static Face<'static> {
             .clone(),
     };
 
+    // bold and regular are different files, so each weight is kept apart
+    let key = format!("{family} {}", weight.style());
+
     let mut loaded = LOADED.lock().expect("failed to lock loaded fonts");
 
-    if let Some(font) = loaded.get(&family) {
+    if let Some(font) = loaded.get(&key) {
         return font;
     }
 
@@ -35,17 +44,23 @@ pub fn load(family: Option<&str>) -> &'static Face<'static> {
      * fonts stay loaded until the program exits,
      * so leaking gives a reference that is valid forever
      */
-    let font = Box::leak(Box::new(read(&family)));
+    let font = Box::leak(Box::new(read(&family, weight)));
 
-    loaded.insert(family, font);
+    loaded.insert(key, font);
 
     font
 }
 
-fn read(family: &str) -> Face<'static> {
+fn read(family: &str, weight: Weight) -> Face<'static> {
     let fontconfig = Fontconfig::new().expect("failed to start fontconfig");
 
-    let found = fontconfig.find(family, None).expect("failed to find font");
+    // regular asks for no style, so plain text finds the same file it always did
+    let style = match weight {
+        Weight::Regular => None,
+        other => Some(other.style()),
+    };
+
+    let found = fontconfig.find(family, style).expect("failed to find font");
 
     let bytes = std::fs::read(&found.path).expect("failed to read font file");
 
