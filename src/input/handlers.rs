@@ -2,6 +2,8 @@ use std::rc::Rc;
 
 use crate::{Button, Key, Point, Scroll};
 
+use super::Cursor;
+
 /*
  * shared, so the hit areas kept after a redraw
  * still work once the widget tree they came from is dropped
@@ -19,4 +21,7 @@ pub struct Handlers {
     pub scroll: Option<ScrollHandler>,
     pub drag: Option<PointHandler>,
     pub motion: Option<PointHandler>,
+
+    // not a handler, but it belongs to the same spot the pointer is over
+    pub cursor: Option<Cursor>,
 }

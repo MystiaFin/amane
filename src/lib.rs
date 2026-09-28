@@ -21,7 +21,12 @@ pub use dbus::{Argument, Bus, Method, Signal, Value};
 pub use files::watch_file;
 pub use full::Full;
 pub use graphics::{Cap, Color, Weight};
-pub use input::{Button, Key, Point, Scroll};
+pub use input::{Button, Cursor, Key, Point, Scroll};
+pub use input::cursor_names::{
+    Crosshair, Default, Grab, Grabbing, Move, NotAllowed, Pointer, ResizeBottom, ResizeBottomLeft,
+    ResizeBottomRight, ResizeHorizontal, ResizeLeft, ResizeRight, ResizeTop, ResizeTopLeft,
+    ResizeTopRight, ResizeVertical, Text, Wait,
+};
 pub use ipc::{IpcCall, ipc_socket};
 pub use monitor::Monitor;
 pub use layer_window::{

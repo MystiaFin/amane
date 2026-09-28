@@ -44,10 +44,20 @@ impl WaylandState {
                 let dragged = pointer.drag();
                 let moved = pointer.report_motion();
 
+                let cursor = pointer.cursor();
+
+                self.show_cursor(cursor);
+
                 hovered || dragged || moved
             }
 
-            PointerEventKind::Leave { .. } => pointer.leave(),
+            PointerEventKind::Leave { .. } => {
+                let left = pointer.leave();
+
+                self.forget_cursor();
+
+                left
+            }
 
             PointerEventKind::Press { button, .. } => {
                 pointer.press();

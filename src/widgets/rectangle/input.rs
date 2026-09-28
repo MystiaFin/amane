@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::graphics::Rect;
-use crate::input::{Target, clip};
+use crate::input::{Cursor, Target, clip};
 use crate::{Button, Point, Rectangle, Scroll};
 
 use super::child;
@@ -32,6 +32,13 @@ impl Rectangle {
      */
     pub fn on_drag(mut self, handler: impl Fn(Point) + 'static) -> Self {
         self.handlers.drag = Some(Rc::new(handler));
+
+        self
+    }
+
+    // how the pointer looks while it is over the rectangle
+    pub fn cursor(mut self, cursor: Cursor) -> Self {
+        self.handlers.cursor = Some(cursor);
 
         self
     }

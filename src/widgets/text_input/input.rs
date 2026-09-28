@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::graphics::Rect;
-use crate::input::{Handlers, KeyHandler, Target, focus};
+use crate::input::{Cursor, Handlers, KeyHandler, Target, focus};
 use crate::{Button, Key};
 
 use super::{TextHandler, TextInput, fields};
@@ -21,6 +21,7 @@ pub fn collect_targets(text_input: &TextInput, area: Rect, targets: &mut Vec<Tar
 
     let handlers = Handlers {
         click: Some(Rc::new(on_click)),
+        cursor: Some(Cursor::Text),
         ..Handlers::default()
     };
 

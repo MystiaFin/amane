@@ -1,4 +1,7 @@
-use smithay_client_toolkit::seat::{Capability, SeatHandler, SeatState};
+use smithay_client_toolkit::seat::{
+    Capability, SeatHandler, SeatState,
+    pointer::ThemeSpec,
+};
 use wayland_client::{Connection, QueueHandle, protocol::wl_seat::WlSeat};
 
 use super::WaylandState;
@@ -19,9 +22,18 @@ impl SeatHandler for WaylandState {
     ) {
         match capability {
             Capability::Pointer => {
+                // the fallback theme draws its icons on a surface of their own
+                let cursor_surface = self.compositor.create_surface(qh);
+
                 let pointer = self
                     .seat
-                    .get_pointer(qh, &seat)
+                    .get_pointer_with_theme::<_, ()>(
+                        qh,
+                        &seat,
+                        self.shm.wl_shm(),
+                        cursor_surface,
+                        ThemeSpec::default(),
+                    )
                     .expect("failed to get pointer");
 
                 self.pointer_device = Some(pointer);
@@ -50,7 +62,7 @@ impl SeatHandler for WaylandState {
         match capability {
             Capability::Pointer => {
                 if let Some(pointer) = self.pointer_device.take() {
-                    pointer.release();
+                    pointer.pointer().release();
                 }
             }
 

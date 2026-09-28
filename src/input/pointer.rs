@@ -1,4 +1,5 @@
 mod click;
+mod cursor;
 mod drag;
 mod hover;
 mod motion;

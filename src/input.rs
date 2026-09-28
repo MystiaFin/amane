@@ -1,5 +1,6 @@
 mod button;
 mod clip;
+mod cursor;
 pub mod focus;
 mod handlers;
 mod key;
@@ -10,6 +11,7 @@ mod target;
 
 pub use button::Button;
 pub use clip::clip;
+pub use cursor::{Cursor, names as cursor_names};
 pub use handlers::{Handlers, KeyHandler};
 pub use key::Key;
 pub use point::Point;

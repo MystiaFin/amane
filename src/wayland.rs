@@ -1,6 +1,7 @@
 mod button;
 mod compositor;
 mod connection;
+mod cursor;
 mod frame;
 mod key;
 mod keyboard;
@@ -17,6 +18,7 @@ mod registry;
 mod scroll;
 mod seat;
 mod settings;
+mod shm;
 mod socket;
 mod update;
 mod view;
@@ -30,17 +32,18 @@ use smithay_client_toolkit::{
     output::OutputState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
-    seat::SeatState,
+    seat::{SeatState, pointer::ThemedPointer},
     session_lock::{SessionLock, SessionLockState},
     shell::wlr_layer::LayerShell,
+    shm::Shm,
 };
 use wayland_client::{
     Connection, QueueHandle,
     globals::registry_queue_init,
-    protocol::{wl_keyboard::WlKeyboard, wl_pointer::WlPointer, wl_surface::WlSurface},
+    protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
 };
 
-use crate::{LayerWindow, Monitor, ipc::Handlers};
+use crate::{Cursor, LayerWindow, Monitor, ipc::Handlers};
 
 use view::View;
 use window::Window;
@@ -62,6 +65,7 @@ struct WaylandState {
     // kept so new windows can be made while the shell runs
     compositor: CompositorState,
     layer_shell: LayerShell,
+    shm: Shm,
 
     // the lock screen's view, and the lock itself while the session is locked
     lock_view: Option<fn(&Monitor) -> LayerWindow>,
@@ -69,8 +73,11 @@ struct WaylandState {
     connection: Connection,
 
     // kept so they can be released when the mouse or keyboard is unplugged
-    pointer_device: Option<WlPointer>,
+    pointer_device: Option<ThemedPointer<()>>,
     keyboard_device: Option<WlKeyboard>,
+
+    // what the pointer was last set to on one of the windows, none after it leaves
+    cursor_shown: Option<Cursor>,
 
     qh: QueueHandle<WaylandState>,
 
@@ -104,6 +111,8 @@ impl WaylandApp {
         let layer_shell =
             LayerShell::bind(&globals, &qh).expect("compositor does not support wlr-layer-shell");
 
+        let shm = Shm::bind(&globals, &qh).expect("compositor does not provide wl_shm");
+
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
             windows: Vec::new(),
@@ -118,12 +127,14 @@ impl WaylandApp {
 
             compositor,
             layer_shell,
+            shm,
 
             lock_view,
             session_lock: None,
             connection: connection.clone(),
 
             pointer_device: None,
+            cursor_shown: None,
             keyboard_device: None,
 
             qh,
