@@ -1,6 +1,7 @@
 pub mod store;
 pub mod wake;
 mod media;
+mod network;
 mod workspace;
 mod workspaces;
 mod write;
@@ -10,6 +11,7 @@ use std::thread;
 use std::time::Duration;
 
 pub use media::Media;
+pub use network::{Link, Network};
 pub use workspace::Workspace;
 pub use workspaces::Workspaces;
 pub use write::Write;
