@@ -6,14 +6,17 @@ use super::WaylandState;
 
 impl WaylandState {
     pub fn redraw(&mut self) {
+        // the view runs again on every redraw, so it shows the services as they are now
+        let window = (self.view)();
+
+        self.update_surface(&window);
+
         let (width, height) = (self.width, self.height);
 
+        // 0 until the compositor configures the window, and again while it is hidden
         if width == 0 || height == 0 {
             return;
         }
-
-        // the view runs again on every redraw, so it shows the services as they are now
-        let window = (self.view)();
 
         let Some(root) = window.root else {
             panic!("failed to draw window: no child set");
@@ -49,6 +52,16 @@ impl WaylandState {
     }
 
     pub fn request_frame(&mut self) {
+        /*
+         * a hidden or unconfigured window gets no frame callbacks,
+         * so the view runs right away to see if the window should show
+         */
+        if self.width == 0 {
+            self.redraw();
+
+            return;
+        }
+
         // changes that land before the next frame all draw together in it
         if self.frame_requested {
             return;

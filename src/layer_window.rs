@@ -6,6 +6,7 @@ mod margin;
 mod needs_height;
 mod needs_width;
 mod vertical;
+mod visible;
 mod window_size;
 mod zone;
 
@@ -33,6 +34,8 @@ pub struct LayerWindow {
     pub(crate) layer: Layer,
     pub(crate) keyboard: Keyboard,
     pub(crate) zone: Zone,
+
+    pub(crate) visible: bool,
 
     pub(crate) root: Option<Box<dyn Widget>>,
 

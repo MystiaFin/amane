@@ -18,6 +18,8 @@ impl NeedsHeight {
             keyboard: Keyboard::default(),
             zone: Zone::default(),
 
+            visible: true,
+
             root: None,
 
             on_key: None,

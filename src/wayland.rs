@@ -5,13 +5,16 @@ mod frame;
 mod key;
 mod keyboard;
 mod layer;
+mod layer_shell;
 mod output;
 mod pointer;
 mod registry;
 mod scroll;
 mod seat;
+mod settings;
 mod socket;
 mod timer;
+mod update;
 
 use smithay_client_toolkit::{
     compositor::CompositorState,
@@ -39,11 +42,13 @@ use crate::{
     services::store,
 };
 
+use settings::Settings;
+
 struct WaylandState {
     view: fn() -> LayerWindow,
 
-    requested_width: u32,
-    requested_height: u32,
+    // what the compositor was last told, so only a real change is sent again
+    settings: Settings,
 
     width: u32,
     height: u32,
@@ -98,13 +103,12 @@ impl WaylandApp {
 
         let surface = compositor.create_surface(&qh);
 
-        // the window's settings are read once here, only its child changes later
+        // later views can change these, each redraw compares them with the last ones
         let window = view();
 
-        let layer_surface = layer::create(&layer_shell, surface, &qh, &window);
+        let settings = Settings::from(&window);
 
-        let width = layer::pixels(window.width);
-        let height = layer::pixels(window.height);
+        let layer_surface = layer::create(&layer_shell, surface, &qh, &settings);
 
         // the gpu draws straight into the surface, so it gets libwayland's own pointers
         let display = connection.backend().display_ptr().cast();
@@ -115,8 +119,7 @@ impl WaylandApp {
         let state = WaylandState {
             view,
 
-            requested_width: width,
-            requested_height: height,
+            settings,
 
             width: 0,
             height: 0,

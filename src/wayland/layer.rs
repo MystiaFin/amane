@@ -1,41 +1,48 @@
 use smithay_client_toolkit::shell::{
     WaylandSurface,
-    wlr_layer::{
-        self, Anchor, KeyboardInteractivity, LayerShell, LayerShellHandler, LayerSurface,
-        LayerSurfaceConfigure,
-    },
+    wlr_layer::{self, Anchor, KeyboardInteractivity, LayerShell, LayerSurface},
 };
-use wayland_client::{Connection, QueueHandle, protocol::wl_surface::WlSurface};
+use wayland_client::{QueueHandle, protocol::wl_surface::WlSurface};
 
-use crate::{Horizontal, Keyboard, Layer, LayerWindow, Vertical, WindowSize, Zone};
+use crate::{Horizontal, Keyboard, Layer, Vertical, WindowSize, Zone};
 
-use super::WaylandState;
+use super::{WaylandState, settings::Settings};
 
 pub fn create(
     layer_shell: &LayerShell,
     surface: WlSurface,
     qh: &QueueHandle<WaylandState>,
-    window: &LayerWindow,
+    settings: &Settings,
 ) -> LayerSurface {
     // no output given, so the compositor chooses the monitor
     let layer_surface =
-        layer_shell.create_layer_surface(qh, surface, layer(window.layer), Some("amane"), None);
+        layer_shell.create_layer_surface(qh, surface, layer(settings.layer), Some("amane"), None);
 
-    layer_surface.set_size(pixels(window.width), pixels(window.height));
+    apply(&layer_surface, settings);
 
-    layer_surface.set_anchor(anchor(window));
+    // a window that starts hidden makes this first commit once it is shown
+    if settings.visible {
+        layer_surface.commit();
+    }
 
-    let margin = window.margin;
+    layer_surface
+}
+
+// the requests only take effect with the next commit
+pub fn apply(layer_surface: &LayerSurface, settings: &Settings) {
+    layer_surface.set_layer(layer(settings.layer));
+
+    layer_surface.set_size(pixels(settings.width), pixels(settings.height));
+
+    layer_surface.set_anchor(anchor(settings));
+
+    let margin = settings.margin;
 
     layer_surface.set_margin(margin.top, margin.right, margin.bottom, margin.left);
 
-    layer_surface.set_keyboard_interactivity(keyboard(window.keyboard));
+    layer_surface.set_keyboard_interactivity(keyboard(settings.keyboard));
 
-    layer_surface.set_exclusive_zone(zone(window));
-
-    layer_surface.commit();
-
-    layer_surface
+    layer_surface.set_exclusive_zone(zone(settings));
 }
 
 // 0 tells the compositor to stretch between the anchored edges
@@ -46,27 +53,27 @@ pub fn pixels(size: WindowSize) -> u32 {
     }
 }
 
-fn anchor(window: &LayerWindow) -> Anchor {
+fn anchor(settings: &Settings) -> Anchor {
     let mut anchor = Anchor::empty();
 
-    match window.vertical {
+    match settings.vertical {
         Vertical::Top => anchor |= Anchor::TOP,
         Vertical::Middle => {}
         Vertical::Bottom => anchor |= Anchor::BOTTOM,
     }
 
-    match window.horizontal {
+    match settings.horizontal {
         Horizontal::Left => anchor |= Anchor::LEFT,
         Horizontal::Middle => {}
         Horizontal::Right => anchor |= Anchor::RIGHT,
     }
 
     // stretching only works between two opposite anchored edges
-    if window.width == WindowSize::Full {
+    if settings.width == WindowSize::Full {
         anchor |= Anchor::LEFT | Anchor::RIGHT;
     }
 
-    if window.height == WindowSize::Full {
+    if settings.height == WindowSize::Full {
         anchor |= Anchor::TOP | Anchor::BOTTOM;
     }
 
@@ -90,55 +97,22 @@ fn keyboard(keyboard: Keyboard) -> KeyboardInteractivity {
     }
 }
 
-fn zone(window: &LayerWindow) -> i32 {
-    match window.zone {
-        Zone::Reserve => reserve(window),
+fn zone(settings: &Settings) -> i32 {
+    match settings.zone {
+        Zone::Reserve => reserve(settings),
         Zone::Respect => 0,
         Zone::Ignore => -1,
     }
 }
 
 // a bar on the left or right edge is as thick as its width, any other bar as its height
-fn reserve(window: &LayerWindow) -> i32 {
-    let size = match (window.horizontal, window.width) {
-        (Horizontal::Left | Horizontal::Right, WindowSize::Fixed(_)) => window.width,
-        _ => window.height,
+fn reserve(settings: &Settings) -> i32 {
+    let size = match (settings.horizontal, settings.width) {
+        (Horizontal::Left | Horizontal::Right, WindowSize::Fixed(_)) => settings.width,
+        _ => settings.height,
     };
 
     let reserved = pixels(size);
 
     i32::try_from(reserved).expect("failed to convert reserved space")
-}
-
-impl LayerShellHandler for WaylandState {
-    fn configure(
-        &mut self,
-        _: &Connection,
-        _: &QueueHandle<Self>,
-        _: &LayerSurface,
-        configure: LayerSurfaceConfigure,
-        _: u32,
-    ) {
-        let (width, height) = configure.new_size;
-
-        let width = if width == 0 {
-            self.requested_width
-        } else {
-            width
-        };
-        let height = if height == 0 {
-            self.requested_height
-        } else {
-            height
-        };
-
-        self.width = width;
-        self.height = height;
-
-        self.redraw();
-    }
-
-    fn closed(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &LayerSurface) {
-        self.running = false;
-    }
 }
