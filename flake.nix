@@ -32,6 +32,7 @@
           wayland-protocols
           libxkbcommon
           vulkan-loader
+          libpulseaudio
         ];
 
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [

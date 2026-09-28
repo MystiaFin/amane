@@ -26,7 +26,7 @@ pub use layer_window::{
     Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
 };
 pub use process::{lines, output, spawn};
-pub use services::{Link, Media, Network, Service, Workspace, Workspaces};
+pub use services::{Audio, Link, Media, Network, Service, Workspace, Workspaces};
 pub use widgets::{
     Align, Arc, Canvas, Center, Circle, Column, End, Fill, Image, Justify, Line, Mask, Path,
     Radius, Rectangle, Row, Shadow, Shape, Size, Start, Text, Widget,

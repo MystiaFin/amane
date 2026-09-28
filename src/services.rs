@@ -1,5 +1,6 @@
 pub mod store;
 pub mod wake;
+mod audio;
 mod media;
 mod network;
 mod workspace;
@@ -10,6 +11,7 @@ use std::sync::RwLockReadGuard;
 use std::thread;
 use std::time::Duration;
 
+pub use audio::Audio;
 pub use media::Media;
 pub use network::{Link, Network};
 pub use workspace::Workspace;
