@@ -2,7 +2,10 @@ use smithay_client_toolkit::shell::{
     WaylandSurface,
     wlr_layer::{self, Anchor, KeyboardInteractivity, LayerShell, LayerSurface},
 };
-use wayland_client::{QueueHandle, protocol::wl_surface::WlSurface};
+use wayland_client::{
+    QueueHandle,
+    protocol::{wl_output::WlOutput, wl_surface::WlSurface},
+};
 
 use crate::{Horizontal, Keyboard, Layer, Vertical, WindowSize, Zone};
 
@@ -11,12 +14,18 @@ use super::{WaylandState, settings::Settings};
 pub fn create(
     layer_shell: &LayerShell,
     surface: WlSurface,
+    output: Option<&WlOutput>,
     qh: &QueueHandle<WaylandState>,
     settings: &Settings,
 ) -> LayerSurface {
-    // no output given, so the compositor chooses the monitor
-    let layer_surface =
-        layer_shell.create_layer_surface(qh, surface, layer(settings.layer), Some("amane"), None);
+    // with no output given, the compositor chooses the monitor
+    let layer_surface = layer_shell.create_layer_surface(
+        qh,
+        surface,
+        layer(settings.layer),
+        Some("amane"),
+        output,
+    );
 
     apply(&layer_surface, settings);
 

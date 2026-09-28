@@ -15,6 +15,9 @@ pub enum Argument {
 
     // an object path like /org/freedesktop/NetworkManager, which d-bus treats apart from text
     Path(String),
+
+    // a list of strings, like the capabilities a notification server answers with
+    TextList(Vec<String>),
 }
 
 impl From<bool> for Argument {
@@ -56,5 +59,11 @@ impl From<&str> for Argument {
 impl From<String> for Argument {
     fn from(value: String) -> Self {
         Self::Text(value)
+    }
+}
+
+impl From<Vec<String>> for Argument {
+    fn from(value: Vec<String>) -> Self {
+        Self::TextList(value)
     }
 }

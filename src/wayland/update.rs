@@ -2,9 +2,9 @@ use smithay_client_toolkit::shell::WaylandSurface;
 
 use crate::LayerWindow;
 
-use super::{WaylandState, layer, settings::Settings};
+use super::{layer, settings::Settings, window::Window};
 
-impl WaylandState {
+impl Window {
     // settings changed by input or services reach the compositor before anything is drawn
     pub fn update_surface(&mut self, window: &LayerWindow) {
         let settings = Settings::from(window);

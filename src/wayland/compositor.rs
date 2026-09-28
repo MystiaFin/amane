@@ -11,11 +11,15 @@ impl CompositorHandler for WaylandState {
         &mut self,
         _conn: &Connection,
         _qh: &QueueHandle<Self>,
-        _surface: &WlSurface,
+        surface: &WlSurface,
         new_factor: i32,
     ) {
-        self.scale = new_factor as f32;
-        self.redraw();
+        let Some(window) = self.window(surface) else {
+            return;
+        };
+
+        window.scale = new_factor as f32;
+        window.redraw();
     }
 
     fn transform_changed(
@@ -27,10 +31,14 @@ impl CompositorHandler for WaylandState {
     ) {
     }
 
-    fn frame(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &WlSurface, _: u32) {
-        self.frame_requested = false;
+    fn frame(&mut self, _: &Connection, _: &QueueHandle<Self>, surface: &WlSurface, _: u32) {
+        let Some(window) = self.window(surface) else {
+            return;
+        };
 
-        self.redraw();
+        window.frame_requested = false;
+
+        window.redraw();
     }
 
     fn surface_enter(

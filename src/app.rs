@@ -1,9 +1,11 @@
-use crate::{LayerWindow, graphics::font, ipc::Handlers, wayland::WaylandApp};
+use crate::{LayerWindow, Monitor, graphics::font, ipc::Handlers, wayland::WaylandApp};
 
 #[derive(Default)]
 pub struct App {
     font: Option<String>,
-    window: Option<fn() -> LayerWindow>,
+
+    windows: Vec<fn() -> LayerWindow>,
+    per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
 
     handlers: Handlers,
 }
@@ -19,8 +21,16 @@ impl App {
         self
     }
 
+    // each call adds one more window, on the monitor the compositor chooses
     pub fn window(mut self, view: fn() -> LayerWindow) -> Self {
-        self.window = Some(view);
+        self.windows.push(view);
+
+        self
+    }
+
+    // one window on every monitor, following monitors as they are plugged in and out
+    pub fn window_per_monitor(mut self, view: fn(&Monitor) -> LayerWindow) -> Self {
+        self.per_monitor.push(view);
 
         self
     }
@@ -33,15 +43,15 @@ impl App {
     }
 
     pub fn run(self) {
-        let Some(view) = self.window else {
+        if self.windows.is_empty() && self.per_monitor.is_empty() {
             panic!("failed to run: no window set");
-        };
+        }
 
         if let Some(family) = &self.font {
             font::set_default(family);
         }
 
-        let mut backend = WaylandApp::new(view, self.handlers);
+        let mut backend = WaylandApp::new(self.windows, self.per_monitor, self.handlers);
 
         backend.run();
     }

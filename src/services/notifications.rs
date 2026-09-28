@@ -1,0 +1,91 @@
+mod notification;
+mod reason;
+mod server;
+mod urgency;
+
+pub use notification::Notification;
+pub use urgency::Urgency;
+
+use crate::Service;
+
+use reason::Reason;
+
+pub struct Notifications {
+    list: Vec<Notification>,
+
+    // the spec keeps 0 for "no notification", so ids start at 1
+    next_id: u32,
+
+    running: bool,
+}
+
+/*
+ * amane is the notification server here: programs send
+ * their notifications to it, instead of amane asking anyone
+ */
+impl Service for Notifications {
+    fn new() -> Self {
+        Self {
+            list: Vec::new(),
+            next_id: 1,
+            running: false,
+        }
+    }
+
+    fn listen() {
+        server::run();
+    }
+}
+
+impl Notifications {
+    // oldest first
+    pub fn list(&self) -> &[Notification] {
+        &self.list
+    }
+
+    // false when another daemon like mako or dunst already owns the name
+    pub fn running(&self) -> bool {
+        self.running
+    }
+
+    pub fn dismiss(id: u32) {
+        Self::write().close(id, Reason::Dismissed);
+    }
+
+    // a sender may replace its own earlier notification, which keeps its id and place
+    fn add(&mut self, mut notification: Notification, replaces_id: u32) -> u32 {
+        let replaced = self.list.iter_mut().find(|old| old.id == replaces_id);
+
+        if let Some(old) = replaced {
+            notification.id = replaces_id;
+
+            *old = notification;
+
+            return replaces_id;
+        }
+
+        let id = self.next_id;
+
+        self.next_id += 1;
+
+        notification.id = id;
+
+        self.list.push(notification);
+
+        id
+    }
+
+    fn close(&mut self, id: u32, reason: Reason) {
+        let Some(index) = self
+            .list
+            .iter()
+            .position(|notification| notification.id == id)
+        else {
+            return;
+        };
+
+        self.list.remove(index);
+
+        server::announce_closed(id, reason);
+    }
+}

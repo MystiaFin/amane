@@ -17,9 +17,9 @@ impl PointerHandler for WaylandState {
             handled |= self.handle_pointer(event);
         }
 
-        // a handler may have changed a service, so the view has to run again
+        // a handler may have changed a service that any window shows
         if handled {
-            self.request_frame();
+            self.request_frames();
         }
     }
 }
@@ -27,17 +27,24 @@ impl PointerHandler for WaylandState {
 impl WaylandState {
     // returns whether a handler ran
     fn handle_pointer(&mut self, event: &PointerEvent) -> bool {
+        // every event names the surface it happened on
+        let Some(window) = self.window(&event.surface) else {
+            return false;
+        };
+
+        let pointer = &mut window.pointer;
+
         let (x, y) = event.position;
 
         match &event.kind {
             PointerEventKind::Enter { .. } | PointerEventKind::Motion { .. } => {
-                self.pointer.move_to(x as f32, y as f32)
+                pointer.move_to(x as f32, y as f32)
             }
 
-            PointerEventKind::Leave { .. } => self.pointer.leave(),
+            PointerEventKind::Leave { .. } => pointer.leave(),
 
             PointerEventKind::Press { .. } => {
-                self.pointer.press();
+                pointer.press();
 
                 false
             }
@@ -48,14 +55,14 @@ impl WaylandState {
                     return false;
                 };
 
-                self.pointer.release(button)
+                pointer.release(button)
             }
 
             PointerEventKind::Axis {
                 horizontal,
                 vertical,
                 ..
-            } => self.pointer.scroll(scroll::translate(horizontal, vertical)),
+            } => pointer.scroll(scroll::translate(horizontal, vertical)),
         }
     }
 }

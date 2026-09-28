@@ -1,5 +1,6 @@
-use smithay_client_toolkit::shell::wlr_layer::{
-    LayerShellHandler, LayerSurface, LayerSurfaceConfigure,
+use smithay_client_toolkit::shell::{
+    WaylandSurface,
+    wlr_layer::{LayerShellHandler, LayerSurface, LayerSurfaceConfigure},
 };
 use wayland_client::{Connection, QueueHandle};
 
@@ -10,30 +11,34 @@ impl LayerShellHandler for WaylandState {
         &mut self,
         _: &Connection,
         _: &QueueHandle<Self>,
-        _: &LayerSurface,
+        layer_surface: &LayerSurface,
         configure: LayerSurfaceConfigure,
         _: u32,
     ) {
+        let Some(window) = self.window(layer_surface.wl_surface()) else {
+            return;
+        };
+
         let (width, height) = configure.new_size;
 
         let width = if width == 0 {
-            layer::pixels(self.settings.width)
+            layer::pixels(window.settings.width)
         } else {
             width
         };
         let height = if height == 0 {
-            layer::pixels(self.settings.height)
+            layer::pixels(window.settings.height)
         } else {
             height
         };
 
-        self.width = width;
-        self.height = height;
+        window.width = width;
+        window.height = height;
 
-        self.redraw();
+        window.redraw();
     }
 
-    fn closed(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &LayerSurface) {
-        self.running = false;
+    fn closed(&mut self, _: &Connection, _: &QueueHandle<Self>, layer_surface: &LayerSurface) {
+        self.close(layer_surface.wl_surface());
     }
 }

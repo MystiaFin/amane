@@ -20,7 +20,7 @@ pub fn insert(handle: &LoopHandle<'static, WaylandState>, handlers: Handlers) {
             if let Ok((stream, _)) = listener.accept() {
                 answer(stream, &handlers);
 
-                state.request_frame();
+                state.request_frames();
             }
 
             Ok(PostAction::Continue)

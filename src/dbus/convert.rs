@@ -89,6 +89,7 @@ fn variant(argument: &Argument) -> Variant<'static> {
         Argument::Float(number) => Variant::F64(*number),
         Argument::Text(text) => Variant::from(text.clone()),
         Argument::Path(path) => object_path(path),
+        Argument::TextList(texts) => Variant::from(texts.clone()),
     }
 }
 

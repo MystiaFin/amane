@@ -9,16 +9,18 @@ use wayland_client::{
 use super::{WaylandState, key};
 
 impl KeyboardHandler for WaylandState {
+    // keys only say which keyboard they came from, so the focused window is kept here
     fn enter(
         &mut self,
         _: &Connection,
         _: &QueueHandle<Self>,
         _: &WlKeyboard,
-        _: &WlSurface,
+        surface: &WlSurface,
         _: u32,
         _: &[u32],
         _: &[Keysym],
     ) {
+        self.keyboard_focus = Some(surface.clone());
     }
 
     fn leave(
@@ -29,6 +31,7 @@ impl KeyboardHandler for WaylandState {
         _: &WlSurface,
         _: u32,
     ) {
+        self.keyboard_focus = None;
     }
 
     fn press_key(
@@ -39,14 +42,22 @@ impl KeyboardHandler for WaylandState {
         _: u32,
         event: KeyEvent,
     ) {
-        let Some(on_key) = &self.on_key else {
+        let Some(surface) = self.keyboard_focus.clone() else {
+            return;
+        };
+
+        let Some(window) = self.window(&surface) else {
+            return;
+        };
+
+        let Some(on_key) = &window.on_key else {
             return;
         };
 
         on_key(key::translate(&event));
 
-        // the handler may have changed a service, so the view has to run again
-        self.request_frame();
+        // the handler may have changed a service that any window shows
+        self.request_frames();
     }
 
     // only sent to keyboards made with key repeat, which this one is not

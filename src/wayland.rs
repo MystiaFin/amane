@@ -6,6 +6,8 @@ mod key;
 mod keyboard;
 mod layer;
 mod layer_shell;
+mod monitor;
+mod open;
 mod output;
 mod pointer;
 mod registry;
@@ -14,7 +16,10 @@ mod seat;
 mod settings;
 mod socket;
 mod update;
+mod view;
 mod wake;
+mod window;
+mod windows;
 
 use smithay_client_toolkit::{
     compositor::CompositorState,
@@ -23,55 +28,41 @@ use smithay_client_toolkit::{
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
     seat::SeatState,
-    shell::{
-        WaylandSurface,
-        wlr_layer::{LayerShell, LayerSurface},
-    },
+    shell::wlr_layer::LayerShell,
 };
 use wayland_client::{
-    Proxy, QueueHandle,
+    Connection, QueueHandle,
     globals::registry_queue_init,
-    protocol::{wl_keyboard::WlKeyboard, wl_pointer::WlPointer},
+    protocol::{wl_keyboard::WlKeyboard, wl_pointer::WlPointer, wl_surface::WlSurface},
 };
 
-use crate::{
-    LayerWindow,
-    graphics::Gpu,
-    input::{KeyHandler, Pointer},
-    ipc::Handlers,
-};
+use crate::{LayerWindow, Monitor, ipc::Handlers};
 
-use settings::Settings;
+use view::View;
+use window::Window;
 
 struct WaylandState {
-    view: fn() -> LayerWindow,
+    // every window has its own layer surface and gpu, and is dropped before the connection
+    windows: Vec<Window>,
 
-    // what the compositor was last told, so only a real change is sent again
-    settings: Settings,
+    // each of these gets a window on every monitor, including ones plugged in later
+    per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
 
-    width: u32,
-    height: u32,
-
-    scale: f32,
-
-    frame_requested: bool,
+    // keys do not say which window they are for, so the window that has focus is kept
+    keyboard_focus: Option<WlSurface>,
 
     registry: RegistryState,
     output: OutputState,
     seat: SeatState,
 
+    // kept so new windows can be made while the shell runs
+    compositor: CompositorState,
+    layer_shell: LayerShell,
+    connection: Connection,
+
     // kept so they can be released when the mouse or keyboard is unplugged
     pointer_device: Option<WlPointer>,
     keyboard_device: Option<WlKeyboard>,
-
-    // both come from the last drawn view, so input matches what is on screen
-    pointer: Pointer,
-    on_key: Option<KeyHandler>,
-
-    // the gpu draws into the layer surface, so it has to go first when both are dropped
-    gpu: Gpu,
-
-    layer_surface: LayerSurface,
 
     qh: QueueHandle<WaylandState>,
 
@@ -86,7 +77,11 @@ pub struct WaylandApp {
 }
 
 impl WaylandApp {
-    pub fn new(view: fn() -> LayerWindow, handlers: Handlers) -> Self {
+    pub fn new(
+        views: Vec<fn() -> LayerWindow>,
+        per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
+        handlers: Handlers,
+    ) -> Self {
         let connection = connection::connect();
 
         let (globals, event_queue) =
@@ -100,51 +95,33 @@ impl WaylandApp {
         let layer_shell =
             LayerShell::bind(&globals, &qh).expect("compositor does not support wlr-layer-shell");
 
-        let surface = compositor.create_surface(&qh);
+        // windows per monitor are opened once the compositor describes each monitor
+        let mut state = WaylandState {
+            windows: Vec::new(),
 
-        // later views can change these, each redraw compares them with the last ones
-        let window = view();
+            per_monitor,
 
-        let settings = Settings::from(&window);
-
-        let layer_surface = layer::create(&layer_shell, surface, &qh, &settings);
-
-        // the gpu draws straight into the surface, so it gets libwayland's own pointers
-        let display = connection.backend().display_ptr().cast();
-        let surface = layer_surface.wl_surface().id().as_ptr().cast();
-
-        let gpu = Gpu::new(display, surface);
-
-        let state = WaylandState {
-            view,
-
-            settings,
-
-            width: 0,
-            height: 0,
-
-            scale: 1.0,
-
-            frame_requested: false,
+            keyboard_focus: None,
 
             registry: RegistryState::new(&globals),
             output: OutputState::new(&globals, &qh),
             seat: SeatState::new(&globals, &qh),
 
+            compositor,
+            layer_shell,
+            connection: connection.clone(),
+
             pointer_device: None,
             keyboard_device: None,
-
-            pointer: Pointer::default(),
-            on_key: None,
-
-            gpu,
-
-            layer_surface,
 
             qh,
 
             running: true,
         };
+
+        for view in views {
+            state.open(View::Plain(view), None);
+        }
 
         let event_loop = EventLoop::try_new().expect("failed to create event loop");
 

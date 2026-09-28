@@ -3,12 +3,12 @@ use smithay_client_toolkit::{compositor::FrameCallbackData, shell::WaylandSurfac
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer};
 
-use super::WaylandState;
+use super::window::Window;
 
-impl WaylandState {
+impl Window {
     pub fn redraw(&mut self) {
         // the view runs again on every redraw, so it shows the services as they are now
-        let window = (self.view)();
+        let window = self.view.run();
 
         let moving = moving::take();
 
