@@ -1,12 +1,15 @@
-use crate::{Argument, Bus, Method, Notification, Notifications, Service, Urgency};
+use crate::{Argument, Bus, Method, Notification, Notifications, Service, Urgency, Value};
 
-use super::Reason;
+use super::{Action, Reason};
 
 const NAME: &str = "org.freedesktop.Notifications";
 
 const PATH: &str = "/org/freedesktop/Notifications";
 
 const INTERFACE: &str = "org.freedesktop.Notifications";
+
+// the key of what clicking the notification itself does
+pub const DEFAULT_ACTION: &str = "default";
 
 pub fn run() {
     let bus = Bus::session();
@@ -44,7 +47,7 @@ fn notify(method: &Method) {
         icon,
         summary,
         body,
-        _actions,
+        actions,
         hints,
         _timeout,
     ] = method.arguments()
@@ -53,6 +56,8 @@ fn notify(method: &Method) {
 
         return;
     };
+
+    let (actions, has_default) = read_actions(actions);
 
     let notification = Notification {
         // add() picks the real id
@@ -64,6 +69,11 @@ fn notify(method: &Method) {
         icon: String::from(icon.text()),
 
         urgency: Urgency::from_level(hints.get("urgency").number()),
+
+        actions,
+        has_default,
+
+        resident: hints.get("resident").bool(),
     };
 
     let replaces_id = replaces_id.number() as u32;
@@ -71,6 +81,33 @@ fn notify(method: &Method) {
     let id = Notifications::write().add(notification, replaces_id);
 
     method.reply(&[Argument::from(id)]);
+}
+
+/*
+ * actions come as one flat list: key, label, key, label;
+ * the "default" one is what clicking the notification itself does
+ */
+fn read_actions(list: &Value) -> (Vec<Action>, bool) {
+    let mut actions = Vec::new();
+    let mut has_default = false;
+
+    for pair in list.list().chunks_exact(2) {
+        let key = pair[0].text();
+        let label = pair[1].text();
+
+        if key == DEFAULT_ACTION {
+            has_default = true;
+
+            continue;
+        }
+
+        actions.push(Action {
+            key: String::from(key),
+            label: String::from(label),
+        });
+    }
+
+    (actions, has_default)
 }
 
 fn close(method: &Method) {
@@ -83,9 +120,9 @@ fn close(method: &Method) {
     method.reply(&[]);
 }
 
-// "body" is the only extra the spec lets a server claim without handling actions or images
+// images are the one extra amane does not handle yet
 fn send_capabilities(method: &Method) {
-    let capabilities = vec![String::from("body")];
+    let capabilities = vec![String::from("actions"), String::from("body")];
 
     method.reply(&[Argument::from(capabilities)]);
 }
@@ -99,6 +136,13 @@ fn send_information(method: &Method) {
     ];
 
     method.reply(&information);
+}
+
+// the sender hears which button was pressed, and does the rest itself
+pub fn announce_action(id: u32, key: &str) {
+    let arguments = [Argument::from(id), Argument::from(key)];
+
+    Bus::session().emit(PATH, INTERFACE, "ActionInvoked", &arguments);
 }
 
 pub fn announce_closed(id: u32, reason: Reason) {

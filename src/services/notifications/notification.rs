@@ -1,5 +1,7 @@
 use crate::Urgency;
 
+use super::Action;
+
 #[derive(Debug, Clone)]
 pub struct Notification {
     pub(crate) id: u32,
@@ -13,6 +15,14 @@ pub struct Notification {
     pub(crate) icon: String,
 
     pub(crate) urgency: Urgency,
+
+    // the "default" action is kept apart, it has no button of its own
+    pub(crate) actions: Vec<Action>,
+
+    pub(crate) has_default: bool,
+
+    // stays open after an action, until it is dismissed or the sender closes it
+    pub(crate) resident: bool,
 }
 
 impl Notification {
@@ -42,5 +52,10 @@ impl Notification {
 
     pub fn urgency(&self) -> Urgency {
         self.urgency
+    }
+
+    // the buttons to show, in the order the sender gave them
+    pub fn actions(&self) -> &[Action] {
+        &self.actions
     }
 }

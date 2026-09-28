@@ -1,8 +1,10 @@
+mod action;
 mod notification;
 mod reason;
 mod server;
 mod urgency;
 
+pub use action::Action;
 pub use notification::Notification;
 pub use urgency::Urgency;
 
@@ -50,6 +52,46 @@ impl Notifications {
 
     pub fn dismiss(id: u32) {
         Self::write().close(id, Reason::Dismissed);
+    }
+
+    // a button was pressed, pass the key from notification.actions()
+    pub fn invoke(id: u32, key: &str) {
+        Self::write().run_action(id, key);
+    }
+
+    // the notification itself was clicked: its default action, or a dismiss when it has none
+    pub fn click(id: u32) {
+        let mut notifications = Self::write();
+
+        let has_default = notifications
+            .list
+            .iter()
+            .any(|notification| notification.id == id && notification.has_default);
+
+        if has_default {
+            notifications.run_action(id, server::DEFAULT_ACTION);
+        } else {
+            notifications.close(id, Reason::Dismissed);
+        }
+    }
+
+    // the spec closes a notification once an action ran, unless it asked to stay
+    fn run_action(&mut self, id: u32, key: &str) {
+        let Some(notification) = self
+            .list
+            .iter()
+            .find(|notification| notification.id == id)
+        else {
+            return;
+        };
+
+        let resident = notification.resident;
+
+        server::announce_action(id, key);
+
+        if !resident {
+            self.close(id, Reason::Dismissed);
+        }
     }
 
     // a sender may replace its own earlier notification, which keeps its id and place
