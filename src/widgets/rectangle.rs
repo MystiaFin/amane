@@ -4,6 +4,7 @@ mod input;
 mod needs_height;
 mod needs_width;
 mod shadow;
+mod transform;
 
 use crate::graphics::Color;
 use crate::input::Handlers;
@@ -26,6 +27,10 @@ pub struct Rectangle {
     pub(crate) shadow: Option<Shadow>,
     pub(crate) child: Option<Box<dyn Widget>>,
     pub(crate) clip: bool,
+    pub(crate) rotation: f32,
+    pub(crate) scale: f32,
+    pub(crate) translate_x: f32,
+    pub(crate) translate_y: f32,
     pub(crate) padding: Padding,
     pub(crate) child_horizontal: Align,
     pub(crate) child_vertical: Align,

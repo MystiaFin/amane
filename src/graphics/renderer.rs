@@ -9,6 +9,7 @@ mod rectangle;
 mod shadow;
 mod shape;
 mod text;
+mod transform;
 
 use super::Transform;
 

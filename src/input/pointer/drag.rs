@@ -1,5 +1,3 @@
-use crate::Point;
-
 use super::Pointer;
 
 impl Pointer {
@@ -28,10 +26,7 @@ impl Pointer {
             return false;
         };
 
-        let point = Point {
-            x: self.x - target.area.x,
-            y: self.y - target.area.y,
-        };
+        let point = target.point(self.x, self.y);
 
         drag(point);
 

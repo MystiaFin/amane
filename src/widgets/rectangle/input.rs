@@ -4,7 +4,7 @@ use crate::graphics::Rect;
 use crate::input::{Cursor, Target, clip};
 use crate::{Button, Point, Rectangle, Scroll};
 
-use super::child;
+use super::{child, transform};
 
 impl Rectangle {
     pub fn on_click(mut self, handler: impl Fn(Button) + 'static) -> Self {
@@ -52,10 +52,30 @@ impl Rectangle {
 }
 
 pub fn collect_targets(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Target>) {
-    let target = Target {
-        area,
-        handlers: rectangle.handlers.clone(),
+    let first = targets.len();
+
+    collect_in_place(rectangle, area, targets);
+
+    let local = transform::local(rectangle, area);
+
+    // a rectangle scaled to nothing takes no input
+    let Some(inverse) = local.invert() else {
+        for target in &mut targets[first..] {
+            target.area = Rect::new(0.0, 0.0, 0.0, 0.0);
+        }
+
+        return;
     };
+
+    // this rectangle's transform is undone first, then whatever its children added inside it
+    for target in &mut targets[first..] {
+        target.inverse = inverse.post_concat(target.inverse);
+    }
+}
+
+// the hit areas as if the rectangle were not rotated, scaled or moved
+fn collect_in_place(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Target>) {
+    let target = Target::new(area, rectangle.handlers.clone());
 
     // added before the child, so the child wins where both react to the same thing
     targets.push(target);

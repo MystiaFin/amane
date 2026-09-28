@@ -25,7 +25,7 @@ pub fn collect_targets(text_input: &TextInput, area: Rect, targets: &mut Vec<Tar
         ..Handlers::default()
     };
 
-    targets.push(Target { area, handlers });
+    targets.push(Target::new(area, handlers));
 }
 
 fn key_handler(text_input: &TextInput) -> KeyHandler {

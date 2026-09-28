@@ -39,7 +39,7 @@ impl Pointer {
 
         // children are collected after their parents, so the last match is the innermost
         for (index, target) in self.targets.iter().enumerate() {
-            if target.area.contains(self.x, self.y) && has_handler(target) {
+            if target.contains(self.x, self.y) && has_handler(target) {
                 topmost = Some(index);
             }
         }

@@ -8,7 +8,7 @@ impl Pointer {
         let mut inside = Vec::new();
 
         for (index, target) in self.targets.iter().enumerate() {
-            if target.handlers.hover.is_some() && target.area.contains(x, y) {
+            if target.handlers.hover.is_some() && target.contains(x, y) {
                 inside.push(index);
             }
         }

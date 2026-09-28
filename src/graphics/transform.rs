@@ -1,3 +1,6 @@
+mod invert;
+mod make;
+
 /*
  * moves, scales and skews points:
  * x becomes sx * x + kx * y + tx, and y becomes ky * x + sy * y + ty

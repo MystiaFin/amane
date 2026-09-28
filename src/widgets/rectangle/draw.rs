@@ -3,7 +3,7 @@ use crate::input::Target;
 use crate::widgets::Widget;
 use crate::{Fill, Image, Size};
 
-use super::{Rectangle, child, input, shadow};
+use super::{Rectangle, child, input, shadow, transform};
 
 impl Widget for Rectangle {
     fn width(&self) -> Size {
@@ -15,26 +15,33 @@ impl Widget for Rectangle {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        let radius = self.radius.resolve(area.width, area.height);
+        let local = transform::local(self, area);
 
-        renderer.blur(area, radius, self.blur);
-
-        // the rectangle holding a mask is still drawing into this renderer, so the cut lands in it
-        if let Fill::Mask = self.fill {
-            renderer.cut(area, radius, self.opacity);
-        }
-
-        // collected apart, so a mask inside this rectangle cuts no further than its edge
-        let mut group = renderer.layer();
-
-        paint(self, &mut group, area, radius);
-
-        renderer.blend(group, self.opacity);
+        renderer.transformed(local, |renderer| draw_in_place(self, renderer, area));
     }
 
     fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
         input::collect_targets(self, area, targets);
     }
+}
+
+// the drawing as if the rectangle were not rotated, scaled or moved
+fn draw_in_place(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect) {
+    let radius = rectangle.radius.resolve(area.width, area.height);
+
+    renderer.blur(area, radius, rectangle.blur);
+
+    // the rectangle holding a mask is still drawing into this renderer, so the cut lands in it
+    if let Fill::Mask = rectangle.fill {
+        renderer.cut(area, radius, rectangle.opacity);
+    }
+
+    // collected apart, so a mask inside this rectangle cuts no further than its edge
+    let mut group = renderer.layer();
+
+    paint(rectangle, &mut group, area, radius);
+
+    renderer.blend(group, rectangle.opacity);
 }
 
 fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {

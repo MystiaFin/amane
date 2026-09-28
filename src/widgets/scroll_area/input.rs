@@ -28,7 +28,7 @@ pub fn collect_targets(scroll_area: &ScrollArea, area: Rect, targets: &mut Vec<T
     };
 
     // added before the child, so a child with its own on_scroll still wins
-    targets.push(Target { area, handlers });
+    targets.push(Target::new(area, handlers));
 
     let first = targets.len();
 
