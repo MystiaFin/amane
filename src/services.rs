@@ -1,5 +1,6 @@
 pub mod store;
 pub mod wake;
+mod apps;
 mod audio;
 mod lock;
 mod media;
@@ -13,6 +14,7 @@ use std::sync::RwLockReadGuard;
 use std::thread;
 use std::time::Duration;
 
+pub use apps::{Apps, DesktopApp};
 pub use audio::Audio;
 pub use lock::Lock;
 pub use media::Media;
