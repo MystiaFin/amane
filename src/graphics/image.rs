@@ -52,7 +52,7 @@ pub fn load(path: &Path) -> &'static Bitmap {
     image
 }
 
-fn read(path: &Path) -> Bitmap {
+pub fn read(path: &Path) -> Bitmap {
     let bytes = std::fs::read(path).expect("failed to read image file");
 
     // the file's first bytes say its format, whatever its name ends in

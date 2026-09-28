@@ -26,6 +26,17 @@ impl Color {
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
+
+    // "#rrggbb", or "#rrggbbaa" when not fully opaque
+    pub fn hex(&self) -> String {
+        let rgb = format!("#{:02x}{:02x}{:02x}", self.r, self.g, self.b);
+
+        if self.a == 255 {
+            return rgb;
+        }
+
+        format!("{rgb}{:02x}", self.a)
+    }
 }
 
 // accepts "#rgb", "#rrggbb" and "#rrggbbaa", the # is optional
