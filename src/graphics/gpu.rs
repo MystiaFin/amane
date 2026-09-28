@@ -1,4 +1,5 @@
 mod blur;
+mod clip;
 mod convert;
 mod cut;
 mod dispatch;

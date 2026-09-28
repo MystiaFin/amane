@@ -25,6 +25,7 @@ pub struct Rectangle {
     pub(crate) opacity: f32,
     pub(crate) shadow: Option<Shadow>,
     pub(crate) child: Option<Box<dyn Widget>>,
+    pub(crate) clip: bool,
     pub(crate) handlers: Handlers,
 }
 
@@ -73,6 +74,13 @@ impl Rectangle {
 
     pub fn child(mut self, child: impl Widget + 'static) -> Self {
         self.child = Some(Box::new(child));
+
+        self
+    }
+
+    // the child only shows inside the rectangle, following its rounded corners
+    pub fn clip(mut self) -> Self {
+        self.clip = true;
 
         self
     }

@@ -63,4 +63,11 @@ pub enum Command {
         commands: Vec<Command>,
         opacity: f32,
     },
+
+    // commands that only show inside the path
+    Clip {
+        path: Path,
+        transform: Transform,
+        commands: Vec<Command>,
+    },
 }

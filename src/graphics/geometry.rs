@@ -28,6 +28,19 @@ impl Rect {
         inside_horizontally && inside_vertically
     }
 
+    // the part both rectangles cover, empty when they don't meet
+    pub fn intersect(self, other: Rect) -> Rect {
+        let left = f32::max(self.x, other.x);
+        let top = f32::max(self.y, other.y);
+        let right = f32::min(self.x + self.width, other.x + other.width);
+        let bottom = f32::min(self.y + self.height, other.y + other.height);
+
+        let width = f32::max(right - left, 0.0);
+        let height = f32::max(bottom - top, 0.0);
+
+        Rect::new(left, top, width, height)
+    }
+
     pub fn trace(self, radius: f32) -> Option<Path> {
         // a radius past half a side would make the corners overlap
         let shortest_half = f32::min(self.width, self.height) / 2.0;

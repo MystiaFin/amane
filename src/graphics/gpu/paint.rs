@@ -51,6 +51,23 @@ impl Gpu {
                     self.lay(&layer, canvas, opacity, false);
                 }
 
+                // the same for a clip, whose canvas is trimmed to the path before it is laid down
+                Command::Clip {
+                    path,
+                    transform,
+                    commands,
+                } if separate(&commands) => {
+                    self.paint(&mut scene, canvas, &mut borrowed);
+
+                    let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
+
+                    self.run(commands, &layer);
+
+                    self.trim(&layer, &path, transform);
+
+                    self.lay(&layer, canvas, 1.0, false);
+                }
+
                 command => self.add(&mut scene, command, canvas),
             }
         }
@@ -62,7 +79,7 @@ impl Gpu {
 fn separate(commands: &[Command]) -> bool {
     commands.iter().any(|command| match command {
         Command::Blur { .. } | Command::Cut { .. } => true,
-        Command::Layer { commands, .. } => separate(commands),
+        Command::Layer { commands, .. } | Command::Clip { commands, .. } => separate(commands),
         _ => false,
     })
 }

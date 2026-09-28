@@ -18,6 +18,7 @@ impl NeedsHeight {
             opacity: 1.0,
             shadow: None,
             child: None,
+            clip: false,
             handlers: Handlers::default(),
         }
     }

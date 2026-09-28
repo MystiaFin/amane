@@ -49,6 +49,12 @@ impl Gpu {
 
             Command::Layer { commands, opacity } => self.layer(scene, commands, opacity, canvas),
 
+            Command::Clip {
+                path,
+                transform,
+                commands,
+            } => self.clip(scene, &path, transform, commands, canvas),
+
             // blurs and cuts split the drawing, so run handles them before they get here
             Command::Blur { .. } | Command::Cut { .. } => {}
         }

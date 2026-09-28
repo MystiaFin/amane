@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::graphics::Rect;
-use crate::input::Target;
+use crate::input::{Target, clip};
 use crate::{Button, Rectangle, Scroll};
 
 use super::child;
@@ -42,5 +42,12 @@ pub fn collect_targets(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Targ
 
     let child_area = child::area(child.as_ref(), area);
 
+    let first = targets.len();
+
     child.collect_targets(child_area, targets);
+
+    // the rounded corners are left out, they are too small to miss a click by
+    if rectangle.clip {
+        clip(&mut targets[first..], area);
+    }
 }

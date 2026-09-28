@@ -21,7 +21,12 @@ impl Gpu {
 
         shape::fill(&mut scene, path, transform, Color::WHITE);
 
-        let coverage = self.render(&scene, canvas);
+        self.erase_covered(&scene, canvas, strength);
+    }
+
+    // takes away from the canvas as much as the scene covers
+    pub(super) fn erase_covered(&mut self, scene: &Scene, canvas: &Texture, strength: f32) {
+        let coverage = self.render(scene, canvas);
 
         let mut encoder = self.device.create_command_encoder(&Default::default());
 

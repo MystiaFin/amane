@@ -63,7 +63,17 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
 
     let child_area = child::area(child.as_ref(), area);
 
-    child.draw(renderer, child_area);
+    if !rectangle.clip {
+        child.draw(renderer, child_area);
+
+        return;
+    }
+
+    let mut inside = renderer.layer();
+
+    child.draw(&mut inside, child_area);
+
+    renderer.clip(inside, area, radius);
 }
 
 fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {

@@ -1,5 +1,6 @@
 mod blur;
 mod border;
+mod clip;
 mod command;
 mod cut;
 mod image;
