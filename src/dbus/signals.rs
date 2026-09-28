@@ -1,0 +1,56 @@
+use zbus::MatchRule;
+use zbus::blocking::MessageIterator;
+use zbus::message::Type;
+
+use crate::Signal;
+
+use super::{Bus, convert};
+
+pub struct Signals {
+    messages: MessageIterator,
+}
+
+impl Bus {
+    // waits for each matching signal, so call it from a service thread, not from view()
+    pub fn signals(&self, interface: &str, name: &str) -> Signals {
+        let rule = MatchRule::builder()
+            .msg_type(Type::Signal)
+            .interface(interface)
+            .expect("failed to watch signals: bad interface name")
+            .member(name)
+            .expect("failed to watch signals: bad signal name")
+            .build();
+
+        let messages = MessageIterator::for_match_rule(rule, self.connection, None)
+            .expect("failed to watch signals");
+
+        Signals { messages }
+    }
+}
+
+impl Iterator for Signals {
+    type Item = Signal;
+
+    fn next(&mut self) -> Option<Signal> {
+        loop {
+            // a message that fails to read is skipped, the next one may be fine
+            let Ok(message) = self.messages.next()? else {
+                continue;
+            };
+
+            let header = message.header();
+
+            let sender = header.sender().map(|name| name.to_string());
+            let path = header.path().map(|path| path.to_string());
+
+            let signal = Signal {
+                sender: sender.unwrap_or_default(),
+                path: path.unwrap_or_default(),
+
+                arguments: convert::arguments(&message),
+            };
+
+            return Some(signal);
+        }
+    }
+}

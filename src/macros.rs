@@ -19,3 +19,14 @@ macro_rules! shapes {
         ]
     };
 }
+
+#[macro_export]
+macro_rules! arguments {
+    ($($argument:expr),* $(,)?) => {
+        vec![
+            $(
+                $crate::Argument::from($argument)
+            ),*
+        ]
+    };
+}

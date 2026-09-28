@@ -1,5 +1,6 @@
 mod animation;
 mod app;
+mod dbus;
 mod files;
 mod full;
 mod graphics;
@@ -15,6 +16,7 @@ mod widgets;
 
 pub use animation::{Animation, Blend, Easing};
 pub use app::App;
+pub use dbus::{Argument, Bus, Signal, Value};
 pub use files::watch_file;
 pub use full::Full;
 pub use graphics::{Cap, Color};
