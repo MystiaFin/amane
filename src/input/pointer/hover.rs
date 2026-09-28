@@ -20,6 +20,9 @@ impl Pointer {
         // a button let go outside the window is not a click
         self.pressed = None;
 
+        // the release will not reach this window, so the drag ends here
+        self.dragged = None;
+
         self.update_hovered(Vec::new())
     }
 

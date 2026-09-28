@@ -1,6 +1,8 @@
 use smithay_client_toolkit::seat::pointer::{PointerEvent, PointerEventKind, PointerHandler};
 use wayland_client::{Connection, QueueHandle, protocol::wl_pointer::WlPointer};
 
+use crate::Button;
+
 use super::{WaylandState, button, scroll};
 
 impl PointerHandler for WaylandState {
@@ -38,15 +40,24 @@ impl WaylandState {
 
         match &event.kind {
             PointerEventKind::Enter { .. } | PointerEventKind::Motion { .. } => {
-                pointer.move_to(x as f32, y as f32)
+                let hovered = pointer.move_to(x as f32, y as f32);
+                let dragged = pointer.drag();
+                let moved = pointer.report_motion();
+
+                hovered || dragged || moved
             }
 
             PointerEventKind::Leave { .. } => pointer.leave(),
 
-            PointerEventKind::Press { .. } => {
+            PointerEventKind::Press { button, .. } => {
                 pointer.press();
 
-                false
+                // only the left button drags
+                if button::translate(*button) != Some(Button::Left) {
+                    return false;
+                }
+
+                pointer.start_drag()
             }
 
             PointerEventKind::Release { button, .. } => {
@@ -54,6 +65,10 @@ impl WaylandState {
                 let Some(button) = button::translate(*button) else {
                     return false;
                 };
+
+                if button == Button::Left {
+                    pointer.stop_drag();
+                }
 
                 pointer.release(button)
             }

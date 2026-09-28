@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::graphics::Rect;
 use crate::input::{Target, clip};
-use crate::{Button, Rectangle, Scroll};
+use crate::{Button, Point, Rectangle, Scroll};
 
 use super::child;
 
@@ -22,6 +22,23 @@ impl Rectangle {
 
     pub fn on_scroll(mut self, handler: impl Fn(Scroll) + 'static) -> Self {
         self.handlers.scroll = Some(Rc::new(handler));
+
+        self
+    }
+
+    /*
+     * runs on a left press and on every move until the release,
+     * even after the pointer leaves the rectangle
+     */
+    pub fn on_drag(mut self, handler: impl Fn(Point) + 'static) -> Self {
+        self.handlers.drag = Some(Rc::new(handler));
+
+        self
+    }
+
+    // runs on every move while the pointer is over the rectangle
+    pub fn on_move(mut self, handler: impl Fn(Point) + 'static) -> Self {
+        self.handlers.motion = Some(Rc::new(handler));
 
         self
     }

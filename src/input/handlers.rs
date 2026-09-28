@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{Button, Key, Scroll};
+use crate::{Button, Key, Point, Scroll};
 
 /*
  * shared, so the hit areas kept after a redraw
@@ -10,10 +10,13 @@ pub type ClickHandler = Rc<dyn Fn(Button)>;
 pub type HoverHandler = Rc<dyn Fn(bool)>;
 pub type ScrollHandler = Rc<dyn Fn(Scroll)>;
 pub type KeyHandler = Rc<dyn Fn(Key)>;
+pub type PointHandler = Rc<dyn Fn(Point)>;
 
 #[derive(Clone, Default)]
 pub struct Handlers {
     pub click: Option<ClickHandler>,
     pub hover: Option<HoverHandler>,
     pub scroll: Option<ScrollHandler>,
+    pub drag: Option<PointHandler>,
+    pub motion: Option<PointHandler>,
 }

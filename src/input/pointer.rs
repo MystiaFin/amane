@@ -1,5 +1,7 @@
 mod click;
+mod drag;
 mod hover;
+mod motion;
 mod scroll;
 
 use crate::Widget;
@@ -18,6 +20,7 @@ pub struct Pointer {
     // positions in targets, which stay the same across redraws of an unchanged layout
     hovered: Vec<usize>,
     pressed: Option<usize>,
+    dragged: Option<usize>,
 }
 
 impl Pointer {
