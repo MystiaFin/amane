@@ -1,10 +1,11 @@
-use crate::{LayerWindow, Monitor, graphics::font, ipc::Handlers, wayland::WaylandApp};
+use crate::{LayerWindow, Monitor, Window, graphics::font, ipc::Handlers, wayland::WaylandApp};
 
 #[derive(Default)]
 pub struct App {
     font: Option<String>,
 
     windows: Vec<fn() -> LayerWindow>,
+    normal_windows: Vec<fn() -> Window>,
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
     lock: Option<fn(&Monitor) -> LayerWindow>,
 
@@ -25,6 +26,13 @@ impl App {
     // each call adds one more window, on the monitor the compositor chooses
     pub fn window(mut self, view: fn() -> LayerWindow) -> Self {
         self.windows.push(view);
+
+        self
+    }
+
+    // a regular desktop window with a title bar, it can be added next to layer windows
+    pub fn normal_window(mut self, view: fn() -> Window) -> Self {
+        self.normal_windows.push(view);
 
         self
     }
@@ -54,7 +62,9 @@ impl App {
     }
 
     pub fn run(self) {
-        if self.windows.is_empty() && self.per_monitor.is_empty() && self.lock.is_none() {
+        let no_windows = self.windows.is_empty() && self.normal_windows.is_empty();
+
+        if no_windows && self.per_monitor.is_empty() && self.lock.is_none() {
             panic!("failed to run: no window set");
         }
 
@@ -62,7 +72,13 @@ impl App {
             font::set_default(family);
         }
 
-        let mut backend = WaylandApp::new(self.windows, self.per_monitor, self.lock, self.handlers);
+        let mut backend = WaylandApp::new(
+            self.windows,
+            self.normal_windows,
+            self.per_monitor,
+            self.lock,
+            self.handlers,
+        );
 
         backend.run();
     }

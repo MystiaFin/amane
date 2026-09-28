@@ -9,6 +9,7 @@ mod layer;
 mod layer_shell;
 mod lock;
 mod monitor;
+mod normal;
 mod open;
 mod output;
 mod pointer;
@@ -34,7 +35,7 @@ use smithay_client_toolkit::{
     registry::RegistryState,
     seat::{SeatState, pointer::ThemedPointer},
     session_lock::{SessionLock, SessionLockState},
-    shell::wlr_layer::LayerShell,
+    shell::{wlr_layer::LayerShell, xdg::XdgShell},
     shm::Shm,
 };
 use wayland_client::{
@@ -43,7 +44,7 @@ use wayland_client::{
     protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
 };
 
-use crate::{Cursor, LayerWindow, Monitor, ipc::Handlers};
+use crate::{Cursor, LayerWindow, Monitor, Window as NormalWindow, ipc::Handlers};
 
 use view::View;
 use window::Window;
@@ -65,6 +66,7 @@ struct WaylandState {
     // kept so new windows can be made while the shell runs
     compositor: CompositorState,
     layer_shell: LayerShell,
+    xdg_shell: XdgShell,
     shm: Shm,
 
     // the lock screen's view, and the lock itself while the session is locked
@@ -94,6 +96,7 @@ pub struct WaylandApp {
 impl WaylandApp {
     pub fn new(
         views: Vec<fn() -> LayerWindow>,
+        normal_views: Vec<fn() -> NormalWindow>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: Handlers,
@@ -111,6 +114,9 @@ impl WaylandApp {
         let layer_shell =
             LayerShell::bind(&globals, &qh).expect("compositor does not support wlr-layer-shell");
 
+        let xdg_shell =
+            XdgShell::bind(&globals, &qh).expect("compositor does not support xdg-shell");
+
         let shm = Shm::bind(&globals, &qh).expect("compositor does not provide wl_shm");
 
         // windows per monitor are opened once the compositor describes each monitor
@@ -127,6 +133,7 @@ impl WaylandApp {
 
             compositor,
             layer_shell,
+            xdg_shell,
             shm,
 
             lock_view,
@@ -144,6 +151,10 @@ impl WaylandApp {
 
         for view in views {
             state.open(View::Plain(view), None);
+        }
+
+        for view in normal_views {
+            state.open_normal(view);
         }
 
         // the lock screens open once the compositor answers that the session is locked

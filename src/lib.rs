@@ -14,6 +14,7 @@ mod process;
 mod services;
 mod wayland;
 mod widgets;
+mod window;
 
 pub use animation::{Animation, Blend, Easing};
 pub use app::App;
@@ -44,3 +45,4 @@ pub use widgets::{
 
 pub use widgets::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};
 pub use widgets::Size::Parent;
+pub use window::Window;
