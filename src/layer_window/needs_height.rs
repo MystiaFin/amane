@@ -20,6 +20,8 @@ impl NeedsHeight {
 
             visible: true,
 
+            input_region: None,
+
             root: None,
 
             on_key: None,

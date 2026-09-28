@@ -7,6 +7,8 @@ use super::{layer, settings::Settings, window::Window};
 impl Window {
     // settings changed by input or services reach the compositor before anything is drawn
     pub fn update_surface(&mut self, window: &LayerWindow) {
+        self.update_input_region(window);
+
         let settings = Settings::from(window);
 
         if settings == self.settings {

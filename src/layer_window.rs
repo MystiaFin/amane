@@ -1,5 +1,7 @@
 mod horizontal;
 mod input;
+mod input_area;
+mod input_region;
 mod keyboard;
 mod layer;
 mod margin;
@@ -14,6 +16,7 @@ use crate::Widget;
 use crate::input::KeyHandler;
 
 pub use horizontal::Horizontal;
+pub use input_area::InputArea;
 pub use keyboard::Keyboard;
 pub use layer::Layer;
 pub use margin::Margin;
@@ -36,6 +39,9 @@ pub struct LayerWindow {
     pub(crate) zone: Zone,
 
     pub(crate) visible: bool,
+
+    // none means the whole window takes the pointer
+    pub(crate) input_region: Option<Vec<InputArea>>,
 
     pub(crate) root: Option<Box<dyn Widget>>,
 

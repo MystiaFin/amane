@@ -25,7 +25,7 @@ pub use input::{Button, Key, Point, Scroll};
 pub use ipc::{IpcCall, ipc_socket};
 pub use monitor::Monitor;
 pub use layer_window::{
-    Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
+    Horizontal, InputArea, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
 };
 pub use process::{lines, output, spawn};
 pub use services::{

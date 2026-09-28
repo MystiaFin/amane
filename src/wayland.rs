@@ -10,6 +10,7 @@ mod monitor;
 mod open;
 mod output;
 mod pointer;
+mod region;
 mod registry;
 mod scroll;
 mod seat;

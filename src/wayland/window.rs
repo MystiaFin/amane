@@ -1,7 +1,11 @@
 use smithay_client_toolkit::shell::wlr_layer::LayerSurface;
-use wayland_client::{QueueHandle, protocol::wl_output::WlOutput};
+use wayland_client::{
+    QueueHandle,
+    protocol::{wl_compositor::WlCompositor, wl_output::WlOutput},
+};
 
 use crate::graphics::Gpu;
+use crate::InputArea;
 use crate::input::{KeyHandler, Pointer};
 
 use super::{WaylandState, settings::Settings, view::View};
@@ -15,6 +19,9 @@ pub struct Window {
 
     // what the compositor was last told, so only a real change is sent again
     pub settings: Settings,
+
+    // the input region is not Copy like the rest, so it is kept on its own
+    pub input_region: Option<Vec<InputArea>>,
 
     pub width: u32,
     pub height: u32,
@@ -31,6 +38,9 @@ pub struct Window {
     pub gpu: Gpu,
 
     pub layer_surface: LayerSurface,
+
+    // kept to make input regions, which come from the compositor
+    pub compositor: WlCompositor,
 
     pub qh: QueueHandle<WaylandState>,
 }

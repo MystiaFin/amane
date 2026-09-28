@@ -36,6 +36,8 @@ impl WaylandState {
 
             settings,
 
+            input_region: None,
+
             width: 0,
             height: 0,
 
@@ -49,6 +51,8 @@ impl WaylandState {
             gpu,
 
             layer_surface,
+
+            compositor: self.compositor.wl_compositor().clone(),
 
             qh: self.qh.clone(),
         };
