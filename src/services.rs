@@ -14,7 +14,7 @@ use std::time::Duration;
 
 pub use audio::Audio;
 pub use media::Media;
-pub use network::{Link, Network};
+pub use network::{AccessPoint, Link, Network};
 pub use notifications::{Notification, Notifications, Urgency};
 pub use workspace::Workspace;
 pub use workspaces::Workspaces;

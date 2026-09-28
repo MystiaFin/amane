@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 // d-bus checks each argument's exact kind, so these keep it, unlike Value
 #[derive(Debug, Clone, PartialEq)]
 pub enum Argument {
@@ -18,6 +20,18 @@ pub enum Argument {
 
     // a list of strings, like the capabilities a notification server answers with
     TextList(Vec<String>),
+
+    // raw bytes, like a wifi network's name
+    Bytes(Vec<u8>),
+
+    // named values of any kind, like the options of a wifi scan
+    Map(BTreeMap<String, Argument>),
+
+    // named groups of named values, like a networkmanager connection's settings
+    Groups(BTreeMap<String, BTreeMap<String, Argument>>),
+
+    // a value that carries its own kind, like the new value of a property
+    Variant(Box<Argument>),
 }
 
 impl From<bool> for Argument {

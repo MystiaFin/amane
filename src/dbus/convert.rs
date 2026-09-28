@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use zbus::Message;
 use zbus::zvariant::{ObjectPath, Structure, StructureBuilder, Value as Variant};
@@ -90,7 +90,34 @@ fn variant(argument: &Argument) -> Variant<'static> {
         Argument::Text(text) => Variant::from(text.clone()),
         Argument::Path(path) => object_path(path),
         Argument::TextList(texts) => Variant::from(texts.clone()),
+        Argument::Bytes(bytes) => Variant::from(bytes.clone()),
+        Argument::Map(map) => Variant::from(entries(map)),
+        Argument::Groups(groups) => Variant::from(grouped(groups)),
+        Argument::Variant(inner) => Variant::Value(Box::new(variant(inner))),
     }
+}
+
+// each value keeps its own kind, so the map is sent as string to variant
+fn entries(map: &BTreeMap<String, Argument>) -> HashMap<String, Variant<'static>> {
+    let mut entries = HashMap::new();
+
+    for (key, argument) in map {
+        entries.insert(key.clone(), variant(argument));
+    }
+
+    entries
+}
+
+fn grouped(
+    groups: &BTreeMap<String, BTreeMap<String, Argument>>,
+) -> HashMap<String, HashMap<String, Variant<'static>>> {
+    let mut grouped = HashMap::new();
+
+    for (name, group) in groups {
+        grouped.insert(name.clone(), entries(group));
+    }
+
+    grouped
 }
 
 fn object_path(path: &str) -> Variant<'static> {

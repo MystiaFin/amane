@@ -1,8 +1,12 @@
+mod access_point;
 mod link;
 mod manager;
+mod profile;
+mod wifi;
 
 use crate::{Service, Value};
 
+pub use access_point::AccessPoint;
 pub use link::Link;
 
 #[derive(Default)]
@@ -14,6 +18,11 @@ pub struct Network {
 
     // 0 to 100, and 0 on a wired link
     strength: u8,
+
+    wifi_enabled: bool,
+
+    // empty without a wifi device, or with the radio off
+    access_points: Vec<AccessPoint>,
 }
 
 /*
@@ -31,6 +40,13 @@ impl Service for Network {
 
     fn update(&mut self) {
         *self = Self::default();
+
+        // networks to join are listed even while offline
+        self.wifi_enabled = manager::wifi_enabled();
+
+        if let Some(device) = wifi::device() {
+            self.access_points = wifi::access_points(&device);
+        }
 
         if !manager::connected() {
             return;
@@ -66,6 +82,61 @@ impl Network {
 
     pub fn strength(&self) -> u8 {
         self.strength
+    }
+
+    pub fn wifi_enabled(&self) -> bool {
+        self.wifi_enabled
+    }
+
+    pub fn access_points(&self) -> &[AccessPoint] {
+        &self.access_points
+    }
+}
+
+/*
+ * these talk to networkmanager right away, and the
+ * next update shows what changed
+ */
+impl Network {
+    // new networks show up in access_points a few seconds later
+    pub fn scan() {
+        let Some(device) = wifi::device() else {
+            return;
+        };
+
+        wifi::scan(&device);
+    }
+
+    /*
+     * a saved profile already holds its password, so it is joined as it is;
+     * otherwise networkmanager saves a new one, password included
+     */
+    pub fn connect(ssid: &str, password: Option<&str>) {
+        let Some(device) = wifi::device() else {
+            return;
+        };
+
+        if let Some(profile) = profile::find(ssid) {
+            manager::activate(&profile, &device);
+
+            return;
+        }
+
+        let settings = profile::settings(ssid, password);
+
+        manager::add_and_activate(settings, &device);
+    }
+
+    pub fn disconnect() {
+        let Some(device) = wifi::device() else {
+            return;
+        };
+
+        wifi::disconnect(&device);
+    }
+
+    pub fn set_wifi(enabled: bool) {
+        manager::set_wifi(enabled);
     }
 }
 

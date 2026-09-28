@@ -48,4 +48,28 @@ impl Bus {
             &arguments,
         )
     }
+
+    pub fn set_property(
+        &self,
+        destination: &str,
+        path: &str,
+        interface: &str,
+        name: &str,
+        value: Argument,
+    ) {
+        // a property can be of any kind, so the new value travels as a variant
+        let arguments = [
+            Argument::from(interface),
+            Argument::from(name),
+            Argument::Variant(Box::new(value)),
+        ];
+
+        self.call(
+            destination,
+            path,
+            "org.freedesktop.DBus.Properties",
+            "Set",
+            &arguments,
+        );
+    }
 }
