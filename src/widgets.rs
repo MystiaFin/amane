@@ -1,8 +1,12 @@
+mod align;
 mod canvas;
+mod center;
 mod column;
+mod end;
 mod fill;
 mod fit;
 mod image;
+mod justify;
 mod layout;
 mod mask;
 mod radius;
@@ -11,15 +15,20 @@ mod row;
 mod shadow;
 mod shape;
 mod size;
+mod start;
 mod text;
 
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
 
+pub use align::Align;
 pub use canvas::Canvas;
+pub use center::Center;
 pub use column::Column;
+pub use end::End;
 pub use fill::Fill;
 pub use image::Image;
+pub use justify::Justify;
 pub use layout::{Direction, Layout};
 pub use mask::Mask;
 pub use radius::Radius;
@@ -28,6 +37,7 @@ pub use row::Row;
 pub use shadow::Shadow;
 pub use shape::{Arc, Circle, Line, Path, Shape};
 pub use size::Size;
+pub use start::Start;
 pub use text::Text;
 
 pub trait Widget {

@@ -19,8 +19,9 @@ pub use layer_window::{
 };
 pub use services::Service;
 pub use widgets::{
-    Arc, Canvas, Circle, Column, Fill, Image, Line, Mask, Path, Radius, Rectangle, Row, Shadow,
-    Shape, Size, Text, Widget,
+    Align, Arc, Canvas, Center, Circle, Column, End, Fill, Image, Justify, Line, Mask, Path,
+    Radius, Rectangle, Row, Shadow, Shape, Size, Start, Text, Widget,
 };
 
+pub use widgets::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};
 pub use widgets::Size::Parent;

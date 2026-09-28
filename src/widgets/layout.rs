@@ -1,6 +1,8 @@
-use crate::Size;
+mod measure;
+
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
+use crate::{Align, Justify, Size};
 
 use super::Widget;
 
@@ -13,13 +15,27 @@ pub enum Direction {
 pub struct Layout {
     direction: Direction,
     children: Vec<Box<dyn Widget>>,
+
+    pub(crate) width: Size,
+    pub(crate) height: Size,
+
+    pub(crate) justify: Justify,
+    pub(crate) align: Align,
 }
 
 impl Layout {
     pub fn new(direction: Direction, children: Vec<Box<dyn Widget>>) -> Self {
+        // children never change after this, so their size can be worked out once
+        let width = measure::width(direction, &children);
+        let height = measure::height(direction, &children);
+
         Self {
             direction,
             children,
+            width,
+            height,
+            justify: Justify::default(),
+            align: Align::default(),
         }
     }
 
@@ -28,6 +44,22 @@ impl Layout {
         match self.direction {
             Direction::Row => child.width(),
             Direction::Column => child.height(),
+        }
+    }
+
+    // the size of a child across the direction the layout grows in
+    fn across(&self, child: &dyn Widget) -> Size {
+        match self.direction {
+            Direction::Row => child.height(),
+            Direction::Column => child.width(),
+        }
+    }
+
+    // the area's length along the direction, then its length across it
+    fn span(&self, area: Rect) -> (f32, f32) {
+        match self.direction {
+            Direction::Row => (area.width, area.height),
+            Direction::Column => (area.height, area.width),
         }
     }
 
@@ -47,10 +79,7 @@ impl Layout {
             return 0.0;
         }
 
-        let available = match self.direction {
-            Direction::Row => area.width,
-            Direction::Column => area.height,
-        };
+        let (available, _) = self.span(area);
 
         f32::max(available - used, 0.0) / filling as f32
     }
@@ -58,36 +87,38 @@ impl Layout {
     // where each child goes, one after another along the direction
     fn place(&self, area: Rect) -> Vec<Rect> {
         let share = self.share(area);
+        let (available, room) = self.span(area);
 
-        let mut current_x = area.x;
-        let mut current_y = area.y;
-
-        let mut child_areas = Vec::new();
+        let mut sizes = Vec::new();
+        let mut used = 0.0;
 
         for child in &self.children {
-            let (width, height) = match self.direction {
-                Direction::Row => (
-                    child.width().resolve(share),
-                    child.height().resolve(area.height),
-                ),
+            let length = self.along(child.as_ref()).resolve(share);
+            let thickness = self.across(child.as_ref()).resolve(room);
 
-                Direction::Column => (
-                    child.width().resolve(area.width),
-                    child.height().resolve(share),
-                ),
+            used += length;
+
+            sizes.push((length, thickness));
+        }
+
+        // Parent-sized children already took the free space, so this is 0 when there are any
+        let free = f32::max(available - used, 0.0);
+        let (lead, gap) = self.justify.spread(free, self.children.len());
+
+        let mut current = lead;
+        let mut child_areas = Vec::new();
+
+        for (length, thickness) in sizes {
+            let offset = self.align.offset(room - thickness);
+
+            let (x, y, width, height) = match self.direction {
+                Direction::Row => (area.x + current, area.y + offset, length, thickness),
+                Direction::Column => (area.x + offset, area.y + current, thickness, length),
             };
 
-            child_areas.push(Rect::new(current_x, current_y, width, height));
+            child_areas.push(Rect::new(x, y, width, height));
 
-            match self.direction {
-                Direction::Row => {
-                    current_x += width;
-                }
-
-                Direction::Column => {
-                    current_y += height;
-                }
-            }
+            current += length + gap;
         }
 
         child_areas
@@ -96,48 +127,11 @@ impl Layout {
 
 impl Widget for Layout {
     fn width(&self) -> Size {
-        let mut total = 0.0;
-        let mut widest = 0.0;
-
-        for child in &self.children {
-            // one child that fills makes the whole layout fill
-            let Size::Fixed(width) = child.width() else {
-                return Size::Parent;
-            };
-
-            total += width;
-
-            widest = f32::max(widest, width);
-        }
-
-        match self.direction {
-            // side by side: widths add up
-            Direction::Row => Size::Fixed(total),
-
-            // stacked: as wide as the widest child
-            Direction::Column => Size::Fixed(widest),
-        }
+        self.width
     }
 
     fn height(&self) -> Size {
-        let mut total = 0.0;
-        let mut tallest = 0.0;
-
-        for child in &self.children {
-            // one child that fills makes the whole layout fill
-            let Size::Fixed(height) = child.height() else {
-                return Size::Parent;
-            };
-
-            total += height;
-
-            tallest = f32::max(tallest, height);
-        }
-
-        match self.direction {
-            Direction::Row => Size::Fixed(tallest),
-            Direction::Column => Size::Fixed(total),
-        }
+        self.height
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {

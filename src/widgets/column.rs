@@ -1,6 +1,6 @@
-use crate::Size;
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
+use crate::{Align, Justify, Size};
 
 use super::{Direction, Layout, Widget};
 
@@ -13,6 +13,30 @@ impl Column {
         Self {
             layout: Layout::new(Direction::Column, children),
         }
+    }
+
+    pub fn width(mut self, width: impl Into<Size>) -> Self {
+        self.layout.width = width.into();
+
+        self
+    }
+
+    pub fn height(mut self, height: impl Into<Size>) -> Self {
+        self.layout.height = height.into();
+
+        self
+    }
+
+    pub fn justify(mut self, justify: impl Into<Justify>) -> Self {
+        self.layout.justify = justify.into();
+
+        self
+    }
+
+    pub fn align(mut self, align: impl Into<Align>) -> Self {
+        self.layout.align = align.into();
+
+        self
     }
 }
 
