@@ -27,6 +27,23 @@ impl Color {
         Self { r, g, b, a }
     }
 
+    // read only, so a theme can mix colors without reaching into the fields
+    pub fn red(&self) -> u8 {
+        self.r
+    }
+
+    pub fn green(&self) -> u8 {
+        self.g
+    }
+
+    pub fn blue(&self) -> u8 {
+        self.b
+    }
+
+    pub fn alpha(&self) -> u8 {
+        self.a
+    }
+
     // "#rrggbb", or "#rrggbbaa" when not fully opaque
     pub fn hex(&self) -> String {
         let rgb = format!("#{:02x}{:02x}{:02x}", self.r, self.g, self.b);
