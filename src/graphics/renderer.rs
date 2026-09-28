@@ -8,6 +8,7 @@ mod image;
 mod layer;
 mod rectangle;
 mod shadow;
+mod shader;
 mod shape;
 mod text;
 mod transform;

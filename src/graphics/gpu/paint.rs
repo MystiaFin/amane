@@ -37,6 +37,17 @@ impl Gpu {
                     self.cut(canvas, &path, transform, strength);
                 }
 
+                Command::Shader {
+                    shader,
+                    rect,
+                    path,
+                    transform,
+                } => {
+                    self.paint(&mut scene, canvas, &mut borrowed);
+
+                    self.shade(canvas, &shader, rect, &path, transform);
+                }
+
                 /*
                  * a blur inside a layer has to see the layer's own drawing,
                  * and a cut inside one must stop at its edge, so the layer gets its own canvas
@@ -78,7 +89,7 @@ impl Gpu {
 
 fn separate(commands: &[Command]) -> bool {
     commands.iter().any(|command| match command {
-        Command::Blur { .. } | Command::Cut { .. } => true,
+        Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => true,
         Command::Layer { commands, .. } | Command::Clip { commands, .. } => separate(commands),
         _ => false,
     })

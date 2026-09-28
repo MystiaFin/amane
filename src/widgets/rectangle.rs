@@ -6,6 +6,8 @@ mod needs_width;
 mod shadow;
 mod transform;
 
+use std::path::PathBuf;
+
 use crate::graphics::Color;
 use crate::input::Handlers;
 use crate::{Align, Fill, Padding, Radius, Shadow, Size};
@@ -25,6 +27,7 @@ pub struct Rectangle {
     pub(crate) blur: f32,
     pub(crate) opacity: f32,
     pub(crate) shadow: Option<Shadow>,
+    pub(crate) shader: Option<PathBuf>,
     pub(crate) child: Option<Box<dyn Widget>>,
     pub(crate) clip: bool,
     pub(crate) rotation: f32,
@@ -76,6 +79,16 @@ impl Rectangle {
 
     pub fn shadow(mut self, shadow: Shadow) -> Self {
         self.shadow = Some(shadow);
+
+        self
+    }
+
+    /*
+     * a wgsl, or .glsl and .frag, fragment shader drawn over the fill;
+     * it gets uv, size and time, see examples/shader.rs
+     */
+    pub fn shader(mut self, path: impl Into<PathBuf>) -> Self {
+        self.shader = Some(path.into());
 
         self
     }

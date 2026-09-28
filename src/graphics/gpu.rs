@@ -10,6 +10,8 @@ mod image;
 mod layer;
 mod paint;
 mod pass;
+mod shade;
+mod shader;
 mod shadow;
 mod shape;
 mod surface;
@@ -18,6 +20,7 @@ mod wait;
 
 use std::collections::HashMap;
 use std::ffi::c_void;
+use std::path::PathBuf;
 
 use vello::peniko::ImageData;
 use vello::wgpu::{
@@ -27,6 +30,7 @@ use vello::wgpu::{
 use vello::{AaSupport, RendererOptions};
 
 use pass::Pass;
+use shader::Shader;
 use wait::wait;
 
 /*
@@ -45,6 +49,9 @@ pub struct Gpu {
     // images already turned into vello's form, keyed by where the loaded image lives
     images: HashMap<usize, ImageData>,
     atlas_dropped: bool,
+
+    // custom shaders, compiled once and kept by the path they were read from
+    shaders: HashMap<PathBuf, Shader>,
 
     composite: Pass,
     present: Pass,
@@ -99,6 +106,8 @@ impl Gpu {
 
             images: HashMap::new(),
             atlas_dropped: false,
+
+            shaders: HashMap::new(),
 
             composite,
             present,

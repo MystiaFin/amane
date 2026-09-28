@@ -17,6 +17,7 @@ impl NeedsHeight {
             blur: 0.0,
             opacity: 1.0,
             shadow: None,
+            shader: None,
             child: None,
             clip: false,
             rotation: 0.0,

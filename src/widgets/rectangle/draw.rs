@@ -1,3 +1,4 @@
+use crate::animation::moving;
 use crate::graphics::{Rect, Renderer, image};
 use crate::input::Target;
 use crate::widgets::Widget;
@@ -54,6 +55,13 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
 
         // the cut was already made in the rectangle holding this one
         Fill::Mask => {}
+    }
+
+    if let Some(shader) = &rectangle.shader {
+        renderer.shader(area, shader, radius);
+
+        // the shader's time moves on, so the window keeps drawing new frames
+        moving::set();
     }
 
     shadow::inner_shadow(rectangle, renderer, area, radius);

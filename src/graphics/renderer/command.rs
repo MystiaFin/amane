@@ -1,4 +1,6 @@
 use crate::graphics::image::Bitmap;
+use std::path::PathBuf;
+
 use crate::graphics::{Cap, Color, Gradient, Path, Rect, Transform};
 
 pub enum Command {
@@ -50,6 +52,14 @@ pub enum Command {
         transform: Transform,
         color: Color,
         blur: f32,
+    },
+
+    // a custom shader run over the rect, which only shows inside the path
+    Shader {
+        shader: PathBuf,
+        rect: Rect,
+        path: Path,
+        transform: Transform,
     },
 
     // blurs what the commands before it drew inside the path, amount is in logical pixels
