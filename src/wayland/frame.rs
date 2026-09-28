@@ -1,5 +1,6 @@
 use smithay_client_toolkit::{compositor::FrameCallbackData, shell::WaylandSurface};
 
+use crate::animation::moving;
 use crate::graphics::{Rect, Renderer};
 
 use super::WaylandState;
@@ -8,6 +9,8 @@ impl WaylandState {
     pub fn redraw(&mut self) {
         // the view runs again on every redraw, so it shows the services as they are now
         let window = (self.view)();
+
+        let moving = moving::take();
 
         self.update_surface(&window);
 
@@ -49,6 +52,14 @@ impl WaylandState {
 
         self.gpu
             .draw(renderer.finish(), buffer_width, buffer_height);
+
+        /*
+         * an animation that has not arrived yet needs the next frame too,
+         * a hidden window never gets here so it waits until it shows again
+         */
+        if moving {
+            self.request_frame();
+        }
     }
 
     pub fn request_frame(&mut self) {

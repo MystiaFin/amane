@@ -1,3 +1,4 @@
+mod animation;
 mod app;
 mod full;
 mod graphics;
@@ -9,6 +10,7 @@ mod services;
 mod wayland;
 mod widgets;
 
+pub use animation::{Animation, Blend, Easing};
 pub use app::App;
 pub use full::Full;
 pub use graphics::{Cap, Color};
