@@ -1,4 +1,4 @@
-use smithay_client_toolkit::{compositor::FrameCallbackData, shell::WaylandSurface};
+use smithay_client_toolkit::compositor::FrameCallbackData;
 
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer};
@@ -45,7 +45,7 @@ impl Window {
 
         self.on_key = window.on_key;
 
-        let surface = self.layer_surface.wl_surface();
+        let surface = self.role.wl_surface();
 
         // the scale goes out with the commit that presenting the frame makes
         surface.set_buffer_scale(self.scale as i32);
@@ -80,10 +80,10 @@ impl Window {
 
         self.frame_requested = true;
 
-        let surface = self.layer_surface.wl_surface();
+        let surface = self.role.wl_surface();
 
         surface.frame(&self.qh, FrameCallbackData(surface.clone()));
 
-        self.layer_surface.commit();
+        self.role.commit();
     }
 }

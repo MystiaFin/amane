@@ -33,6 +33,7 @@
           libxkbcommon
           vulkan-loader
           libpulseaudio
+          linux-pam
         ];
 
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [

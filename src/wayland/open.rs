@@ -1,10 +1,9 @@
-use smithay_client_toolkit::shell::WaylandSurface;
 use wayland_client::{Proxy, protocol::wl_output::WlOutput};
 
 use crate::graphics::Gpu;
 use crate::input::Pointer;
 
-use super::{WaylandState, layer, settings::Settings, view::View, window::Window};
+use super::{WaylandState, layer, role::Role, settings::Settings, view::View, window::Window};
 
 impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {
@@ -23,9 +22,14 @@ impl WaylandState {
             &settings,
         );
 
+        self.add(view, output, settings, Role::Layer(layer_surface));
+    }
+
+    // everything a window needs besides its surface is the same for layers and lock screens
+    pub fn add(&mut self, view: View, output: Option<WlOutput>, settings: Settings, role: Role) {
         // the gpu draws straight into the surface, so it gets libwayland's own pointers
         let display = self.connection.backend().display_ptr().cast();
-        let surface = layer_surface.wl_surface().id().as_ptr().cast();
+        let surface = role.wl_surface().id().as_ptr().cast();
 
         let gpu = Gpu::new(display, surface);
 
@@ -50,7 +54,7 @@ impl WaylandState {
 
             gpu,
 
-            layer_surface,
+            role,
 
             compositor: self.compositor.wl_compositor().clone(),
 

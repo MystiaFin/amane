@@ -1,13 +1,16 @@
-use smithay_client_toolkit::shell::WaylandSurface;
-
 use crate::LayerWindow;
 
-use super::{layer, settings::Settings, window::Window};
+use super::{layer, role::Role, settings::Settings, window::Window};
 
 impl Window {
     // settings changed by input or services reach the compositor before anything is drawn
     pub fn update_surface(&mut self, window: &LayerWindow) {
         self.update_input_region(window);
+
+        // the compositor sizes lock screens itself, and never lets them hide
+        let Role::Layer(layer_surface) = &self.role else {
+            return;
+        };
 
         let settings = Settings::from(window);
 
@@ -32,16 +35,16 @@ impl Window {
          * a commit without a buffer also shows a hidden window again,
          * the compositor answers with a configure and drawing starts there
          */
-        layer::apply(&self.layer_surface, &settings);
+        layer::apply(layer_surface, &settings);
 
-        self.layer_surface.commit();
+        self.role.commit();
     }
 
     fn hide(&mut self) {
         // taking the buffer away unmaps the window and gives back its reserved space
-        self.layer_surface.wl_surface().attach(None, 0, 0);
+        self.role.wl_surface().attach(None, 0, 0);
 
-        self.layer_surface.commit();
+        self.role.commit();
 
         // nothing is drawn until showing the window brings a new configure
         self.width = 0;

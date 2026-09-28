@@ -6,6 +6,7 @@ pub struct App {
 
     windows: Vec<fn() -> LayerWindow>,
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
+    lock: Option<fn(&Monitor) -> LayerWindow>,
 
     handlers: Handlers,
 }
@@ -35,6 +36,16 @@ impl App {
         self
     }
 
+    /*
+     * locks the session as soon as the app runs, with this view on every monitor;
+     * it stays locked until Lock::unlock gets a password pam accepts
+     */
+    pub fn lock(mut self, view: fn(&Monitor) -> LayerWindow) -> Self {
+        self.lock = Some(view);
+
+        self
+    }
+
     // lets `amane ipc call <name> [arguments...]` run the handler while the shell is running
     pub fn ipc(mut self, name: &str, handler: fn(&[String]) -> String) -> Self {
         self.handlers.insert(name, handler);
@@ -43,7 +54,7 @@ impl App {
     }
 
     pub fn run(self) {
-        if self.windows.is_empty() && self.per_monitor.is_empty() {
+        if self.windows.is_empty() && self.per_monitor.is_empty() && self.lock.is_none() {
             panic!("failed to run: no window set");
         }
 
@@ -51,7 +62,7 @@ impl App {
             font::set_default(family);
         }
 
-        let mut backend = WaylandApp::new(self.windows, self.per_monitor, self.handlers);
+        let mut backend = WaylandApp::new(self.windows, self.per_monitor, self.lock, self.handlers);
 
         backend.run();
     }

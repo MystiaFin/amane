@@ -29,7 +29,7 @@ pub use layer_window::{
 };
 pub use process::{lines, output, spawn};
 pub use services::{
-    AccessPoint, Action, Audio, Link, Media, Network, Notification, Notifications, Service,
+    AccessPoint, Action, Audio, Link, Lock, Media, Network, Notification, Notifications, Service,
     Urgency, Workspace, Workspaces,
 };
 pub use widgets::{

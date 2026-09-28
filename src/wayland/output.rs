@@ -23,6 +23,9 @@ impl OutputHandler for WaylandState {
 
             self.open(view, Some(output.clone()));
         }
+
+        // a monitor plugged in while locked needs a lock screen too
+        self.open_lock(output);
     }
 
     fn update_output(&mut self, _: &Connection, _: &QueueHandle<Self>, output: WlOutput) {

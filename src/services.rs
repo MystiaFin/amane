@@ -1,6 +1,7 @@
 pub mod store;
 pub mod wake;
 mod audio;
+mod lock;
 mod media;
 mod network;
 mod notifications;
@@ -13,6 +14,7 @@ use std::thread;
 use std::time::Duration;
 
 pub use audio::Audio;
+pub use lock::Lock;
 pub use media::Media;
 pub use network::{AccessPoint, Link, Network};
 pub use notifications::{Action, Notification, Notifications, Urgency};

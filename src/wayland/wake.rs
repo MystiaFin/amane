@@ -9,6 +9,8 @@ pub fn insert(handle: &LoopHandle<'static, WaylandState>) {
 
     handle
         .insert_source(source, |_, _, state| {
+            state.end_lock_if_unlocked();
+
             state.request_frames();
         })
         .expect("failed to insert wake ping");

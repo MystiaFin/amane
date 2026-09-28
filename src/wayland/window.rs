@@ -1,4 +1,3 @@
-use smithay_client_toolkit::shell::wlr_layer::LayerSurface;
 use wayland_client::{
     QueueHandle,
     protocol::{wl_compositor::WlCompositor, wl_output::WlOutput},
@@ -8,9 +7,9 @@ use crate::graphics::Gpu;
 use crate::InputArea;
 use crate::input::{KeyHandler, Pointer};
 
-use super::{WaylandState, settings::Settings, view::View};
+use super::{WaylandState, role::Role, settings::Settings, view::View};
 
-// one layer surface on screen, with everything it needs to draw and take input
+// one surface on screen, with everything it needs to draw and take input
 pub struct Window {
     pub view: View,
 
@@ -34,10 +33,10 @@ pub struct Window {
     pub pointer: Pointer,
     pub on_key: Option<KeyHandler>,
 
-    // the gpu draws into the layer surface, so it has to go first when both are dropped
+    // the gpu draws into the surface, so it has to go first when both are dropped
     pub gpu: Gpu,
 
-    pub layer_surface: LayerSurface,
+    pub role: Role,
 
     // kept to make input regions, which come from the compositor
     pub compositor: WlCompositor,

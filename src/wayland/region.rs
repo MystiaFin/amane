@@ -1,4 +1,3 @@
-use smithay_client_toolkit::shell::WaylandSurface;
 use wayland_client::{Connection, Dispatch, QueueHandle, protocol::wl_region::{self, WlRegion}};
 
 use crate::LayerWindow;
@@ -14,7 +13,7 @@ impl Window {
 
         self.input_region = window.input_region.clone();
 
-        let surface = self.layer_surface.wl_surface();
+        let surface = self.role.wl_surface();
 
         // no region set means the whole window takes the pointer again
         let Some(areas) = &self.input_region else {

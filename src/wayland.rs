@@ -6,11 +6,13 @@ mod key;
 mod keyboard;
 mod layer;
 mod layer_shell;
+mod lock;
 mod monitor;
 mod open;
 mod output;
 mod pointer;
 mod region;
+mod role;
 mod registry;
 mod scroll;
 mod seat;
@@ -29,6 +31,7 @@ use smithay_client_toolkit::{
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     registry::RegistryState,
     seat::SeatState,
+    session_lock::{SessionLock, SessionLockState},
     shell::wlr_layer::LayerShell,
 };
 use wayland_client::{
@@ -59,6 +62,10 @@ struct WaylandState {
     // kept so new windows can be made while the shell runs
     compositor: CompositorState,
     layer_shell: LayerShell,
+
+    // the lock screen's view, and the lock itself while the session is locked
+    lock_view: Option<fn(&Monitor) -> LayerWindow>,
+    session_lock: Option<SessionLock>,
     connection: Connection,
 
     // kept so they can be released when the mouse or keyboard is unplugged
@@ -81,6 +88,7 @@ impl WaylandApp {
     pub fn new(
         views: Vec<fn() -> LayerWindow>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
+        lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: Handlers,
     ) -> Self {
         let connection = connection::connect();
@@ -110,6 +118,9 @@ impl WaylandApp {
 
             compositor,
             layer_shell,
+
+            lock_view,
+            session_lock: None,
             connection: connection.clone(),
 
             pointer_device: None,
@@ -122,6 +133,17 @@ impl WaylandApp {
 
         for view in views {
             state.open(View::Plain(view), None);
+        }
+
+        // the lock screens open once the compositor answers that the session is locked
+        if lock_view.is_some() {
+            let lock_state = SessionLockState::new(&globals, &state.qh);
+
+            let session_lock = lock_state
+                .lock(&state.qh)
+                .expect("compositor does not support ext-session-lock");
+
+            state.session_lock = Some(session_lock);
         }
 
         let event_loop = EventLoop::try_new().expect("failed to create event loop");
