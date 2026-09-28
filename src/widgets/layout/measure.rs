@@ -4,7 +4,7 @@ use crate::widgets::Widget;
 use super::Direction;
 
 // how wide the children need the layout to be
-pub fn width(direction: Direction, children: &[Box<dyn Widget>]) -> Size {
+pub fn width(direction: Direction, children: &[Box<dyn Widget>], gap: f32) -> Size {
     let mut total = 0.0;
     let mut widest = 0.0;
 
@@ -20,8 +20,8 @@ pub fn width(direction: Direction, children: &[Box<dyn Widget>]) -> Size {
     }
 
     match direction {
-        // side by side: widths add up
-        Direction::Row => Size::Fixed(total),
+        // side by side: widths and the gaps between them add up
+        Direction::Row => Size::Fixed(total + gaps(children, gap)),
 
         // stacked: as wide as the widest child
         Direction::Column => Size::Fixed(widest),
@@ -29,7 +29,7 @@ pub fn width(direction: Direction, children: &[Box<dyn Widget>]) -> Size {
 }
 
 // how tall the children need the layout to be
-pub fn height(direction: Direction, children: &[Box<dyn Widget>]) -> Size {
+pub fn height(direction: Direction, children: &[Box<dyn Widget>], gap: f32) -> Size {
     let mut total = 0.0;
     let mut tallest = 0.0;
 
@@ -46,6 +46,13 @@ pub fn height(direction: Direction, children: &[Box<dyn Widget>]) -> Size {
 
     match direction {
         Direction::Row => Size::Fixed(tallest),
-        Direction::Column => Size::Fixed(total),
+        Direction::Column => Size::Fixed(total + gaps(children, gap)),
     }
+}
+
+// all the gaps between children added up
+pub fn gaps(children: &[Box<dyn Widget>], gap: f32) -> f32 {
+    let count = children.len().saturating_sub(1);
+
+    gap * count as f32
 }

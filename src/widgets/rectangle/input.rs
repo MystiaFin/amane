@@ -57,7 +57,7 @@ pub fn collect_targets(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Targ
         return;
     };
 
-    let child_area = child::area(child.as_ref(), area);
+    let child_area = child::area(rectangle, child.as_ref(), area);
 
     let first = targets.len();
 

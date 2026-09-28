@@ -1,12 +1,17 @@
 use crate::graphics::Rect;
 use crate::widgets::Widget;
 
-// a child starts at the rectangle's top left corner
-pub fn area(child: &dyn Widget, area: Rect) -> Rect {
-    Rect::new(
-        area.x,
-        area.y,
-        child.width().resolve(area.width),
-        child.height().resolve(area.height),
-    )
+use super::Rectangle;
+
+// a child sits inside the padding, placed by the rectangle's child alignment
+pub fn area(rectangle: &Rectangle, child: &dyn Widget, area: Rect) -> Rect {
+    let inside = rectangle.padding.shrink(area);
+
+    let width = child.width().resolve(inside.width);
+    let height = child.height().resolve(inside.height);
+
+    let x = inside.x + rectangle.child_horizontal.offset(inside.width - width);
+    let y = inside.y + rectangle.child_vertical.offset(inside.height - height);
+
+    Rect::new(x, y, width, height)
 }

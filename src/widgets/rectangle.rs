@@ -7,7 +7,7 @@ mod shadow;
 
 use crate::graphics::Color;
 use crate::input::Handlers;
-use crate::{Fill, Radius, Shadow, Size};
+use crate::{Align, Fill, Padding, Radius, Shadow, Size};
 
 use super::Widget;
 
@@ -26,6 +26,9 @@ pub struct Rectangle {
     pub(crate) shadow: Option<Shadow>,
     pub(crate) child: Option<Box<dyn Widget>>,
     pub(crate) clip: bool,
+    pub(crate) padding: Padding,
+    pub(crate) child_horizontal: Align,
+    pub(crate) child_vertical: Align,
     pub(crate) handlers: Handlers,
 }
 
@@ -74,6 +77,25 @@ impl Rectangle {
 
     pub fn child(mut self, child: impl Widget + 'static) -> Self {
         self.child = Some(Box::new(child));
+
+        self
+    }
+
+    // space between the edges and the child, one number for every side or a Padding for each
+    pub fn padding(mut self, padding: impl Into<Padding>) -> Self {
+        self.padding = padding.into();
+
+        self
+    }
+
+    // where the child sits inside the padding, left to right and then top to bottom
+    pub fn align_child(
+        mut self,
+        horizontal: impl Into<Align>,
+        vertical: impl Into<Align>,
+    ) -> Self {
+        self.child_horizontal = horizontal.into();
+        self.child_vertical = vertical.into();
 
         self
     }

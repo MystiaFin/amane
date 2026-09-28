@@ -16,27 +16,45 @@ pub struct Layout {
     direction: Direction,
     children: Vec<Box<dyn Widget>>,
 
-    pub(crate) width: Size,
-    pub(crate) height: Size,
+    // what the children need, used when no size was given
+    measured_width: Size,
+    measured_height: Size,
+
+    pub(crate) width: Option<Size>,
+    pub(crate) height: Option<Size>,
 
     pub(crate) justify: Justify,
     pub(crate) align: Align,
+
+    // the empty space between each pair of children
+    gap: f32,
 }
 
 impl Layout {
     pub fn new(direction: Direction, children: Vec<Box<dyn Widget>>) -> Self {
         // children never change after this, so their size can be worked out once
-        let width = measure::width(direction, &children);
-        let height = measure::height(direction, &children);
+        let measured_width = measure::width(direction, &children, 0.0);
+        let measured_height = measure::height(direction, &children, 0.0);
 
         Self {
             direction,
             children,
-            width,
-            height,
+            measured_width,
+            measured_height,
+            width: None,
+            height: None,
             justify: Justify::default(),
             align: Align::default(),
+            gap: 0.0,
         }
+    }
+
+    // gaps change how much room the children need, so they are measured again
+    pub fn set_gap(&mut self, gap: f32) {
+        self.gap = gap;
+
+        self.measured_width = measure::width(self.direction, &self.children, gap);
+        self.measured_height = measure::height(self.direction, &self.children, gap);
     }
 
     // the size of a child along the direction the layout grows in
@@ -65,7 +83,7 @@ impl Layout {
 
     // the space each Parent-sized child gets: what the fixed children leave, split evenly
     fn share(&self, area: Rect) -> f32 {
-        let mut used = 0.0;
+        let mut used = measure::gaps(&self.children, self.gap);
         let mut filling = 0;
 
         for child in &self.children {
@@ -90,7 +108,7 @@ impl Layout {
         let (available, room) = self.span(area);
 
         let mut sizes = Vec::new();
-        let mut used = 0.0;
+        let mut used = measure::gaps(&self.children, self.gap);
 
         for child in &self.children {
             let length = self.along(child.as_ref()).resolve(share);
@@ -103,7 +121,10 @@ impl Layout {
 
         // Parent-sized children already took the free space, so this is 0 when there are any
         let free = f32::max(available - used, 0.0);
-        let (lead, gap) = self.justify.spread(free, self.children.len());
+        let (lead, spread) = self.justify.spread(free, self.children.len());
+
+        // justify's spacing comes on top of the fixed gap
+        let gap = spread + self.gap;
 
         let mut current = lead;
         let mut child_areas = Vec::new();
@@ -127,11 +148,11 @@ impl Layout {
 
 impl Widget for Layout {
     fn width(&self) -> Size {
-        self.width
+        self.width.unwrap_or(self.measured_width)
     }
 
     fn height(&self) -> Size {
-        self.height
+        self.height.unwrap_or(self.measured_height)
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {

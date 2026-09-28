@@ -16,13 +16,20 @@ impl Row {
     }
 
     pub fn width(mut self, width: impl Into<Size>) -> Self {
-        self.layout.width = width.into();
+        self.layout.width = Some(width.into());
 
         self
     }
 
     pub fn height(mut self, height: impl Into<Size>) -> Self {
-        self.layout.height = height.into();
+        self.layout.height = Some(height.into());
+
+        self
+    }
+
+    // empty space between each pair of children
+    pub fn gap(mut self, gap: f32) -> Self {
+        self.layout.set_gap(gap);
 
         self
     }

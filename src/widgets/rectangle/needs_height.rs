@@ -1,5 +1,5 @@
 use crate::input::Handlers;
-use crate::{Color, Fill, Radius, Rectangle, Size};
+use crate::{Align, Color, Fill, Padding, Radius, Rectangle, Size};
 
 pub struct NeedsHeight {
     pub(crate) width: Size,
@@ -19,6 +19,9 @@ impl NeedsHeight {
             shadow: None,
             child: None,
             clip: false,
+            padding: Padding::default(),
+            child_horizontal: Align::Start,
+            child_vertical: Align::Start,
             handlers: Handlers::default(),
         }
     }
