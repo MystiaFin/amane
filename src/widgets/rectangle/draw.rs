@@ -49,6 +49,7 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
 
     match &rectangle.fill {
         Fill::Color(color) => renderer.rectangle(area, *color, radius),
+        Fill::Gradient(gradient) => renderer.gradient(area, gradient, radius),
         Fill::Image(image) => paint_image(image, renderer, area, radius),
 
         // the cut was already made in the rectangle holding this one

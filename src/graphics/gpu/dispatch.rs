@@ -3,7 +3,7 @@ use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
 
-use super::{Gpu, shadow, shape};
+use super::{Gpu, gradient, shadow, shape};
 
 impl Gpu {
     // hands each command to the file that knows how to draw it
@@ -14,6 +14,13 @@ impl Gpu {
                 transform,
                 color,
             } => shape::fill(scene, &path, transform, color),
+
+            Command::Gradient {
+                path,
+                rect,
+                transform,
+                gradient,
+            } => gradient::fill(scene, &path, rect, transform, &gradient),
 
             Command::Stroke {
                 path,

@@ -3,6 +3,7 @@ mod clip;
 mod convert;
 mod cut;
 mod dispatch;
+mod gradient;
 mod flush;
 mod frame;
 mod image;

@@ -1,11 +1,19 @@
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Cap, Color, Path, Rect, Transform};
+use crate::graphics::{Cap, Color, Gradient, Path, Rect, Transform};
 
 pub enum Command {
     Fill {
         path: Path,
         transform: Transform,
         color: Color,
+    },
+
+    // the rect says where the gradient starts and ends
+    Gradient {
+        path: Path,
+        rect: Rect,
+        transform: Transform,
+        gradient: Gradient,
     },
 
     // a line along the path, centered on it

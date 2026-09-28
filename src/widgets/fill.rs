@@ -1,9 +1,11 @@
-use crate::Color;
+use crate::{Color, Gradient};
 
 use super::{Image, Mask};
 
 pub enum Fill {
     Color(Color),
+
+    Gradient(Gradient),
 
     Image(Image),
 
@@ -21,6 +23,12 @@ impl From<Color> for Fill {
 impl From<&str> for Fill {
     fn from(hex: &str) -> Self {
         Self::Color(Color::from(hex))
+    }
+}
+
+impl From<Gradient> for Fill {
+    fn from(gradient: Gradient) -> Self {
+        Self::Gradient(gradient)
     }
 }
 

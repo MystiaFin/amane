@@ -20,7 +20,7 @@ pub use app::App;
 pub use dbus::{Argument, Bus, Method, Signal, Value};
 pub use files::watch_file;
 pub use full::Full;
-pub use graphics::{Cap, Color, Weight};
+pub use graphics::{Cap, Color, Gradient, Weight};
 pub use input::{Button, Cursor, Key, Point, Scroll};
 pub use input::cursor_names::{
     Crosshair, Default, Grab, Grabbing, Move, NotAllowed, Pointer, ResizeBottom, ResizeBottomLeft,

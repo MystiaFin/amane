@@ -3,6 +3,7 @@ mod border;
 mod clip;
 mod command;
 mod cut;
+mod gradient;
 mod image;
 mod layer;
 mod rectangle;
