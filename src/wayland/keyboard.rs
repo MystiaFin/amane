@@ -6,6 +6,8 @@ use wayland_client::{
     protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
 };
 
+use crate::input::focus;
+
 use super::{WaylandState, key};
 
 impl KeyboardHandler for WaylandState {
@@ -32,6 +34,11 @@ impl KeyboardHandler for WaylandState {
         _: u32,
     ) {
         self.keyboard_focus = None;
+
+        // keys stop arriving, so no text input can stay focused
+        focus::clear();
+
+        self.request_frames();
     }
 
     fn press_key(
@@ -46,6 +53,15 @@ impl KeyboardHandler for WaylandState {
             return;
         };
 
+        let key = key::translate(&event);
+
+        // a focused text input takes the key before the window's on_key sees it
+        if focus::send(key) {
+            self.request_frames();
+
+            return;
+        }
+
         let Some(window) = self.window(&surface) else {
             return;
         };
@@ -54,7 +70,7 @@ impl KeyboardHandler for WaylandState {
             return;
         };
 
-        on_key(key::translate(&event));
+        on_key(key);
 
         // the handler may have changed a service that any window shows
         self.request_frames();

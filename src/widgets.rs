@@ -18,6 +18,7 @@ mod shape;
 mod size;
 mod start;
 mod text;
+mod text_input;
 
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
@@ -41,6 +42,7 @@ pub use shape::{Arc, Circle, Line, Path, Shape};
 pub use size::Size;
 pub use start::Start;
 pub use text::Text;
+pub use text_input::TextInput;
 
 pub trait Widget {
     fn width(&self) -> Size;

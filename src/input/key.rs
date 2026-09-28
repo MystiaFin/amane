@@ -21,6 +21,10 @@ pub enum Key {
 
     Right,
 
+    Home,
+
+    End,
+
     // a key amane has no name for yet
     Other,
 }

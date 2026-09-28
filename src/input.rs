@@ -1,5 +1,6 @@
 mod button;
 mod clip;
+pub mod focus;
 mod handlers;
 mod key;
 mod pointer;

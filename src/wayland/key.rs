@@ -13,6 +13,8 @@ pub fn translate(event: &KeyEvent) -> Key {
         Keysym::Down => Key::Down,
         Keysym::Left => Key::Left,
         Keysym::Right => Key::Right,
+        Keysym::Home => Key::Home,
+        Keysym::End => Key::End,
         _ => character(event),
     }
 }

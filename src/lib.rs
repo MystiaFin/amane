@@ -34,7 +34,7 @@ pub use services::{
 };
 pub use widgets::{
     Align, Arc, Canvas, Center, Circle, Column, End, Fill, Image, Justify, Line, Mask, Path,
-    Radius, Rectangle, Row, ScrollArea, Shadow, Shape, Size, Start, Text, Widget,
+    Radius, Rectangle, Row, ScrollArea, Shadow, Shape, Size, Start, Text, TextInput, Widget,
 };
 
 pub use widgets::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};
