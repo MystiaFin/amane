@@ -10,12 +10,15 @@ mod widgets;
 
 pub use app::App;
 pub use full::Full;
-pub use graphics::Color;
+pub use graphics::{Cap, Color};
 pub use ipc::{IpcCall, ipc_socket};
 pub use layer_window::{
     Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
 };
 pub use services::Service;
-pub use widgets::{Column, Fill, Image, Mask, Radius, Rectangle, Row, Shadow, Size, Text, Widget};
+pub use widgets::{
+    Arc, Canvas, Circle, Column, Fill, Image, Line, Mask, Path, Radius, Rectangle, Row, Shadow,
+    Shape, Size, Text, Widget,
+};
 
 pub use widgets::Size::Parent;

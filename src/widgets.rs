@@ -1,3 +1,4 @@
+mod canvas;
 mod column;
 mod fill;
 mod fit;
@@ -8,11 +9,13 @@ mod radius;
 mod rectangle;
 mod row;
 mod shadow;
+mod shape;
 mod size;
 mod text;
 
 use crate::graphics::{Rect, Renderer};
 
+pub use canvas::Canvas;
 pub use column::Column;
 pub use fill::Fill;
 pub use image::Image;
@@ -22,6 +25,7 @@ pub use radius::Radius;
 pub use rectangle::Rectangle;
 pub use row::Row;
 pub use shadow::Shadow;
+pub use shape::{Arc, Circle, Line, Path, Shape};
 pub use size::Size;
 pub use text::Text;
 

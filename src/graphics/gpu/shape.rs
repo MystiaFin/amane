@@ -1,8 +1,8 @@
 use vello::Scene;
-use vello::kurbo::{Join, Stroke};
+use vello::kurbo::{self, Join, Stroke};
 use vello::peniko::Fill;
 
-use crate::graphics::{Color, Path, Transform};
+use crate::graphics::{Cap, Color, Path, Transform};
 
 use super::convert::{affine, bezier, paint};
 
@@ -22,9 +22,12 @@ pub(super) fn stroke(
     transform: Transform,
     thickness: f32,
     color: Color,
+    cap: Cap,
 ) {
     // square corners stay square instead of being rounded off by the line
-    let stroke = Stroke::new(f64::from(thickness)).with_join(Join::Miter);
+    let stroke = Stroke::new(f64::from(thickness))
+        .with_join(Join::Miter)
+        .with_caps(line_end(cap));
 
     scene.stroke(
         &stroke,
@@ -33,4 +36,12 @@ pub(super) fn stroke(
         None,
         &bezier(path),
     );
+}
+
+fn line_end(cap: Cap) -> kurbo::Cap {
+    match cap {
+        Cap::Butt => kurbo::Cap::Butt,
+        Cap::Round => kurbo::Cap::Round,
+        Cap::Square => kurbo::Cap::Square,
+    }
 }

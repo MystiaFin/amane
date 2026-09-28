@@ -20,7 +20,8 @@ impl Gpu {
                 transform,
                 thickness,
                 color,
-            } => shape::stroke(scene, &path, transform, thickness, color),
+                cap,
+            } => shape::stroke(scene, &path, transform, thickness, color, cap),
 
             Command::Image {
                 image,

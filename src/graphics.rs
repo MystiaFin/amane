@@ -1,3 +1,4 @@
+mod cap;
 mod color;
 pub mod font;
 mod geometry;
@@ -8,6 +9,7 @@ mod path;
 mod renderer;
 mod transform;
 
+pub use cap::Cap;
 pub use color::Color;
 pub use geometry::Rect;
 pub use gpu::Gpu;

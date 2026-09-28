@@ -8,3 +8,14 @@ macro_rules! children {
         ]
     };
 }
+
+#[macro_export]
+macro_rules! shapes {
+    ($($shape:expr),* $(,)?) => {
+        vec![
+            $(
+                Box::new($shape) as Box<dyn $crate::Shape>
+            ),*
+        ]
+    };
+}

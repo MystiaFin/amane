@@ -1,3 +1,5 @@
+mod arc;
+
 // one step of a path, in the path's own coordinates
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Segment {
@@ -17,7 +19,7 @@ pub struct Path {
     pub(crate) segments: Vec<Segment>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct PathBuilder {
     segments: Vec<Segment>,
 }

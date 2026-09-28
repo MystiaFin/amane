@@ -1,5 +1,5 @@
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Color, Path, Rect, Transform};
+use crate::graphics::{Cap, Color, Path, Rect, Transform};
 
 pub enum Command {
     Fill {
@@ -14,6 +14,7 @@ pub enum Command {
         transform: Transform,
         thickness: f32,
         color: Color,
+        cap: Cap,
     },
 
     // the image is only shown inside the clip path

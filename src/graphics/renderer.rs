@@ -6,6 +6,7 @@ mod image;
 mod layer;
 mod rectangle;
 mod shadow;
+mod shape;
 mod text;
 
 use super::Transform;

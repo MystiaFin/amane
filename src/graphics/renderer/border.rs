@@ -1,4 +1,4 @@
-use crate::graphics::{Color, Rect, Renderer};
+use crate::graphics::{Cap, Color, Rect, Renderer};
 
 use super::Command;
 
@@ -34,6 +34,8 @@ impl Renderer {
             transform: self.transform,
             thickness,
             color,
+            cap: Cap::Butt,
         });
     }
 }
+
