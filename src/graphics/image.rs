@@ -1,13 +1,17 @@
 use std::collections::HashMap;
 use std::io::Cursor;
+use std::panic;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex};
+use std::thread;
 
 use png::{ColorType, Decoder, Transformations};
 use zune_jpeg::JpegDecoder;
 use zune_jpeg::zune_core::bytestream::ZCursor;
 use zune_jpeg::zune_core::colorspace::ColorSpace;
 use zune_jpeg::zune_core::options::DecoderOptions;
+
+use crate::services::wake;
 
 const PNG_SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
@@ -31,25 +35,49 @@ impl Bitmap {
     }
 }
 
-static LOADED: LazyLock<Mutex<HashMap<PathBuf, &'static Bitmap>>> =
+// every image asked for: none while it is still decoding, or when it could not be read
+static LOADED: LazyLock<Mutex<HashMap<PathBuf, Option<&'static Bitmap>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-pub fn load(path: &Path) -> &'static Bitmap {
+/*
+ * decoding a large image takes long enough to drop frames, so it happens
+ * on its own thread; until it is done this gives none and the image is
+ * left out, then the window is woken to draw it
+ */
+pub fn load(path: &Path) -> Option<&'static Bitmap> {
     let mut loaded = LOADED.lock().expect("failed to lock loaded images");
 
     if let Some(image) = loaded.get(path) {
-        return image;
+        return *image;
     }
+
+    loaded.insert(path.to_path_buf(), None);
+
+    let path = path.to_path_buf();
+
+    thread::spawn(move || decode(path));
+
+    None
+}
+
+fn decode(path: PathBuf) {
+    // a broken file stays empty instead of taking the shell down
+    let Ok(image) = panic::catch_unwind(|| read(&path)) else {
+        return;
+    };
 
     /*
      * images stay loaded until the program exits,
      * so leaking gives a reference that is valid forever
      */
-    let image = Box::leak(Box::new(read(path)));
+    let image: &'static Bitmap = Box::leak(Box::new(image));
 
-    loaded.insert(path.to_path_buf(), image);
+    LOADED
+        .lock()
+        .expect("failed to lock loaded images")
+        .insert(path, Some(image));
 
-    image
+    wake::wake();
 }
 
 pub fn read(path: &Path) -> Bitmap {

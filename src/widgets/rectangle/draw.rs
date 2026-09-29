@@ -95,7 +95,10 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
 }
 
 fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
-    let image = image::load(&fill.path);
+    // still decoding, or unreadable
+    let Some(image) = image::load(&fill.path) else {
+        return;
+    };
 
     let image_width = image.width() as f32;
     let image_height = image.height() as f32;
