@@ -5,7 +5,8 @@ use crate::graphics::renderer::Command;
 use super::{Gpu, texture};
 
 impl Gpu {
-    pub fn draw(&mut self, commands: Vec<Command>, width: u32, height: u32) {
+    // false when the frame was skipped, so nothing was committed
+    pub fn draw(&mut self, commands: Vec<Command>, width: u32, height: u32) -> bool {
         if self.config.width != width || self.config.height != height {
             self.config.width = width;
             self.config.height = height;
@@ -14,7 +15,7 @@ impl Gpu {
         }
 
         let Some(frame) = self.next_frame() else {
-            return;
+            return false;
         };
 
         let canvas = texture::canvas(&self.device, width, height);
@@ -37,6 +38,8 @@ impl Gpu {
 
         // presenting attaches the frame to the wayland surface and commits it
         frame.present();
+
+        true
     }
 
     fn next_frame(&mut self) -> Option<SurfaceTexture> {

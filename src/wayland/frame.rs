@@ -50,15 +50,24 @@ impl Window {
         // the scale goes out with the commit that presenting the frame makes
         surface.set_buffer_scale(self.scale as i32);
 
-        self.gpu
-            .draw(renderer.finish(), buffer_width, buffer_height);
-
         /*
-         * an animation that has not arrived yet needs the next frame too,
+         * an animation that has not arrived yet needs the next frame too; asking
+         * in the same commit as this frame gets the answer on the next refresh,
          * a hidden window never gets here so it waits until it shows again
          */
-        if moving {
-            self.request_frame();
+        if moving && !self.frame_requested {
+            self.frame_requested = true;
+
+            surface.frame(&self.qh, FrameCallbackData(surface.clone()));
+        }
+
+        let presented = self
+            .gpu
+            .draw(renderer.finish(), buffer_width, buffer_height);
+
+        // a skipped frame commits nothing, so the request goes out on its own
+        if !presented && moving {
+            self.role.commit();
         }
     }
 
