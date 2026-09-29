@@ -9,6 +9,15 @@ impl Gpu {
     // hands each command to the file that knows how to draw it
     pub(super) fn add(&mut self, scene: &mut Scene, command: Command, canvas: &Texture) {
         match command {
+            Command::Glyph {
+                face,
+                id,
+                size,
+                color,
+                x,
+                y,
+            } => self.draw_glyph(scene, face, id, size, color, x, y),
+
             Command::Fill {
                 path,
                 transform,

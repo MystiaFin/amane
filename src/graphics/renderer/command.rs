@@ -1,9 +1,21 @@
 use crate::graphics::image::Bitmap;
 use std::path::PathBuf;
 
+use ttf_parser::Face;
+
 use crate::graphics::{Cap, Color, Gradient, Path, Rect, Transform};
 
 pub enum Command {
+    // one letter as a picture, at a whole device pixel; x and y are where its baseline starts
+    Glyph {
+        face: &'static Face<'static>,
+        id: u16,
+        size: f32,
+        color: Color,
+        x: f32,
+        y: f32,
+    },
+
     Fill {
         path: Path,
         transform: Transform,

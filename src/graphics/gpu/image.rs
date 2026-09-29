@@ -45,6 +45,10 @@ impl Gpu {
             self.vello.mark_override_image_dirty(image);
         }
 
+        for glyph in self.glyphs.values().flatten() {
+            self.vello.mark_override_image_dirty(glyph.image());
+        }
+
         self.atlas_dropped = false;
     }
 

@@ -3,6 +3,7 @@ mod clip;
 mod convert;
 mod cut;
 mod dispatch;
+mod glyph;
 mod gradient;
 mod flush;
 mod frame;
@@ -48,6 +49,9 @@ pub struct Gpu {
 
     // images already turned into vello's form, keyed by where the loaded image lives
     images: HashMap<usize, ImageData>,
+
+    // letters already drawn into pictures, none for letters without pixels like a space
+    glyphs: HashMap<glyph::GlyphKey, Option<glyph::Glyph>>,
     atlas_dropped: bool,
 
     // custom shaders, compiled once and kept by the path they were read from
@@ -105,6 +109,7 @@ impl Gpu {
             vello,
 
             images: HashMap::new(),
+            glyphs: HashMap::new(),
             atlas_dropped: false,
 
             shaders: HashMap::new(),
