@@ -11,7 +11,7 @@ pub fn collect_targets(text_input: &TextInput, area: Rect, targets: &mut Vec<Tar
     let on_key = key_handler(text_input);
 
     // the handler holds this redraw's on_change and on_submit, so a focused input takes the new one
-    if focus::has(id) {
+    if focus::has(id) || text_input.focused {
         focus::set(id, on_key.clone());
     }
 

@@ -29,6 +29,11 @@ pub fn has(id: &'static str) -> bool {
 
 // returns whether a text input took the key
 pub fn send(key: Key) -> bool {
+    // a text input has no use for these, so they go on to the window's on_key
+    if matches!(key, Key::Up | Key::Down | Key::Tab | Key::Other) {
+        return false;
+    }
+
     // copied out first, so the handler is free to change the focus itself
     let on_key = FOCUS.with_borrow(|focus| focus.as_ref().map(|focus| focus.on_key.clone()));
 
@@ -38,5 +43,6 @@ pub fn send(key: Key) -> bool {
 
     on_key(key);
 
-    true
+    // escape leaves the input and still reaches the window, which may want to close
+    key != Key::Escape
 }

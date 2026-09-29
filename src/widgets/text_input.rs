@@ -10,6 +10,8 @@ use crate::{Color, Size, Text};
 
 use super::Widget;
 
+use field::Field;
+
 // shared, so the key handler kept after a redraw still reaches it
 pub type TextHandler = Rc<dyn Fn(String)>;
 
@@ -27,6 +29,9 @@ pub struct TextInput {
     // shows a dot in place of each letter
     password: bool,
 
+    // takes the keyboard as soon as it is drawn, without a click
+    focused: bool,
+
     on_change: Option<TextHandler>,
     on_submit: Option<TextHandler>,
 }
@@ -40,6 +45,7 @@ impl TextInput {
             color: Color::BLACK,
             width: Size::Parent,
             password: false,
+            focused: false,
             on_change: None,
             on_submit: None,
         }
@@ -74,6 +80,22 @@ impl TextInput {
         self.password = true;
 
         self
+    }
+
+    pub fn focused(mut self) -> Self {
+        self.focused = true;
+
+        self
+    }
+
+    // replaces what the input holds, with the cursor at the end
+    pub fn set_text(id: &'static str, text: &str) {
+        let field = Field {
+            text: String::from(text),
+            cursor: text.chars().count(),
+        };
+
+        fields::set(id, field);
     }
 
     // runs after every change to the text, with the whole new text
