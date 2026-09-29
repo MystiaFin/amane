@@ -8,7 +8,7 @@ use vello::wgpu::{
     RenderPassColorAttachment, RenderPassDescriptor, StoreOp, Texture,
 };
 
-use crate::graphics::{Path as Outline, Rect, Transform};
+use crate::graphics::{Path as Outline, Rect, Transform, VALUE_ROWS};
 
 use super::shader::Shader;
 use super::{Gpu, texture};
@@ -25,20 +25,28 @@ impl Gpu {
         &mut self,
         canvas: &Texture,
         shader: &Path,
+        values: &[[f32; 4]],
         rect: Rect,
         outline: &Outline,
         transform: Transform,
     ) {
         let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
 
-        self.draw_shader(&layer, shader, rect, transform);
+        self.draw_shader(&layer, shader, values, rect, transform);
 
         self.trim(&layer, outline, transform);
 
         self.lay(&layer, canvas, 1.0, false);
     }
 
-    fn draw_shader(&mut self, layer: &Texture, shader: &Path, rect: Rect, transform: Transform) {
+    fn draw_shader(
+        &mut self,
+        layer: &Texture,
+        shader: &Path,
+        values: &[[f32; 4]],
+        rect: Rect,
+        transform: Transform,
+    ) {
         // compiled the first time a path is drawn, then kept
         if !self.shaders.contains_key(shader) {
             let compiled = Shader::load(&self.device, shader);
@@ -60,6 +68,15 @@ impl Gpu {
             [layer.width() as f32, layer.height() as f32, 0.0, 0.0],
         ]);
 
+        // the shader always reads every row, so the ones left out are 0
+        let mut rows = [[0.0; 4]; VALUE_ROWS];
+
+        for (row, value) in rows.iter_mut().zip(values) {
+            *row = *value;
+        }
+
+        let values = self.uniform_rows(rows);
+
         let inputs = self.device.create_bind_group(&BindGroupDescriptor {
             label: None,
             layout: &shader.inputs,
@@ -75,6 +92,10 @@ impl Gpu {
                 BindGroupEntry {
                     binding: 2,
                     resource: placement.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 3,
+                    resource: values.as_entire_binding(),
                 },
             ],
         });

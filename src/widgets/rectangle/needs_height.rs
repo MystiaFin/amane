@@ -18,6 +18,7 @@ impl NeedsHeight {
             opacity: 1.0,
             shadow: None,
             shader: None,
+            shader_values: Vec::new(),
             child: None,
             clip: false,
             rotation: 0.0,

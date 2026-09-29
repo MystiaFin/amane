@@ -54,9 +54,10 @@ pub enum Command {
         blur: f32,
     },
 
-    // a custom shader run over the rect, which only shows inside the path
+    // a custom shader run over the rect, which only shows inside the path; values are passed to it
     Shader {
         shader: PathBuf,
+        values: Vec<[f32; 4]>,
         rect: Rect,
         path: Path,
         transform: Transform,

@@ -58,7 +58,7 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
     }
 
     if let Some(shader) = &rectangle.shader {
-        renderer.shader(area, shader, radius);
+        renderer.shader(area, shader, radius, &rectangle.shader_values);
 
         // the shader's time moves on, so the window keeps drawing new frames
         moving::set();

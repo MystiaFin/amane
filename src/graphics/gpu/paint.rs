@@ -39,13 +39,14 @@ impl Gpu {
 
                 Command::Shader {
                     shader,
+                    values,
                     rect,
                     path,
                     transform,
                 } => {
                     self.paint(&mut scene, canvas, &mut borrowed);
 
-                    self.shade(canvas, &shader, rect, &path, transform);
+                    self.shade(canvas, &shader, &values, rect, &path, transform);
                 }
 
                 /*

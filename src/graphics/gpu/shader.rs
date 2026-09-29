@@ -16,6 +16,7 @@ const VERTEX: &str = include_str!("shader.wgsl");
 const WGSL_INPUTS: &str = "
 @group(0) @binding(0) var<uniform> size: vec2<f32>;
 @group(0) @binding(1) var<uniform> time: f32;
+@group(0) @binding(3) var<uniform> values: array<vec4<f32>, 16>;
 ";
 
 const GLSL_INPUTS: &str = "#version 450
@@ -23,11 +24,13 @@ layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 color;
 layout(set = 0, binding = 0) uniform Size { vec2 size; };
 layout(set = 0, binding = 1) uniform Time { float time; };
+layout(set = 0, binding = 3) uniform Values { vec4 values[16]; };
 ";
 
 /*
  * a user's fragment shader over a rectangle: it gets uv from 0 to 1 across the rectangle,
- * size in logical pixels and time in seconds, and returns a plain, not premultiplied, color
+ * size in logical pixels, time in seconds and the rectangle's values (16 is VALUE_ROWS),
+ * and returns a plain, not premultiplied, color
  */
 pub struct Shader {
     pub pipeline: RenderPipeline,
@@ -69,6 +72,7 @@ impl Shader {
                 uniform(0, ShaderStages::FRAGMENT),
                 uniform(1, ShaderStages::FRAGMENT),
                 uniform(2, ShaderStages::VERTEX),
+                uniform(3, ShaderStages::FRAGMENT),
             ],
         });
 

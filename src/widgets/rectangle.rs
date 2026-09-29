@@ -8,7 +8,7 @@ mod transform;
 
 use std::path::PathBuf;
 
-use crate::graphics::Color;
+use crate::graphics::{Color, VALUE_ROWS};
 use crate::input::Handlers;
 use crate::{Align, Fill, Padding, Radius, Shadow, Size};
 
@@ -28,6 +28,7 @@ pub struct Rectangle {
     pub(crate) opacity: f32,
     pub(crate) shadow: Option<Shadow>,
     pub(crate) shader: Option<PathBuf>,
+    pub(crate) shader_values: Vec<[f32; 4]>,
     pub(crate) child: Option<Box<dyn Widget>>,
     pub(crate) clip: bool,
     pub(crate) rotation: f32,
@@ -89,6 +90,21 @@ impl Rectangle {
      */
     pub fn shader(mut self, path: impl Into<PathBuf>) -> Self {
         self.shader = Some(path.into());
+
+        self
+    }
+
+    /*
+     * numbers the shader reads as `values`, up to 16 rows of four,
+     * like the rectangles a shader should draw; rows left out are 0
+     */
+    pub fn shader_values(mut self, values: Vec<[f32; 4]>) -> Self {
+        assert!(
+            values.len() <= VALUE_ROWS,
+            "a shader takes at most {VALUE_ROWS} rows of values"
+        );
+
+        self.shader_values = values;
 
         self
     }

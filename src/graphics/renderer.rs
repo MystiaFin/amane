@@ -16,6 +16,7 @@ mod transform;
 use super::Transform;
 
 pub use command::Command;
+pub use shader::VALUE_ROWS;
 
 /*
  * collects what widgets draw as commands,
