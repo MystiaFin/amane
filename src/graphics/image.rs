@@ -1,3 +1,5 @@
+mod shrink;
+
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::panic;
@@ -44,8 +46,11 @@ impl Bitmap {
     }
 }
 
+// a file, and the size it is shrunk to cover, none for its own size
+type Key = (PathBuf, Option<(u32, u32)>);
+
 // every image asked for: none while it is still decoding, or when it could not be read
-static LOADED: LazyLock<Mutex<HashMap<PathBuf, Option<&'static Bitmap>>>> =
+static LOADED: LazyLock<Mutex<HashMap<Key, Option<&'static Bitmap>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /*
@@ -53,26 +58,34 @@ static LOADED: LazyLock<Mutex<HashMap<PathBuf, Option<&'static Bitmap>>>> =
  * on its own thread; until it is done this gives none and the image is
  * left out, then the window is woken to draw it
  */
-pub fn load(path: &Path) -> Option<&'static Bitmap> {
+pub fn load(path: &Path, cover: Option<(u32, u32)>) -> Option<&'static Bitmap> {
     let mut loaded = LOADED.lock().expect("failed to lock loaded images");
 
-    if let Some(image) = loaded.get(path) {
+    let key = (path.to_path_buf(), cover);
+
+    if let Some(image) = loaded.get(&key) {
         return *image;
     }
 
-    loaded.insert(path.to_path_buf(), None);
+    loaded.insert(key.clone(), None);
 
-    let path = path.to_path_buf();
-
-    thread::spawn(move || decode(path));
+    thread::spawn(move || decode(key));
 
     None
 }
 
-fn decode(path: PathBuf) {
+fn decode(key: Key) {
+    let (path, cover) = &key;
+
     // a broken file stays empty instead of taking the shell down
-    let Ok(image) = panic::catch_unwind(|| read(&path)) else {
+    let Ok(image) = panic::catch_unwind(|| read(path)) else {
         return;
+    };
+
+    // only the small copy is kept, the full size one is dropped here
+    let image = match cover {
+        Some((width, height)) => shrink::to_cover(image, *width, *height),
+        None => image,
     };
 
     /*
@@ -84,7 +97,7 @@ fn decode(path: PathBuf) {
     LOADED
         .lock()
         .expect("failed to lock loaded images")
-        .insert(path, Some(image));
+        .insert(key, Some(image));
 
     wake::wake();
 }
