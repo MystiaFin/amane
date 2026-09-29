@@ -34,7 +34,12 @@ pub fn prepare() -> PathBuf {
     project_folder
 }
 
-// the empty workspace keeps cargo from joining a workspace in a parent folder
+/*
+ * dev builds optimise amane and its dependencies, drawing unoptimised
+ * is too slow for smooth animation; only the user's own crate stays
+ * unoptimised, so a save still rebuilds quickly after the first build.
+ * the empty workspace keeps cargo from joining a workspace in a parent folder
+ */
 fn manifest(main: &str, library: &str) -> String {
     format!(
         "[package]
@@ -48,6 +53,9 @@ path = '{main}'
 
 [dependencies]
 amane = {{ path = '{library}' }}
+
+[profile.dev.package.\"*\"]
+opt-level = 3
 
 [workspace]
 "
