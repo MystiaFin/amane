@@ -1,3 +1,4 @@
+use std::any::TypeId;
 use std::ops::{Deref, DerefMut};
 use std::sync::RwLockWriteGuard;
 
@@ -21,9 +22,9 @@ impl<S> DerefMut for Write<S> {
     }
 }
 
-// a finished write is a change the window has to show
-impl<S> Drop for Write<S> {
+// a finished write is a change the windows that read the service have to show
+impl<S: 'static> Drop for Write<S> {
     fn drop(&mut self) {
-        wake::wake();
+        wake::changed(TypeId::of::<S>());
     }
 }

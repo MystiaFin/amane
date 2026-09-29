@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use wayland_client::{Proxy, protocol::wl_output::WlOutput};
 
 use crate::graphics::Gpu;
@@ -48,6 +50,7 @@ impl WaylandState {
             scale: 1.0,
 
             frame_requested: false,
+            reads: HashSet::new(),
 
             pointer: Pointer::default(),
             on_key: None,

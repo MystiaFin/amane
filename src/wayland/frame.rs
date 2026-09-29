@@ -2,13 +2,20 @@ use smithay_client_toolkit::compositor::FrameCallbackData;
 
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer};
+use crate::services::wake;
 
 use super::window::Window;
 
 impl Window {
     pub fn redraw(&mut self) {
+        // anything read before belongs to another window
+        wake::take_read();
+
         // the view runs again on every redraw, so it shows the services as they are now
         let window = self.view.run();
+
+        // a later change to one of these services draws this window again
+        self.reads = wake::take_read();
 
         let moving = moving::take();
 
@@ -39,6 +46,9 @@ impl Window {
         );
 
         root.draw(&mut renderer, area);
+
+        // some widgets read services while drawing
+        self.reads.extend(wake::take_read());
 
         // the handlers are rebuilt with the view, so each frame replaces the last frame's
         self.pointer.collect(root.as_ref(), area);

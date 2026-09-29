@@ -1,5 +1,7 @@
 use wayland_client::protocol::wl_surface::WlSurface;
 
+use crate::services::wake;
+
 use super::{WaylandState, window::Window};
 
 impl WaylandState {
@@ -17,6 +19,23 @@ impl WaylandState {
     // a service or handler may have changed what any of the windows shows
     pub fn request_frames(&mut self) {
         for window in &mut self.windows {
+            window.request_frame();
+        }
+    }
+
+    // only windows that read a service that changed draw again
+    pub fn request_changed_frames(&mut self) {
+        let Some(changed) = wake::take_changes() else {
+            self.request_frames();
+
+            return;
+        };
+
+        for window in &mut self.windows {
+            if window.reads.is_disjoint(&changed) {
+                continue;
+            }
+
             window.request_frame();
         }
     }

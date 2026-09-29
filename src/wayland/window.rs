@@ -1,3 +1,6 @@
+use std::any::TypeId;
+use std::collections::HashSet;
+
 use wayland_client::{
     QueueHandle,
     protocol::{wl_compositor::WlCompositor, wl_output::WlOutput},
@@ -28,6 +31,9 @@ pub struct Window {
     pub scale: f32,
 
     pub frame_requested: bool,
+
+    // the services the last view read, a change to any of them draws the window again
+    pub reads: HashSet<TypeId>,
 
     // both come from the last drawn view, so input matches what is on screen
     pub pointer: Pointer,

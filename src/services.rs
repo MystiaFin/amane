@@ -16,6 +16,7 @@ mod workspace;
 mod workspaces;
 mod write;
 
+use std::any::TypeId;
 use std::sync::RwLockReadGuard;
 use std::thread;
 use std::time::Duration;
@@ -60,6 +61,9 @@ pub trait Service: Send + Sync + Sized + 'static {
     }
 
     fn read() -> RwLockReadGuard<'static, Self> {
+        // remembered, so a later change redraws only the windows that read it
+        wake::note_read(TypeId::of::<Self>());
+
         store::find::<Self>()
             .read()
             .expect("failed to lock service")
