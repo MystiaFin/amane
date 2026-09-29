@@ -1,11 +1,13 @@
 mod blend;
 mod easing;
 pub mod moving;
+mod spring;
 
 use std::time::{Duration, Instant};
 
 pub use blend::Blend;
 pub use easing::Easing;
+pub use spring::Spring;
 
 pub struct Animation<T: Blend = f32> {
     pub(crate) from: T,
