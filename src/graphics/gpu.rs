@@ -3,6 +3,7 @@ mod clip;
 mod convert;
 mod cut;
 mod dispatch;
+mod atlas;
 mod glyph;
 mod gradient;
 mod flush;
@@ -11,6 +12,8 @@ mod image;
 mod layer;
 mod paint;
 mod pass;
+mod picture;
+mod quads;
 mod shade;
 mod shader;
 mod shadow;
@@ -52,6 +55,8 @@ pub struct Gpu {
 
     // letters already drawn into pictures, none for letters without pixels like a space
     glyphs: HashMap<glyph::GlyphKey, Option<glyph::Glyph>>,
+
+    quads: quads::Quads,
     atlas_dropped: bool,
 
     // custom shaders, compiled once and kept by the path they were read from
@@ -99,6 +104,8 @@ impl Gpu {
         let box_blur = Pass::new(&device, "box_blur", TextureFormat::Rgba8Unorm, None);
         let erase = cut::erase(&device);
 
+        let quads = quads::Quads::new(&device, &queue);
+
         Self {
             device,
             queue,
@@ -110,6 +117,7 @@ impl Gpu {
 
             images: HashMap::new(),
             glyphs: HashMap::new(),
+            quads,
             atlas_dropped: false,
 
             shaders: HashMap::new(),

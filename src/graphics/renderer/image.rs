@@ -28,6 +28,8 @@ impl Renderer {
             image,
             transform,
             clip: path,
+            rect,
+            radius,
             clip_transform: self.transform,
         });
     }

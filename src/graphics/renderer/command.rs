@@ -16,6 +16,23 @@ pub enum Command {
         y: f32,
     },
 
+    // a rounded rectangle, kept as one so the gpu can draw it without tracing its outline
+    Rectangle {
+        rect: Rect,
+        radius: f32,
+        transform: Transform,
+        color: Color,
+    },
+
+    // a line along the inside edge of a rounded rectangle
+    Border {
+        rect: Rect,
+        radius: f32,
+        thickness: f32,
+        transform: Transform,
+        color: Color,
+    },
+
     Fill {
         path: Path,
         transform: Transform,
@@ -39,11 +56,13 @@ pub enum Command {
         cap: Cap,
     },
 
-    // the image is only shown inside the clip path
+    // the image is only shown inside the clip path, which traces the rounded rectangle
     Image {
         image: &'static Bitmap,
         transform: Transform,
         clip: Path,
+        rect: Rect,
+        radius: f32,
         clip_transform: Transform,
     },
 
@@ -95,9 +114,11 @@ pub enum Command {
         opacity: f32,
     },
 
-    // commands that only show inside the path
+    // commands that only show inside the path, which traces the rounded rectangle
     Clip {
         path: Path,
+        rect: Rect,
+        radius: f32,
         transform: Transform,
         commands: Vec<Command>,
     },

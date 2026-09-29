@@ -12,6 +12,8 @@ impl Renderer {
 
         self.commands.push(Command::Clip {
             path,
+            rect,
+            radius,
             transform: self.transform,
             commands: group.commands,
         });

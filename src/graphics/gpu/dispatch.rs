@@ -9,6 +9,21 @@ impl Gpu {
     // hands each command to the file that knows how to draw it
     pub(super) fn add(&mut self, scene: &mut Scene, command: Command, canvas: &Texture) {
         match command {
+            Command::Rectangle {
+                rect,
+                radius,
+                transform,
+                color,
+            } => shape::rectangle(scene, rect, radius, transform, color),
+
+            Command::Border {
+                rect,
+                radius,
+                thickness,
+                transform,
+                color,
+            } => shape::border(scene, rect, radius, thickness, transform, color),
+
             Command::Glyph {
                 face,
                 id,
@@ -44,6 +59,7 @@ impl Gpu {
                 transform,
                 clip,
                 clip_transform,
+                ..
             } => self.draw_image(scene, image, transform, &clip, clip_transform),
 
             Command::Shadow {
@@ -69,6 +85,7 @@ impl Gpu {
                 path,
                 transform,
                 commands,
+                ..
             } => self.clip(scene, &path, transform, commands, canvas),
 
             // blurs, cuts and shaders split the drawing, so run handles them before they get here

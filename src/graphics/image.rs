@@ -26,6 +26,15 @@ pub struct Bitmap {
 }
 
 impl Bitmap {
+    // one clear pixel, for a texture slot that has to hold something
+    pub fn empty() -> Self {
+        Self {
+            width: 1,
+            height: 1,
+            pixels: vec![0; 4],
+        }
+    }
+
     pub fn width(&self) -> u32 {
         self.width
     }

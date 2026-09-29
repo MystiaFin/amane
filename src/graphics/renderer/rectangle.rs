@@ -12,12 +12,13 @@ impl Renderer {
             return;
         }
 
-        let Some(path) = rect.trace(radius) else {
+        if rect.width <= 0.0 || rect.height <= 0.0 {
             return;
-        };
+        }
 
-        self.commands.push(Command::Fill {
-            path,
+        self.commands.push(Command::Rectangle {
+            rect,
+            radius,
             transform: self.transform,
             color,
         });
