@@ -4,12 +4,14 @@ mod manager;
 mod profile;
 mod wifi;
 
+use std::thread;
+
 use crate::{Service, Value};
 
 pub use access_point::AccessPoint;
 pub use link::Link;
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Network {
     link: Link,
 
@@ -39,6 +41,25 @@ impl Service for Network {
         network.update();
 
         network
+    }
+
+    /*
+     * networkmanager is asked outside the lock, so a slow answer never
+     * holds up a frame, and nothing is written when nothing changed, so
+     * the windows aren't redrawn every second for no reason
+     */
+    fn listen() {
+        loop {
+            thread::sleep(Self::interval());
+
+            let fresh = Self::new();
+
+            if *Self::read() == fresh {
+                continue;
+            }
+
+            *Self::write() = fresh;
+        }
     }
 
     fn update(&mut self) {
