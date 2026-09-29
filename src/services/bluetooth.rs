@@ -122,9 +122,9 @@ impl Bluetooth {
         device_call(device, "Disconnect");
     }
 
-    // works for devices that pair without a code, like most headsets and mice
+    // pairs, then connects like other bluetooth menus do; only for devices that pair without a code
     pub fn pair(device: &str) {
-        device_call(device, "Pair");
+        device_calls(device, &["Pair", "Connect"]);
     }
 
     // unpairs and removes the device, it comes back only after a new scan
@@ -156,11 +156,20 @@ fn adapter_call(method: &'static str, arguments: &[Argument]) {
 
 // connecting can take seconds, so it runs on its own thread and the bar keeps drawing
 fn device_call(device: &str, method: &'static str) {
+    device_calls(device, &[method]);
+}
+
+// one after another, each waiting for the one before, like pairing before connecting
+fn device_calls(device: &str, methods: &[&'static str]) {
     let device = String::from(device);
 
-    thread::spawn(move || {
-        Bus::system().call(BLUEZ, &device, DEVICE, method, &[]);
+    let methods = methods.to_vec();
 
-        Bluetooth::write().update();
+    thread::spawn(move || {
+        for method in methods {
+            Bus::system().call(BLUEZ, &device, DEVICE, method, &[]);
+
+            Bluetooth::write().update();
+        }
     });
 }
