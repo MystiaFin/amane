@@ -4,6 +4,7 @@ mod input;
 mod needs_height;
 mod needs_width;
 mod shadow;
+mod time;
 mod transform;
 
 use std::path::PathBuf;

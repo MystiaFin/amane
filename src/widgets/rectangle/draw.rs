@@ -4,7 +4,7 @@ use crate::input::Target;
 use crate::widgets::Widget;
 use crate::{Fill, Image, Size};
 
-use super::{Rectangle, child, input, shadow, transform};
+use super::{Rectangle, child, input, shadow, time, transform};
 
 impl Widget for Rectangle {
     fn width(&self) -> Size {
@@ -61,7 +61,9 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
         renderer.shader(area, shader, radius, &rectangle.shader_values);
 
         // the shader's time moves on, so the window keeps drawing new frames
-        moving::set();
+        if time::reads_time(shader) {
+            moving::set();
+        }
     }
 
     shadow::inner_shadow(rectangle, renderer, area, radius);
