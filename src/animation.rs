@@ -1,13 +1,20 @@
 mod blend;
 mod easing;
 pub mod moving;
-mod spring;
 
 use std::time::{Duration, Instant};
 
 pub use blend::Blend;
 pub use easing::Easing;
-pub use spring::Spring;
+
+/*
+ * asks for one more frame after this one; call it from the view while
+ * something you move yourself has not arrived, and stop calling it once
+ * it has, so the window can rest
+ */
+pub fn request_frame() {
+    moving::set();
+}
 
 pub struct Animation<T: Blend = f32> {
     pub(crate) from: T,
