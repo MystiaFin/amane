@@ -1,4 +1,4 @@
-mod measure;
+pub mod measure;
 
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
