@@ -13,7 +13,31 @@ const CONNECTION: &str = "org.freedesktop.NetworkManager.Settings.Connection";
 
 // a saved profile for this network, networkmanager keeps its password
 pub fn find(name: &str) -> Option<String> {
+    for (path, ssid) in wifi_profiles() {
+        if ssid == name {
+            return Some(path);
+        }
+    }
+
+    None
+}
+
+// the names of every network with a saved profile
+pub fn saved_names() -> Vec<String> {
+    let mut names = Vec::new();
+
+    for (_, ssid) in wifi_profiles() {
+        names.push(ssid);
+    }
+
+    names
+}
+
+// each saved wifi profile's path with its network name
+fn wifi_profiles() -> Vec<(String, String)> {
     let profiles = Bus::system().call(NAME, SETTINGS_PATH, SETTINGS, "ListConnections", &[]);
+
+    let mut found = Vec::new();
 
     for profile in profiles.list() {
         let path = profile.text();
@@ -23,12 +47,16 @@ pub fn find(name: &str) -> Option<String> {
         // wired and vpn profiles have no wifi group, so their name is empty
         let wireless = settings.get("802-11-wireless");
 
-        if ssid(wireless.get("ssid")) == name {
-            return Some(String::from(path));
+        let name = ssid(wireless.get("ssid"));
+
+        if name.is_empty() {
+            continue;
         }
+
+        found.push((String::from(path), name));
     }
 
-    None
+    found
 }
 
 // only what networkmanager cannot work out itself, it fills in the rest

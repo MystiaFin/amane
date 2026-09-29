@@ -17,6 +17,9 @@ pub struct AccessPoint {
 
     // the network the device is joined to right now
     pub(crate) active: bool,
+
+    // networkmanager has a profile for it, password included
+    pub(crate) saved: bool,
 }
 
 impl AccessPoint {
@@ -33,6 +36,7 @@ impl AccessPoint {
             strength: properties.get("Strength").number() as u8,
             secured,
             active,
+            saved: false,
         }
     }
 
@@ -50,5 +54,9 @@ impl AccessPoint {
 
     pub fn active(&self) -> bool {
         self.active
+    }
+
+    pub fn saved(&self) -> bool {
+        self.saved
     }
 }

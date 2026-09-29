@@ -21,6 +21,9 @@ pub struct Network {
 
     wifi_enabled: bool,
 
+    // joining a wifi network that isn't up yet
+    connecting: bool,
+
     // empty without a wifi device, or with the radio off
     access_points: Vec<AccessPoint>,
 }
@@ -46,6 +49,7 @@ impl Service for Network {
 
         if let Some(device) = wifi::device() {
             self.access_points = wifi::access_points(&device);
+            self.connecting = wifi::connecting(&device);
         }
 
         if !manager::connected() {
@@ -86,6 +90,10 @@ impl Network {
 
     pub fn wifi_enabled(&self) -> bool {
         self.wifi_enabled
+    }
+
+    pub fn connecting(&self) -> bool {
+        self.connecting
     }
 
     pub fn access_points(&self) -> &[AccessPoint] {
