@@ -20,7 +20,7 @@ use super::atlas::Atlas;
 use super::{picture, texture};
 
 // how many numbers one quad takes in quads.wgsl
-const QUAD_SIZE: usize = 20;
+const QUAD_SIZE: usize = 28;
 
 // what kind of quad it is, as quads.wgsl tells them apart
 const SHAPE: f32 = 0.0;
@@ -38,6 +38,35 @@ const NO_CLIP: Clip = Clip {
 pub struct Clip {
     pub rect: Rect,
     pub radius: f32,
+}
+
+// at most two rounded clips reach a quad, the outer one and the one inside it
+#[derive(Clone, Copy, Default)]
+pub struct Clips {
+    pub outer: Option<Clip>,
+    pub inner: Option<Clip>,
+}
+
+impl Clips {
+    // a clip inside the ones already there; with two there already, the outer two merge
+    pub fn within(self, clip: Clip) -> Clips {
+        match (self.outer, self.inner) {
+            (None, _) => Clips {
+                outer: Some(clip),
+                inner: None,
+            },
+
+            (Some(outer), None) => Clips {
+                outer: Some(outer),
+                inner: Some(clip),
+            },
+
+            (Some(outer), Some(inner)) => Clips {
+                outer: Some(narrow(outer, inner)),
+                inner: Some(clip),
+            },
+        }
+    }
 }
 
 // quads next to each other that read the same image, drawn in one go
@@ -152,8 +181,8 @@ impl Quads {
     }
 
     // rect and radius in canvas pixels
-    pub fn rectangle(&mut self, rect: Rect, radius: f32, color: Color, clip: Option<Clip>) {
-        self.push(rect, [radius, 0.0], color, clip, SHAPE, [0.0; 4], None);
+    pub fn rectangle(&mut self, rect: Rect, radius: f32, color: Color, clips: Clips) {
+        self.push(rect, [radius, 0.0], color, clips, SHAPE, [0.0; 4], None);
     }
 
     pub fn border(
@@ -162,13 +191,13 @@ impl Quads {
         radius: f32,
         thickness: f32,
         color: Color,
-        clip: Option<Clip>,
+        clips: Clips,
     ) {
         self.push(
             rect,
             [radius, thickness],
             color,
-            clip,
+            clips,
             SHAPE,
             [0.0; 4],
             None,
@@ -186,7 +215,7 @@ impl Quads {
         color: Color,
         x: f32,
         y: f32,
-        clip: Option<Clip>,
+        clips: Clips,
     ) {
         let Some(letter) = self.atlas.letter(queue, face, id, size) else {
             return;
@@ -206,7 +235,7 @@ impl Quads {
             (letter.y + letter.height) as f32,
         ];
 
-        self.push(rect, [0.0; 2], color, clip, LETTER, texels, None);
+        self.push(rect, [0.0; 2], color, clips, LETTER, texels, None);
     }
 
     // the whole image stretched over rect, which the clip usually trims
@@ -216,7 +245,7 @@ impl Quads {
         queue: &Queue,
         image: &'static Bitmap,
         rect: Rect,
-        clip: Option<Clip>,
+        clips: Clips,
     ) {
         let key = std::ptr::from_ref(image) as usize;
 
@@ -234,7 +263,7 @@ impl Quads {
             rect,
             [0.0; 2],
             Color::WHITE,
-            clip,
+            clips,
             PICTURE,
             corners,
             Some(key),
@@ -247,12 +276,13 @@ impl Quads {
         rect: Rect,
         [radius, thickness]: [f32; 2],
         color: Color,
-        clip: Option<Clip>,
+        clips: Clips,
         kind: f32,
         source: [f32; 4],
         picture: Option<usize>,
     ) {
-        let clip = clip.unwrap_or(NO_CLIP);
+        let outer = clips.outer.unwrap_or(NO_CLIP);
+        let inner = clips.inner.unwrap_or(NO_CLIP);
 
         let channel = |value: u8| f32::from(value) / 255.0;
 
@@ -263,21 +293,32 @@ impl Quads {
             rect.y,
             rect.width,
             rect.height,
-            clip.rect.x,
-            clip.rect.y,
-            clip.rect.width,
-            clip.rect.height,
+            outer.rect.x,
+            outer.rect.y,
+            outer.rect.width,
+            outer.rect.height,
             channel(color.r),
             channel(color.g),
             channel(color.b),
             channel(color.a),
             radius,
             thickness,
-            clip.radius,
+            outer.radius,
             kind,
         ]);
 
         self.waiting.extend(source);
+
+        self.waiting.extend([
+            inner.rect.x,
+            inner.rect.y,
+            inner.rect.width,
+            inner.rect.height,
+            inner.radius,
+            0.0,
+            0.0,
+            0.0,
+        ]);
 
         // a quad reading the same image as the one before joins its run
         if let Some(run) = self.runs.last_mut()
@@ -455,5 +496,24 @@ fn sampler_entry() -> BindGroupLayoutEntry {
         visibility: ShaderStages::FRAGMENT,
         ty: BindingType::Sampler(SamplerBindingType::Filtering),
         count: None,
+    }
+}
+
+pub fn narrow(outer: Clip, inner: Clip) -> Clip {
+    let left = f32::max(outer.rect.x, inner.rect.x);
+    let top = f32::max(outer.rect.y, inner.rect.y);
+
+    let outer_right = outer.rect.x + outer.rect.width;
+    let outer_bottom = outer.rect.y + outer.rect.height;
+
+    let right = f32::min(outer_right, inner.rect.x + inner.rect.width);
+    let bottom = f32::min(outer_bottom, inner.rect.y + inner.rect.height);
+
+    let width = f32::max(right - left, 0.0);
+    let height = f32::max(bottom - top, 0.0);
+
+    Clip {
+        rect: Rect::new(left, top, width, height),
+        radius: inner.radius,
     }
 }

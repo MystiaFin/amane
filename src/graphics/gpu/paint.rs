@@ -303,29 +303,7 @@ fn device_clip(rect: Rect, radius: f32, transform: Transform) -> Option<Clip> {
 }
 
 /*
- * only one rounded clip reaches the quads, so nested clips become their
+ * only two rounded clips reach the quads, so deeper ones merge into their
  * overlap, rounded like the inner one; clips inside clips are almost
- * always smaller, so this is exact for them
+ * always smaller, so this is close enough for them
  */
-fn narrow(outer: Option<Clip>, inner: Clip) -> Clip {
-    let Some(outer) = outer else {
-        return inner;
-    };
-
-    let left = f32::max(outer.rect.x, inner.rect.x);
-    let top = f32::max(outer.rect.y, inner.rect.y);
-
-    let outer_right = outer.rect.x + outer.rect.width;
-    let outer_bottom = outer.rect.y + outer.rect.height;
-
-    let right = f32::min(outer_right, inner.rect.x + inner.rect.width);
-    let bottom = f32::min(outer_bottom, inner.rect.y + inner.rect.height);
-
-    let width = f32::max(right - left, 0.0);
-    let height = f32::max(bottom - top, 0.0);
-
-    Clip {
-        rect: Rect::new(left, top, width, height),
-        radius: inner.radius,
-    }
-}
