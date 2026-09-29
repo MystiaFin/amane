@@ -3,7 +3,7 @@ use crate::Color;
 // wcag's minimum contrast for normal sized text
 const READABLE: f32 = 4.5;
 
-// how much a vivid color counts over one near middle brightness, taken from jaqc
+// how much a vivid color counts over one near middle brightness
 const SATURATION_WEIGHT: f32 = 1.4;
 const TARGET_LUMINANCE: f32 = 0.52;
 const LUMINANCE_PENALTY: f32 = 0.35;

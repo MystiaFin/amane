@@ -11,7 +11,7 @@ use std::time::{Duration, SystemTime};
 use crate::graphics::image;
 use crate::{Color, Service};
 
-// until an image is opened, the colors jaqc falls back to
+// the colors used until an image is opened
 const FALLBACK_BACKGROUND: Color = Color::rgb(0x11, 0x11, 0x1b);
 const FALLBACK_ACCENT: Color = Color::rgb(0x89, 0xb4, 0xfa);
 
@@ -85,7 +85,7 @@ impl Service for Palette {
 impl Palette {
     /*
      * reads the image right away, so the first frame already has its
-     * colors; 16 matches jaqc and is enough for a whole shell's theme
+     * colors; 16 is enough for a whole shell's theme
      */
     pub fn open(&mut self, path: &str, count: usize) {
         let path = PathBuf::from(path);
