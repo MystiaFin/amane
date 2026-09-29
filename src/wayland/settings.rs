@@ -14,6 +14,8 @@ pub struct Settings {
     pub keyboard: Keyboard,
     pub zone: Zone,
 
+    pub namespace: &'static str,
+
     pub visible: bool,
 }
 
@@ -30,6 +32,8 @@ impl From<&LayerWindow> for Settings {
             layer: window.layer,
             keyboard: window.keyboard,
             zone: window.zone,
+
+            namespace: window.namespace,
 
             visible: window.visible,
         }

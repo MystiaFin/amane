@@ -1,4 +1,6 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+use crate::graphics::image;
 
 use super::fit::Fit;
 
@@ -27,5 +29,13 @@ impl Image {
             path: path.into(),
             fit: Fit::Stretch,
         }
+    }
+
+    /*
+     * starts decoding the file if nothing asked for it yet, and says whether
+     * it is ready to draw; a file that can't be read never becomes ready
+     */
+    pub fn loaded(path: impl AsRef<Path>) -> bool {
+        image::load(path.as_ref()).is_some()
     }
 }

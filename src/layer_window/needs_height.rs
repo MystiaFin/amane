@@ -18,6 +18,8 @@ impl NeedsHeight {
             keyboard: Keyboard::default(),
             zone: Zone::default(),
 
+            namespace: "amane",
+
             visible: true,
 
             input_region: None,

@@ -5,6 +5,7 @@ mod input_region;
 mod keyboard;
 mod layer;
 mod margin;
+mod namespace;
 mod needs_height;
 mod needs_width;
 mod vertical;
@@ -37,6 +38,8 @@ pub struct LayerWindow {
     pub(crate) layer: Layer,
     pub(crate) keyboard: Keyboard,
     pub(crate) zone: Zone,
+
+    pub(crate) namespace: &'static str,
 
     pub(crate) visible: bool,
 

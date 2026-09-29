@@ -23,7 +23,7 @@ pub fn create(
         qh,
         surface,
         layer(settings.layer),
-        Some("amane"),
+        Some(settings.namespace),
         output,
     );
 
