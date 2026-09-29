@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use crate::Urgency;
 
 use super::Action;
@@ -23,6 +25,8 @@ pub struct Notification {
 
     // stays open after an action, until it is dismissed or the sender closes it
     pub(crate) resident: bool,
+
+    pub(crate) received: SystemTime,
 }
 
 impl Notification {
@@ -57,5 +61,15 @@ impl Notification {
     // the buttons to show, in the order the sender gave them
     pub fn actions(&self) -> &[Action] {
         &self.actions
+    }
+
+    // whether clicking the notification itself does something, see Notifications::click
+    pub fn has_default_action(&self) -> bool {
+        self.has_default
+    }
+
+    // when it arrived, or when the sender last replaced it
+    pub fn received(&self) -> SystemTime {
+        self.received
     }
 }

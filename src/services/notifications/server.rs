@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use crate::{Argument, Bus, Method, Notification, Notifications, Service, Urgency, Value};
 
 use super::{Action, Reason};
@@ -74,6 +76,8 @@ fn notify(method: &Method) {
         has_default,
 
         resident: hints.get("resident").bool(),
+
+        received: SystemTime::now(),
     };
 
     let replaces_id = replaces_id.number() as u32;

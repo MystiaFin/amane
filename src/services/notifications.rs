@@ -54,6 +54,20 @@ impl Notifications {
         Self::write().close(id, Reason::Dismissed);
     }
 
+    pub fn clear() {
+        let mut notifications = Self::write();
+
+        let mut ids = Vec::new();
+
+        for notification in &notifications.list {
+            ids.push(notification.id);
+        }
+
+        for id in ids {
+            notifications.close(id, Reason::Dismissed);
+        }
+    }
+
     // a button was pressed, pass the key from notification.actions()
     pub fn invoke(id: u32, key: &str) {
         Self::write().run_action(id, key);

@@ -82,6 +82,15 @@ impl Text {
         self
     }
 
+    // how tall it is once laid out in this width, for wrapped text whose height depends on it
+    pub fn height_in(&self, width: f32) -> f32 {
+        let font = self.face();
+
+        let arranged = lines::arrange(&self.content, font, self.size, width, self.rules);
+
+        lines::stack_height(font, self.size, arranged.len())
+    }
+
     fn face(&self) -> &'static Face<'static> {
         font::load_weighted(self.font.as_deref(), self.weight)
     }
