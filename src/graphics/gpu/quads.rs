@@ -499,7 +499,12 @@ fn sampler_entry() -> BindGroupLayoutEntry {
     }
 }
 
-pub fn narrow(outer: Clip, inner: Clip) -> Clip {
+/*
+ * only two rounded clips reach a quad, so deeper ones merge into their
+ * overlap, rounded like the inner one; clips inside clips are almost
+ * always smaller, so this is close enough for them
+ */
+fn narrow(outer: Clip, inner: Clip) -> Clip {
     let left = f32::max(outer.rect.x, inner.rect.x);
     let top = f32::max(outer.rect.y, inner.rect.y);
 

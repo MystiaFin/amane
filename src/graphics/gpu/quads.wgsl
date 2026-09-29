@@ -4,7 +4,7 @@ struct Quad {
     // where it is on the canvas, in pixels: x, y, width, height
     rect: vec4<f32>,
 
-    // it only shows inside this rounded rectangle
+    // it only shows inside this rounded rectangle, and inside inner_clip too
     clip: vec4<f32>,
 
     // not premultiplied, 0 to 1
@@ -17,6 +17,11 @@ struct Quad {
     // where it reads from, left, top, right, bottom: a letter's texels in the atlas,
     // or the part of the image, from 0 to 1
     source: vec4<f32>,
+
+    inner_clip: vec4<f32>,
+
+    // the inner clip's corner radius
+    inner_radius: vec4<f32>,
 }
 
 @group(0) @binding(0) var<storage, read> quads: array<Quad>;
@@ -96,7 +101,10 @@ fn fragment(corner: Corner) -> @location(0) vec4<f32> {
     // sampled for every quad, since sampling has to happen outside of branches
     let image = textureSample(picture, picture_sampler, corner.source);
 
-    let clip = coverage(rounded_rectangle(corner.point, quad.clip, quad.shape.z));
+    let outer_clip = coverage(rounded_rectangle(corner.point, quad.clip, quad.shape.z));
+    let inner_clip = coverage(rounded_rectangle(corner.point, quad.inner_clip, quad.inner_radius.x));
+
+    let clip = outer_clip * inner_clip;
 
     // images hold premultiplied colors already, the color's alpha fades them
     if quad.shape.w == 2.0 {

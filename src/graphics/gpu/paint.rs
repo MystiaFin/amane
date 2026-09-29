@@ -7,7 +7,7 @@ use crate::graphics::renderer::Command;
 use crate::graphics::{Rect, Transform};
 
 use super::convert::bezier;
-use super::quads::Clip;
+use super::quads::{Clip, Clips};
 use super::{Gpu, texture};
 
 /*
@@ -18,16 +18,16 @@ use super::{Gpu, texture};
 impl Gpu {
     // draws each command over what the commands before it left on the canvas
     pub(super) fn run(&mut self, commands: Vec<Command>, canvas: &Texture) {
-        self.run_clipped(commands, canvas, None);
+        self.run_clipped(commands, canvas, Clips::default());
     }
 
-    fn run_clipped(&mut self, commands: Vec<Command>, canvas: &Texture, clip: Option<Clip>) {
+    fn run_clipped(&mut self, commands: Vec<Command>, canvas: &Texture, clips: Clips) {
         let mut scene = Scene::new();
 
         // blurred copies vello reads from, dropped once the scene using them is drawn
         let mut borrowed = Vec::new();
 
-        self.gather(commands, canvas, clip, &mut scene, &mut borrowed);
+        self.gather(commands, canvas, clips, &mut scene, &mut borrowed);
 
         self.flush(&mut scene, canvas, &mut borrowed);
     }
@@ -36,7 +36,7 @@ impl Gpu {
         &mut self,
         commands: Vec<Command>,
         canvas: &Texture,
-        clip: Option<Clip>,
+        clips: Clips,
         scene: &mut Scene,
         borrowed: &mut Vec<ImageData>,
     ) {
@@ -85,7 +85,7 @@ impl Gpu {
 
                     let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
 
-                    self.run_clipped(commands, &layer, clip);
+                    self.run_clipped(commands, &layer, clips);
 
                     self.lay(&layer, canvas, opacity, false);
                 }
@@ -101,7 +101,7 @@ impl Gpu {
 
                     let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
 
-                    self.run_clipped(commands, &layer, clip);
+                    self.run_clipped(commands, &layer, clips);
 
                     self.trim(&layer, &path, transform);
 
@@ -125,14 +125,12 @@ impl Gpu {
                             commands,
                         };
 
-                        self.to_vello(scene, command, canvas, clip);
+                        self.to_vello(scene, command, canvas, clips);
 
                         continue;
                     };
 
-                    let clip = Some(narrow(clip, inner));
-
-                    self.gather(commands, canvas, clip, scene, borrowed);
+                    self.gather(commands, canvas, clips.within(inner), scene, borrowed);
                 }
 
                 Command::Rectangle {
@@ -147,7 +145,7 @@ impl Gpu {
 
                     let rect = device_rect(rect, transform);
 
-                    self.quads.rectangle(rect, radius * scale, color, clip);
+                    self.quads.rectangle(rect, radius * scale, color, clips);
                 }
 
                 Command::Border {
@@ -164,7 +162,7 @@ impl Gpu {
                     let rect = device_rect(rect, transform);
 
                     self.quads
-                        .border(rect, radius * scale, thickness * scale, color, clip);
+                        .border(rect, radius * scale, thickness * scale, color, clips);
                 }
 
                 Command::Glyph {
@@ -178,7 +176,7 @@ impl Gpu {
                     self.to_quads(scene, canvas, borrowed);
 
                     self.quads
-                        .letter(&self.queue, face, id, size, color, x, y, clip);
+                        .letter(&self.queue, face, id, size, color, x, y, clips);
                 }
 
                 Command::Image {
@@ -198,13 +196,16 @@ impl Gpu {
 
                     let shape = device_clip(rect, radius, clip_transform);
 
-                    let clip = shape.map(|shape| narrow(clip, shape));
+                    let clips = match shape {
+                        Some(shape) => clips.within(shape),
+                        None => clips,
+                    };
 
                     self.quads
-                        .picture(&self.device, &self.queue, image, placement, clip);
+                        .picture(&self.device, &self.queue, image, placement, clips);
                 }
 
-                command => self.to_vello(scene, command, canvas, clip),
+                command => self.to_vello(scene, command, canvas, clips),
             }
         }
     }
@@ -222,31 +223,36 @@ impl Gpu {
         scene: &mut Scene,
         command: Command,
         canvas: &Texture,
-        clip: Option<Clip>,
+        clips: Clips,
     ) {
         self.quads.draw(&self.device, &self.queue, canvas);
 
-        let Some(clip) = clip else {
-            self.add(scene, command, canvas);
+        let mut paths = Vec::new();
 
-            return;
-        };
+        for clip in [clips.outer, clips.inner].into_iter().flatten() {
+            // an empty clip shows nothing of what is inside it
+            let Some(path) = clip.rect.trace(clip.radius) else {
+                return;
+            };
 
-        let Some(path) = clip.rect.trace(clip.radius) else {
-            return;
-        };
+            paths.push(path);
+        }
 
-        scene.push_layer(
-            Fill::NonZero,
-            Mix::Normal,
-            1.0,
-            Affine::IDENTITY,
-            &bezier(&path),
-        );
+        for path in &paths {
+            scene.push_layer(
+                Fill::NonZero,
+                Mix::Normal,
+                1.0,
+                Affine::IDENTITY,
+                &bezier(path),
+            );
+        }
 
         self.add(scene, command, canvas);
 
-        scene.pop_layer();
+        for _ in &paths {
+            scene.pop_layer();
+        }
     }
 
     fn flush(&mut self, scene: &mut Scene, canvas: &Texture, borrowed: &mut Vec<ImageData>) {
