@@ -46,7 +46,7 @@ impl Gpu {
                 } => {
                     self.paint(&mut scene, canvas, &mut borrowed);
 
-                    self.shade(canvas, &shader, &values, rect, &path, transform);
+                    self.shade(canvas, &shader, &values, rect, path.as_ref(), transform);
                 }
 
                 /*

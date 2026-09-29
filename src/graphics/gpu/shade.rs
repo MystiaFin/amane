@@ -18,8 +18,10 @@ static START: LazyLock<Instant> = LazyLock::new(Instant::now);
 
 impl Gpu {
     /*
-     * the shader draws on a canvas of its own, which is trimmed to the rounded
-     * outline and laid over what the commands before it drew
+     * with rounded corners the shader draws on a canvas of its own, which is
+     * trimmed to the outline and laid over what the commands before it drew;
+     * with square ones it blends straight onto the canvas, saving three full
+     * size passes and a texture every frame
      */
     pub(super) fn shade(
         &mut self,
@@ -27,9 +29,15 @@ impl Gpu {
         shader: &Path,
         values: &[[f32; 4]],
         rect: Rect,
-        outline: &Outline,
+        outline: Option<&Outline>,
         transform: Transform,
     ) {
+        let Some(outline) = outline else {
+            self.draw_shader(canvas, shader, values, rect, transform);
+
+            return;
+        };
+
         let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
 
         self.draw_shader(&layer, shader, values, rect, transform);
