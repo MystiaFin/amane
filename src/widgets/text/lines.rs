@@ -135,3 +135,36 @@ fn elide(line: &str, font: &Face, size: f32, width: f32) -> String {
         kept.pop();
     }
 }
+
+// where the letters' ink starts and ends, counted from the pen's starting point
+pub fn ink(content: &str, font: &Face, size: f32) -> (f32, f32) {
+    let units = size / f32::from(font.units_per_em());
+
+    let mut pen = 0.0;
+
+    let mut left = f32::MAX;
+    let mut right = f32::MIN;
+
+    for letter in content.chars() {
+        let id = font.glyph_index(letter).unwrap_or_default();
+
+        // a space has no ink, only an advance
+        if let Some(bounds) = font.glyph_bounding_box(id) {
+            left = left.min(pen + f32::from(bounds.x_min) * units);
+            right = right.max(pen + f32::from(bounds.x_max) * units);
+        }
+
+        let advance = font
+            .glyph_hor_advance(id)
+            .expect("failed to read letter advance");
+
+        pen += f32::from(advance) * units;
+    }
+
+    // nothing but spaces is as wide as its advance
+    if left > right {
+        return (0.0, pen);
+    }
+
+    (left, right)
+}

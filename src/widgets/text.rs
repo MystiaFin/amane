@@ -16,6 +16,9 @@ pub struct Text {
     font: Option<String>,
     weight: Weight,
     rules: Rules,
+
+    // sized by the letters' own shapes instead of their advance, so an icon centers exactly
+    tight: bool,
 }
 
 impl Text {
@@ -27,6 +30,7 @@ impl Text {
             font: None,
             weight: Weight::Regular,
             rules: Rules::default(),
+            tight: false,
         }
     }
 
@@ -72,6 +76,12 @@ impl Text {
         self
     }
 
+    pub fn tight(mut self) -> Self {
+        self.tight = true;
+
+        self
+    }
+
     fn face(&self) -> &'static Face<'static> {
         font::load_weighted(self.font.as_deref(), self.weight)
     }
@@ -82,6 +92,12 @@ impl Widget for Text {
         // wrapped or elided text takes the width it is given and fits itself into it
         if self.rules.wrap || self.rules.elide {
             return Size::Parent;
+        }
+
+        if self.tight {
+            let (left, right) = lines::ink(&self.content, self.face(), self.size);
+
+            return Size::Fixed(right - left);
         }
 
         Size::Fixed(lines::measure(&self.content, self.face(), self.size))
@@ -103,6 +119,15 @@ impl Widget for Text {
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
         let font = self.face();
+
+        // the ink starts at the area's left edge, not the pen
+        let area = if self.tight {
+            let (left, _) = lines::ink(&self.content, font, self.size);
+
+            Rect::new(area.x - left, area.y, area.width, area.height)
+        } else {
+            area
+        };
 
         let arranged = lines::arrange(&self.content, font, self.size, area.width, self.rules);
 
