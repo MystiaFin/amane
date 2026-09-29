@@ -2,6 +2,7 @@ mod cap;
 mod color;
 pub mod font;
 mod geometry;
+pub mod letter;
 mod gpu;
 mod gradient;
 pub mod image;

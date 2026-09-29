@@ -6,7 +6,7 @@ use vello::wgpu::{
     TextureAspect, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
 };
 
-use crate::graphics::font;
+use crate::graphics::letter;
 
 const SIZE: u32 = 1024;
 
@@ -86,16 +86,14 @@ impl Atlas {
             return *letter;
         }
 
-        let (metrics, coverage) = font::rasterizer(face).rasterize_indexed(id, size);
-
-        let width = metrics.width as u32;
-        let height = metrics.height as u32;
-
-        if width == 0 || height == 0 {
+        let Some(pixels) = letter::rasterize(face, id, size) else {
             self.letters.insert(key, None);
 
             return None;
-        }
+        };
+
+        let width = pixels.width;
+        let height = pixels.height;
 
         // too big for the atlas at all
         if width + PADDING > SIZE || height + PADDING > SIZE {
@@ -123,16 +121,15 @@ impl Atlas {
             depth_or_array_layers: 1,
         };
 
-        queue.write_texture(target, &coverage, layout, extent);
+        queue.write_texture(target, &pixels.coverage, layout, extent);
 
-        // ymin counts up from the baseline to the picture's bottom edge, the screen counts down
         let letter = Letter {
             x,
             y,
             width,
             height,
-            left: metrics.xmin as f32,
-            top: -(metrics.ymin as f32 + metrics.height as f32),
+            left: pixels.left,
+            top: pixels.top,
         };
 
         self.letters.insert(key, Some(letter));

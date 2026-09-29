@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
 
 use fontconfig::Fontconfig;
-use fontdue::{Font, FontSettings};
 use ttf_parser::Face;
 
 use crate::Weight;
@@ -11,10 +10,6 @@ static DEFAULT_FAMILY: LazyLock<Mutex<String>> =
     LazyLock::new(|| Mutex::new(String::from("sans-serif")));
 
 static LOADED: LazyLock<Mutex<HashMap<String, &'static Face<'static>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
-
-// the same fonts again for turning letters into pixels, keyed by where each face lives
-static RASTERIZERS: LazyLock<Mutex<HashMap<usize, &'static Font>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub fn set_default(family: &str) {
@@ -49,40 +44,14 @@ pub fn load_weighted(family: Option<&str>, weight: Weight) -> &'static Face<'sta
      * fonts stay loaded until the program exits,
      * so leaking gives a reference that is valid forever
      */
-    let (face, bytes, index) = read(&family, weight);
-
-    let font = Box::leak(Box::new(face));
-
-    let settings = FontSettings {
-        collection_index: index,
-        ..FontSettings::default()
-    };
-
-    let rasterizer = Font::from_bytes(bytes, settings).expect("failed to read font for drawing");
-
-    RASTERIZERS
-        .lock()
-        .expect("failed to lock font rasterizers")
-        .insert(
-            std::ptr::from_ref(font) as usize,
-            Box::leak(Box::new(rasterizer)),
-        );
+    let font = Box::leak(Box::new(read(&family, weight)));
 
     loaded.insert(key, font);
 
     font
 }
 
-// the rasterizer for a face that load_weighted handed out
-pub fn rasterizer(face: &Face) -> &'static Font {
-    let rasterizers = RASTERIZERS.lock().expect("failed to lock font rasterizers");
-
-    rasterizers
-        .get(&(std::ptr::from_ref(face) as usize))
-        .expect("failed to find the rasterizer for a font")
-}
-
-fn read(family: &str, weight: Weight) -> (Face<'static>, &'static [u8], u32) {
+fn read(family: &str, weight: Weight) -> Face<'static> {
     let fontconfig = Fontconfig::new().expect("failed to start fontconfig");
 
     // regular asks for no style, so plain text finds the same file it always did
@@ -101,7 +70,5 @@ fn read(family: &str, weight: Weight) -> (Face<'static>, &'static [u8], u32) {
     // a .ttc file holds several fonts, the index says which one
     let index = found.index.unwrap_or(0) as u32;
 
-    let face = Face::parse(bytes, index).expect("failed to parse font");
-
-    (face, bytes, index)
+    Face::parse(bytes, index).expect("failed to parse font")
 }

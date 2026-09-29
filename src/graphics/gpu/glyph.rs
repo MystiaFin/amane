@@ -5,7 +5,7 @@ use vello::peniko::{Blob, ImageAlphaType, ImageBrush, ImageData, ImageFormat, Im
 use ttf_parser::Face;
 
 use crate::graphics::Color;
-use crate::graphics::font;
+use crate::graphics::letter;
 
 use super::Gpu;
 
@@ -73,15 +73,11 @@ impl Gpu {
 }
 
 fn rasterize(face: &'static Face<'static>, id: u16, size: f32, color: Color) -> Option<Glyph> {
-    let (metrics, coverage) = font::rasterizer(face).rasterize_indexed(id, size);
+    let letter = letter::rasterize(face, id, size)?;
 
-    if metrics.width == 0 || metrics.height == 0 {
-        return None;
-    }
+    let mut pixels = Vec::with_capacity(letter.coverage.len() * 4);
 
-    let mut pixels = Vec::with_capacity(coverage.len() * 4);
-
-    for amount in coverage {
+    for amount in letter.coverage {
         let color_alpha = u16::from(color.a);
         let coverage = u16::from(amount);
 
@@ -94,16 +90,13 @@ fn rasterize(face: &'static Face<'static>, id: u16, size: f32, color: Color) -> 
         data: Blob::from(pixels),
         format: ImageFormat::Rgba8,
         alpha_type: ImageAlphaType::Alpha,
-        width: metrics.width as u32,
-        height: metrics.height as u32,
+        width: letter.width,
+        height: letter.height,
     };
-
-    // ymin counts up from the baseline to the picture's bottom edge, the screen counts down
-    let top = -(metrics.ymin as f32 + metrics.height as f32);
 
     Some(Glyph {
         image,
-        left: metrics.xmin as f32,
-        top,
+        left: letter.left,
+        top: letter.top,
     })
 }
