@@ -47,11 +47,13 @@
 
         buildInputs = libraries;
 
-        # the cli runs cargo on the user's config, so it carries its own toolchain
+        # the cli runs cargo on the user's config, so it carries its own toolchain;
+        # pam is linked by name rather than found through pkg-config, so it needs a search path
         postFixup = with pkgs; ''
           wrapProgram $out/bin/amane \
             --prefix PATH : ${lib.makeBinPath [ cargo rustc pkg-config stdenv.cc ]} \
             --prefix PKG_CONFIG_PATH : ${lib.makeSearchPathOutput "dev" "lib/pkgconfig" libraries} \
+            --prefix LIBRARY_PATH : ${lib.makeLibraryPath [ linux-pam ]} \
             --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader wayland ]}
         '';
       };
