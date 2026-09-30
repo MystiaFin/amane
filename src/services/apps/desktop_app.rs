@@ -8,6 +8,7 @@ pub struct DesktopApp {
     pub(crate) exec: String,
     pub(crate) icon: Option<String>,
     pub(crate) icon_path: Option<PathBuf>,
+    pub(crate) description: Option<String>,
 }
 
 impl DesktopApp {
@@ -28,6 +29,11 @@ impl DesktopApp {
     // the image file for the icon, a png when the theme has one
     pub fn icon_path(&self) -> Option<&Path> {
         self.icon_path.as_deref()
+    }
+
+    // the entry's Comment, or its GenericName like "Web Browser" when it has none
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_deref()
     }
 
     // starts the program and moves on without waiting for it

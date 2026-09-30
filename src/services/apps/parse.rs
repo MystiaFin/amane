@@ -38,11 +38,17 @@ pub fn read(path: &Path, icons: &HashMap<String, PathBuf>) -> Option<DesktopApp>
 
     let icon_path = icon.as_deref().and_then(|icon| find_icon(icon, icons));
 
+    let description = fields
+        .get("Comment")
+        .or(fields.get("GenericName"))
+        .map(|description| description.to_string());
+
     Some(DesktopApp {
         name,
         exec,
         icon,
         icon_path,
+        description,
     })
 }
 
