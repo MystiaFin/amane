@@ -3,19 +3,21 @@ use vello::wgpu::{
     TextureView,
 };
 
+pub const CANVAS: TextureUsages = TextureUsages::RENDER_ATTACHMENT
+    .union(TextureUsages::TEXTURE_BINDING)
+    .union(TextureUsages::COPY_SRC);
+
+pub const SCRATCH: TextureUsages =
+    TextureUsages::STORAGE_BINDING.union(TextureUsages::TEXTURE_BINDING);
+
 // what the commands draw onto, one premultiplied color per real pixel
 pub fn canvas(device: &Device, width: u32, height: u32) -> Texture {
-    let usage =
-        TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_SRC;
-
-    create(device, width, height, usage)
+    create(device, width, height, CANVAS)
 }
 
 // vello writes here from a compute shader, with plain, not premultiplied, alpha
 pub fn scratch(device: &Device, width: u32, height: u32) -> Texture {
-    let usage = TextureUsages::STORAGE_BINDING | TextureUsages::TEXTURE_BINDING;
-
-    create(device, width, height, usage)
+    create(device, width, height, SCRATCH)
 }
 
 // vello copies the finished blur into its image atlas, so it has to be a copy source

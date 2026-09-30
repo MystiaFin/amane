@@ -38,13 +38,15 @@ impl Gpu {
             return;
         };
 
-        let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
+        let layer = self.take_canvas(canvas.width(), canvas.height());
 
         self.draw_shader(&layer, shader, values, rect, transform);
 
         self.trim(&layer, outline, transform);
 
         self.lay(&layer, canvas, 1.0, false);
+
+        self.give_back(layer);
     }
 
     fn draw_shader(

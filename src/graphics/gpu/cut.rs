@@ -40,6 +40,8 @@ impl Gpu {
         );
 
         self.queue.submit([encoder.finish()]);
+
+        self.give_back(coverage);
     }
 }
 

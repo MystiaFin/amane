@@ -12,13 +12,16 @@ impl Gpu {
             self.config.height = height;
 
             self.surface.configure(&self.device, &self.config);
+
+            // spares of the old size would never fit again
+            self.spare.clear();
         }
 
         let Some(frame) = self.next_frame() else {
             return false;
         };
 
-        let canvas = texture::canvas(&self.device, width, height);
+        let canvas = self.take_canvas(width, height);
 
         self.run(commands, &canvas);
 
@@ -35,6 +38,8 @@ impl Gpu {
         );
 
         self.queue.submit([encoder.finish()]);
+
+        self.give_back(canvas);
 
         // presenting attaches the frame to the wayland surface and commits it
         frame.present();

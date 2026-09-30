@@ -20,6 +20,8 @@ impl Gpu {
 
         self.lay(&scratch, canvas, 1.0, true);
 
+        self.give_back(scratch);
+
         scene.reset();
 
         for image in borrowed.drain(..) {
@@ -27,11 +29,11 @@ impl Gpu {
         }
     }
 
-    // the scene alone, on a fresh texture the size of the canvas
+    // the scene alone, on its own texture the size of the canvas, given back by the caller
     pub(super) fn render(&mut self, scene: &Scene, canvas: &Texture) -> Texture {
         self.keep_atlas(scene);
 
-        let scratch = texture::scratch(&self.device, canvas.width(), canvas.height());
+        let scratch = self.take_scratch(canvas.width(), canvas.height());
 
         let params = RenderParams {
             base_color: peniko::Color::TRANSPARENT,

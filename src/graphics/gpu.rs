@@ -13,6 +13,7 @@ mod layer;
 mod paint;
 mod pass;
 mod picture;
+mod pool;
 mod quads;
 mod shade;
 mod shader;
@@ -29,7 +30,7 @@ use std::path::PathBuf;
 use vello::peniko::ImageData;
 use vello::wgpu::{
     BlendState, Device, DeviceDescriptor, Instance, InstanceDescriptor, Queue,
-    RequestAdapterOptions, Surface, SurfaceConfiguration, TextureFormat,
+    RequestAdapterOptions, Surface, SurfaceConfiguration, Texture, TextureFormat,
 };
 use vello::{AaSupport, RendererOptions};
 
@@ -61,6 +62,9 @@ pub struct Gpu {
 
     // custom shaders, compiled once and kept by the path they were read from
     shaders: HashMap<PathBuf, Shader>,
+
+    // finished window-sized textures waiting to be reused
+    spare: Vec<Texture>,
 
     composite: Pass,
     present: Pass,
@@ -121,6 +125,7 @@ impl Gpu {
             atlas_dropped: false,
 
             shaders: HashMap::new(),
+            spare: Vec::new(),
 
             composite,
             present,

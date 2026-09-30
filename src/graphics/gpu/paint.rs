@@ -8,7 +8,7 @@ use crate::graphics::{Rect, Transform};
 
 use super::convert::bezier;
 use super::quads::{Clip, Clips};
-use super::{Gpu, texture};
+use super::Gpu;
 
 /*
  * rectangles, borders and letters go to the quads, anything else to vello;
@@ -83,11 +83,13 @@ impl Gpu {
                 Command::Layer { commands, opacity } => {
                     self.flush(scene, canvas, borrowed);
 
-                    let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
+                    let layer = self.take_canvas(canvas.width(), canvas.height());
 
                     self.run_clipped(commands, &layer, clips);
 
                     self.lay(&layer, canvas, opacity, false);
+
+                    self.give_back(layer);
                 }
 
                 // a blur inside a clip has to see only the clip's own drawing, so it gets a canvas
@@ -99,13 +101,15 @@ impl Gpu {
                 } if separate(&commands) => {
                     self.flush(scene, canvas, borrowed);
 
-                    let layer = texture::canvas(&self.device, canvas.width(), canvas.height());
+                    let layer = self.take_canvas(canvas.width(), canvas.height());
 
                     self.run_clipped(commands, &layer, clips);
 
                     self.trim(&layer, &path, transform);
 
                     self.lay(&layer, canvas, 1.0, false);
+
+                    self.give_back(layer);
                 }
 
                 Command::Clip {
