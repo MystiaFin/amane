@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::panic;
 use std::path::{Path, PathBuf};
-use std::sync::{LazyLock, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
 
 use png::{ColorType, Decoder, Transformations};
@@ -50,7 +50,7 @@ impl Bitmap {
 type Key = (PathBuf, Option<(u32, u32)>);
 
 // every image asked for: none while it is still decoding, or when it could not be read
-static LOADED: LazyLock<Mutex<HashMap<Key, Option<&'static Bitmap>>>> =
+static LOADED: LazyLock<Mutex<HashMap<Key, Option<Arc<Bitmap>>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /*
@@ -58,13 +58,13 @@ static LOADED: LazyLock<Mutex<HashMap<Key, Option<&'static Bitmap>>>> =
  * on its own thread; until it is done this gives none and the image is
  * left out, then the window is woken to draw it
  */
-pub fn load(path: &Path, cover: Option<(u32, u32)>) -> Option<&'static Bitmap> {
+pub fn load(path: &Path, cover: Option<(u32, u32)>) -> Option<Arc<Bitmap>> {
     let mut loaded = LOADED.lock().expect("failed to lock loaded images");
 
     let key = (path.to_path_buf(), cover);
 
     if let Some(image) = loaded.get(&key) {
-        return *image;
+        return image.clone();
     }
 
     loaded.insert(key.clone(), None);
@@ -88,18 +88,26 @@ fn decode(key: Key) {
         None => image,
     };
 
-    /*
-     * images stay loaded until the program exits,
-     * so leaking gives a reference that is valid forever
-     */
-    let image: &'static Bitmap = Box::leak(Box::new(image));
-
     LOADED
         .lock()
         .expect("failed to lock loaded images")
-        .insert(key, Some(image));
+        .insert(key, Some(Arc::new(image)));
 
     wake::wake();
+}
+
+/*
+ * frees a full size image no window shows anymore; small copies stay,
+ * they cost little and decoding them again is slow
+ */
+pub fn forget(image: &Arc<Bitmap>) {
+    let mut loaded = LOADED.lock().expect("failed to lock loaded images");
+
+    loaded.retain(|(_, cover), kept| {
+        let same = kept.as_ref().is_some_and(|kept| Arc::ptr_eq(kept, image));
+
+        cover.is_some() || !same
+    });
 }
 
 pub fn read(path: &Path) -> Bitmap {

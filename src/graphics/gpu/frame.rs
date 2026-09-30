@@ -41,6 +41,8 @@ impl Gpu {
 
         self.give_back(canvas);
 
+        self.forget_unshown();
+
         // presenting attaches the frame to the wayland surface and commits it
         frame.present();
 

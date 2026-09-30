@@ -7,6 +7,7 @@ mod atlas;
 mod glyph;
 mod gradient;
 mod flush;
+mod forget;
 mod frame;
 mod image;
 mod layer;
@@ -23,9 +24,10 @@ mod surface;
 mod texture;
 mod wait;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ffi::c_void;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use vello::peniko::ImageData;
 use vello::wgpu::{
@@ -33,6 +35,8 @@ use vello::wgpu::{
     RequestAdapterOptions, Surface, SurfaceConfiguration, Texture, TextureFormat,
 };
 use vello::{AaSupport, RendererOptions};
+
+use crate::graphics::image::Bitmap;
 
 use pass::Pass;
 use shader::Shader;
@@ -53,6 +57,10 @@ pub struct Gpu {
 
     // images already turned into vello's form, keyed by where the loaded image lives
     images: HashMap<usize, ImageData>,
+
+    // images this window keeps copies of, and the ones it drew this frame
+    shown: HashMap<usize, Arc<Bitmap>>,
+    drawn: HashSet<usize>,
 
     // letters already drawn into pictures, none for letters without pixels like a space
     glyphs: HashMap<glyph::GlyphKey, Option<glyph::Glyph>>,
@@ -120,6 +128,8 @@ impl Gpu {
             vello,
 
             images: HashMap::new(),
+            shown: HashMap::new(),
+            drawn: HashSet::new(),
             glyphs: HashMap::new(),
             quads,
             atlas_dropped: false,

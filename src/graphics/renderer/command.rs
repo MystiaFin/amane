@@ -1,5 +1,6 @@
 use crate::graphics::image::Bitmap;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use ttf_parser::Face;
 
@@ -58,7 +59,7 @@ pub enum Command {
 
     // the image is only shown inside the clip path, which traces the rounded rectangle
     Image {
-        image: &'static Bitmap,
+        image: Arc<Bitmap>,
         transform: Transform,
         clip: Path,
         rect: Rect,

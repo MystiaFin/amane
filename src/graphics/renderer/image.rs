@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use crate::graphics::image::Bitmap;
 use crate::graphics::{Rect, Renderer, Transform};
 
 use super::Command;
 
 impl Renderer {
-    pub fn image(&mut self, rect: Rect, radius: f32, image: &'static Bitmap, placement: Rect) {
+    pub fn image(&mut self, rect: Rect, radius: f32, image: Arc<Bitmap>, placement: Rect) {
         let Some(path) = rect.trace(radius) else {
             return;
         };

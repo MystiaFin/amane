@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use vello::Scene;
 use vello::peniko::{Blob, Fill, ImageAlphaType, ImageBrush, ImageData, ImageFormat, ImageQuality};
 
@@ -11,13 +13,15 @@ impl Gpu {
     pub(super) fn draw_image(
         &mut self,
         scene: &mut Scene,
-        image: &'static Bitmap,
+        image: Arc<Bitmap>,
         transform: Transform,
         clip: &Path,
         clip_transform: Transform,
     ) {
         // bicubic keeps a large image smooth when it shrinks to fit
-        let brush = ImageBrush::new(self.image(image)).with_quality(ImageQuality::High);
+        self.note_shown(&image);
+
+        let brush = ImageBrush::new(self.image(&image)).with_quality(ImageQuality::High);
 
         scene.push_clip_layer(Fill::NonZero, affine(clip_transform), &bezier(clip));
 
@@ -52,8 +56,8 @@ impl Gpu {
         self.atlas_dropped = false;
     }
 
-    // images live until the program exits, so where one lives says which image it is
-    fn image(&mut self, image: &'static Bitmap) -> ImageData {
+    // a shown image stays where it is, so where it lives says which image it is
+    fn image(&mut self, image: &Bitmap) -> ImageData {
         let key = std::ptr::from_ref(image) as usize;
 
         let converted = self.images.entry(key).or_insert_with(|| ImageData {

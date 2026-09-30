@@ -193,6 +193,8 @@ impl Gpu {
                 } if straight(transform) && even_scale(clip_transform).is_some() => {
                     self.to_quads(scene, canvas, borrowed);
 
+                    self.note_shown(&image);
+
                     // the image's own pixels, stretched by its transform onto the canvas
                     let size = Rect::new(0.0, 0.0, image.width() as f32, image.height() as f32);
 
@@ -206,7 +208,7 @@ impl Gpu {
                     };
 
                     self.quads
-                        .picture(&self.device, &self.queue, image, placement, clips);
+                        .picture(&self.device, &self.queue, &image, placement, clips);
                 }
 
                 command => self.to_vello(scene, command, canvas, clips),

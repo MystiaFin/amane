@@ -238,12 +238,16 @@ impl Quads {
         self.push(rect, [0.0; 2], color, clips, LETTER, texels, None);
     }
 
+    pub fn forget(&mut self, picture: usize) {
+        self.pictures.remove(&picture);
+    }
+
     // the whole image stretched over rect, which the clip usually trims
     pub fn picture(
         &mut self,
         device: &Device,
         queue: &Queue,
-        image: &'static Bitmap,
+        image: &Bitmap,
         rect: Rect,
         clips: Clips,
     ) {
