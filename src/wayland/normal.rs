@@ -7,7 +7,7 @@ use smithay_client_toolkit::shell::{
 };
 use wayland_client::{Connection, QueueHandle};
 
-use crate::window::REQUESTED;
+use crate::window::{CLOSING, REQUESTED};
 use crate::{LayerWindow, Window};
 
 use super::{WaylandState, layer, role::Role, settings::Settings, view::View};
@@ -66,6 +66,31 @@ impl WaylandState {
             }
 
             self.open_normal(view);
+        }
+    }
+
+    // the windows close_window asked to close
+    pub fn close_requested(&mut self) {
+        let mut queue = CLOSING.lock().expect("failed to lock closing windows");
+
+        let closing = mem::take(&mut *queue);
+
+        drop(queue);
+
+        for view in closing {
+            let mut surfaces = Vec::new();
+
+            for window in &self.windows {
+                if let View::Normal(shown) = window.view {
+                    if ptr::fn_addr_eq(shown, view) {
+                        surfaces.push(window.role.wl_surface().clone());
+                    }
+                }
+            }
+
+            for surface in surfaces {
+                self.close(&surface);
+            }
         }
     }
 }

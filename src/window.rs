@@ -91,3 +91,16 @@ pub fn open_window(view: fn() -> Window) {
 
     wake::wake();
 }
+
+// windows asked to close from handlers, closed by the event loop when it wakes
+pub static CLOSING: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
+
+// closes a window open_window opened, like a close button inside it; a closed one is left alone
+pub fn close_window(view: fn() -> Window) {
+    CLOSING
+        .lock()
+        .expect("failed to lock closing windows")
+        .push(view);
+
+    wake::wake();
+}
