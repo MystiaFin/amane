@@ -12,6 +12,7 @@ mod frame;
 mod image;
 mod layer;
 mod paint;
+mod painted;
 mod pass;
 mod picture;
 mod pool;
@@ -73,6 +74,10 @@ pub struct Gpu {
 
     // finished window-sized textures waiting to be reused
     spare: Vec<Texture>,
+
+    // last frame's vello results in the order they were painted, and how far this frame got
+    painted: Vec<Option<painted::Painted>>,
+    painting: usize,
 
     composite: Pass,
     present: Pass,
@@ -136,6 +141,9 @@ impl Gpu {
 
             shaders: HashMap::new(),
             spare: Vec::new(),
+
+            painted: Vec::new(),
+            painting: 0,
 
             composite,
             present,

@@ -16,11 +16,20 @@ impl Gpu {
             return;
         }
 
-        let scratch = self.render(scene, canvas);
+        // the same place in the frame usually gets the same scene as last frame
+        let index = self.painting;
 
-        self.lay(&scratch, canvas, 1.0, true);
+        self.painting += 1;
 
-        self.give_back(scratch);
+        if let Some(kept) = self.unchanged(index, scene, canvas) {
+            self.lay(kept, canvas, 1.0, true);
+        } else {
+            let scratch = self.render(scene, canvas);
+
+            self.lay(&scratch, canvas, 1.0, true);
+
+            self.keep(index, scene, scratch);
+        }
 
         scene.reset();
 

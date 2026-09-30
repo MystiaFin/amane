@@ -13,13 +13,16 @@ impl Gpu {
 
             self.surface.configure(&self.device, &self.config);
 
-            // spares of the old size would never fit again
+            // spares and kept results of the old size would never fit again
             self.spare.clear();
+            self.painted.clear();
         }
 
         let Some(frame) = self.next_frame() else {
             return false;
         };
+
+        self.painting = 0;
 
         let canvas = self.take_canvas(width, height);
 
@@ -42,6 +45,8 @@ impl Gpu {
         self.give_back(canvas);
 
         self.forget_unshown();
+
+        self.forget_unpainted();
 
         // presenting attaches the frame to the wayland surface and commits it
         frame.present();
