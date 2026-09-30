@@ -36,8 +36,8 @@ pub use layer_window::{
 pub use process::{lines, output, spawn};
 pub use services::{
     AccessPoint, Action, Apps, Audio, Battery, Bluetooth, BluetoothDevice, Brightness, Cpu,
-    DesktopApp, Link, Lock, Media, Memory, Network, Notification, Notifications, Palette, Service,
-    Urgency, Workspace, Workspaces,
+    DesktopApp, Link, Lock, Media, MediaPlayer, Memory, Network, Notification, Notifications,
+    Palette, Service, Urgency, Workspace, Workspaces,
 };
 pub use widgets::{
     Align, Arc, Canvas, Center, Circle, Column, End, Fill, Image, Justify, Line, Mask, Padding,

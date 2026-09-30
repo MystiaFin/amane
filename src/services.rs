@@ -28,7 +28,7 @@ pub use bluetooth::{Bluetooth, BluetoothDevice};
 pub use brightness::Brightness;
 pub use cpu::Cpu;
 pub use lock::Lock;
-pub use media::Media;
+pub use media::{Media, MediaPlayer};
 pub use memory::Memory;
 pub use network::{AccessPoint, Link, Network};
 pub use notifications::{Action, Notification, Notifications, Urgency};
