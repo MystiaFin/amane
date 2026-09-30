@@ -42,6 +42,34 @@ impl WaylandState {
         self.add(view, Some(output), settings, Role::Lock(lock_surface));
     }
 
+    // runs on every wake, since that is when a Lock::start shows up
+    pub fn start_lock_if_asked(&mut self) {
+        if !Lock::take_request() {
+            return;
+        }
+
+        let Some(lock_state) = &self.lock_state else {
+            eprintln!("amane: Lock::start needs a lock screen, see App::lock");
+
+            return;
+        };
+
+        // already locked, or waiting for the compositor to grant it
+        if self.session_lock.is_some() {
+            return;
+        }
+
+        // a new lock starts clean, not with the last one's unlocked or failed state
+        *Lock::write() = Lock::default();
+
+        let session_lock = lock_state
+            .lock(&self.qh)
+            .expect("compositor does not support ext-session-lock");
+
+        // the lock screens open once the compositor answers that the session is locked
+        self.session_lock = Some(session_lock);
+    }
+
     // runs on every wake, since that is when a finished pam check shows up
     pub fn end_lock_if_unlocked(&mut self) {
         let Some(session_lock) = &self.session_lock else {

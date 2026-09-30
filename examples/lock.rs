@@ -12,6 +12,8 @@ const FOREGROUND: Color = Color::rgb(0xcd, 0xd6, 0xf4);
  * try it from a second tty first, a locked session only opens with the right password
  */
 fn main() {
+    Lock::start();
+
     App::new().lock(view).run();
 }
 

@@ -70,8 +70,12 @@ struct WaylandState {
     xdg_shell: XdgShell,
     shm: Shm,
 
-    // the lock screen's view, and the lock itself while the session is locked
+    /*
+     * the lock screen's view, what asks the compositor for a lock (kept, so
+     * the session can be locked again), and the lock while the session is locked
+     */
     lock_view: Option<fn(&Monitor) -> LayerWindow>,
+    lock_state: Option<SessionLockState>,
     session_lock: Option<SessionLock>,
     connection: Connection,
 
@@ -138,6 +142,7 @@ impl WaylandApp {
             shm,
 
             lock_view,
+            lock_state: None,
             session_lock: None,
             connection: connection.clone(),
 
@@ -158,16 +163,12 @@ impl WaylandApp {
             state.open_normal(view);
         }
 
-        // the lock screens open once the compositor answers that the session is locked
         if lock_view.is_some() {
-            let lock_state = SessionLockState::new(&globals, &state.qh);
-
-            let session_lock = lock_state
-                .lock(&state.qh)
-                .expect("compositor does not support ext-session-lock");
-
-            state.session_lock = Some(session_lock);
+            state.lock_state = Some(SessionLockState::new(&globals, &state.qh));
         }
+
+        // a Lock::start before run() has no event loop to wake yet
+        state.start_lock_if_asked();
 
         let event_loop = EventLoop::try_new().expect("failed to create event loop");
 

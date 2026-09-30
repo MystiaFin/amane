@@ -1,9 +1,15 @@
 mod pam;
 
 use std::env;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 use crate::Service;
+
+use super::wake;
+
+// set by Lock::start, taken by the event loop when it wakes
+static REQUESTED: AtomicBool = AtomicBool::new(false);
 
 // the pam service file in /etc/pam.d that checks the password
 const PAM_SERVICE: &str = "login";
@@ -41,6 +47,20 @@ impl Lock {
 
     pub(crate) fn unlocked(&self) -> bool {
         self.unlocked
+    }
+
+    /*
+     * locks the session with the view given to App::lock, from a button,
+     * an ipc call or a thread; does nothing while already locked
+     */
+    pub fn start() {
+        REQUESTED.store(true, Ordering::Relaxed);
+
+        wake::wake();
+    }
+
+    pub(crate) fn take_request() -> bool {
+        REQUESTED.swap(false, Ordering::Relaxed)
     }
 
     /*

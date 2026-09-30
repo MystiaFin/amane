@@ -11,6 +11,8 @@ pub fn insert(handle: &LoopHandle<'static, WaylandState>) {
         .insert_source(source, |_, _, state| {
             state.end_lock_if_unlocked();
 
+            state.start_lock_if_asked();
+
             state.open_requested();
 
             state.request_changed_frames();

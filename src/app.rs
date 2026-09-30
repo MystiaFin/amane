@@ -45,7 +45,7 @@ impl App {
     }
 
     /*
-     * locks the session as soon as the app runs, with this view on every monitor;
+     * the lock screen, shown on every monitor once Lock::start locks the session;
      * it stays locked until Lock::unlock gets a password pam accepts
      */
     pub fn lock(mut self, view: fn(&Monitor) -> LayerWindow) -> Self {
