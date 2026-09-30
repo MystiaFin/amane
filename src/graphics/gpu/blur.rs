@@ -97,7 +97,7 @@ impl Gpu {
 
         self.queue.submit([encoder.finish()]);
 
-        let mut blurred = self.vello.register_texture(first);
+        let mut blurred = self.vello.borrow_mut().register_texture(first);
 
         // the copy came from the canvas, which keeps its colors premultiplied
         blurred.alpha_type = ImageAlphaType::AlphaPremultiplied;

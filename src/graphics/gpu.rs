@@ -21,27 +21,26 @@ mod shade;
 mod shader;
 mod shadow;
 mod shape;
+mod shared;
 mod surface;
 mod texture;
 mod wait;
 
+use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::ffi::c_void;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use vello::peniko::ImageData;
-use vello::wgpu::{
-    BlendState, Device, DeviceDescriptor, Instance, InstanceDescriptor, Queue,
-    RequestAdapterOptions, Surface, SurfaceConfiguration, Texture, TextureFormat,
-};
-use vello::{AaSupport, RendererOptions};
+use vello::wgpu::{BlendState, Device, Queue, Surface, SurfaceConfiguration, Texture, TextureFormat};
 
 use crate::graphics::image::Bitmap;
 
 use pass::Pass;
 use shader::Shader;
-use wait::wait;
+use shared::Shared;
 
 /*
  * the only part of amane that knows how drawing is done,
@@ -54,7 +53,8 @@ pub struct Gpu {
     surface: Surface<'static>,
     config: SurfaceConfiguration,
 
-    vello: vello::Renderer,
+    // one renderer for every window, see shared.rs
+    vello: Rc<RefCell<vello::Renderer>>,
 
     // images already turned into vello's form, keyed by where the loaded image lives
     images: HashMap<usize, ImageData>,
@@ -67,7 +67,10 @@ pub struct Gpu {
     glyphs: HashMap<glyph::GlyphKey, Option<glyph::Glyph>>,
 
     quads: quads::Quads,
-    atlas_dropped: bool,
+
+    // the shared count of atlas drops, and the one this window last sent its images again after
+    atlas_drops: Rc<Cell<u64>>,
+    atlas_seen: u64,
 
     // custom shaders, compiled once and kept by the path they were read from
     shaders: HashMap<PathBuf, Shader>,
@@ -88,30 +91,17 @@ pub struct Gpu {
 impl Gpu {
     // the pointers are libwayland's display and surface, which have to outlive the gpu
     pub fn new(display: *mut c_void, surface: *mut c_void) -> Self {
-        let instance = Instance::new(InstanceDescriptor::new_without_display_handle_from_env());
+        let surface = surface::create(&shared::instance(), display, surface);
 
-        let surface = surface::create(&instance, display, surface);
-
-        let adapter_options = RequestAdapterOptions {
-            compatible_surface: Some(&surface),
-            ..RequestAdapterOptions::default()
-        };
-
-        let adapter = wait(instance.request_adapter(&adapter_options))
-            .expect("failed to find a gpu that can draw to the window");
-
-        let (device, queue) =
-            wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
+        let Shared {
+            adapter,
+            device,
+            queue,
+            vello,
+            atlas_drops,
+        } = shared::get(&surface);
 
         let config = surface::configure(&surface, &adapter);
-
-        // area anti-aliasing matches how edges looked with the cpu renderer
-        let vello_options = RendererOptions {
-            antialiasing_support: AaSupport::area_only(),
-            ..RendererOptions::default()
-        };
-
-        let vello = vello::Renderer::new(&device, vello_options).expect("failed to start vello");
 
         // the canvas and the surface hold premultiplied colors
         let over = Some(BlendState::PREMULTIPLIED_ALPHA_BLENDING);
@@ -137,7 +127,8 @@ impl Gpu {
             drawn: HashSet::new(),
             glyphs: HashMap::new(),
             quads,
-            atlas_dropped: false,
+            atlas_drops,
+            atlas_seen: 0,
 
             shaders: HashMap::new(),
             spare: Vec::new(),

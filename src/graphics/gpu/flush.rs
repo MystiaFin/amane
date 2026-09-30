@@ -34,7 +34,7 @@ impl Gpu {
         scene.reset();
 
         for image in borrowed.drain(..) {
-            self.vello.unregister_texture(image);
+            self.vello.borrow_mut().unregister_texture(image);
         }
     }
 
@@ -52,6 +52,7 @@ impl Gpu {
         };
 
         self.vello
+            .borrow_mut()
             .render_to_texture(
                 &self.device,
                 &self.queue,

@@ -31,29 +31,30 @@ impl Gpu {
     }
 
     /*
-     * vello throws its image atlas away after a scene without images,
-     * but still counts the images in it as uploaded, so they are sent again
+     * vello throws its image atlas away after a scene without images, but
+     * still counts the images in it as uploaded, so they are sent again; the
+     * atlas is shared, so any window's empty scene drops every window's images
      */
     pub(super) fn keep_atlas(&mut self, scene: &Scene) {
         if scene.encoding().resources.patches.is_empty() {
-            self.atlas_dropped = true;
+            self.atlas_drops.set(self.atlas_drops.get() + 1);
 
             return;
         }
 
-        if !self.atlas_dropped {
+        if self.atlas_seen == self.atlas_drops.get() {
             return;
         }
 
         for image in self.images.values() {
-            self.vello.mark_override_image_dirty(image);
+            self.vello.borrow_mut().mark_override_image_dirty(image);
         }
 
         for glyph in self.glyphs.values().flatten() {
-            self.vello.mark_override_image_dirty(glyph.image());
+            self.vello.borrow_mut().mark_override_image_dirty(glyph.image());
         }
 
-        self.atlas_dropped = false;
+        self.atlas_seen = self.atlas_drops.get();
     }
 
     // a shown image stays where it is, so where it lives says which image it is
