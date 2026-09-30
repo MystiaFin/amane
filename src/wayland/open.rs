@@ -50,6 +50,7 @@ impl WaylandState {
             scale: 1.0,
 
             frame_requested: false,
+            last_frame: None,
             reads: HashSet::new(),
 
             pointer: Pointer::default(),

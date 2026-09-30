@@ -1,5 +1,6 @@
 use std::any::TypeId;
 use std::collections::HashSet;
+use std::time::Instant;
 
 use wayland_client::{
     QueueHandle,
@@ -31,6 +32,9 @@ pub struct Window {
     pub scale: f32,
 
     pub frame_requested: bool,
+
+    // when the last frame started drawing, for AMANE_FRAMES
+    pub last_frame: Option<Instant>,
 
     // the services the last view read, a change to any of them draws the window again
     pub reads: HashSet<TypeId>,

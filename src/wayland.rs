@@ -21,6 +21,7 @@ mod seat;
 mod settings;
 mod shm;
 mod socket;
+pub mod timing;
 mod update;
 mod view;
 mod wake;

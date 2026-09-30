@@ -1,13 +1,18 @@
+use std::time::Instant;
+
 use smithay_client_toolkit::compositor::FrameCallbackData;
 
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer};
 use crate::services::wake;
 
+use super::timing::{self, Timing};
 use super::window::Window;
 
 impl Window {
     pub fn redraw(&mut self) {
+        let started = Instant::now();
+
         // anything read before belongs to another window
         wake::take_read();
 
@@ -18,6 +23,10 @@ impl Window {
         self.reads = wake::take_read();
 
         let moving = moving::take();
+
+        let viewed = Instant::now();
+
+        let name = window.namespace;
 
         self.update_surface(&window);
 
@@ -71,9 +80,22 @@ impl Window {
             surface.frame(&self.qh, FrameCallbackData(surface.clone()));
         }
 
-        let presented = self
-            .gpu
-            .draw(renderer.finish(), buffer_width, buffer_height);
+        let commands = renderer.finish();
+
+        let drawn = Instant::now();
+
+        let presented = self.gpu.draw(commands, buffer_width, buffer_height);
+
+        let timing = Timing {
+            started,
+            viewed,
+            drawn,
+            presented: Instant::now(),
+        };
+
+        timing::log(name, width, height, self.last_frame, &timing);
+
+        self.last_frame = Some(started);
 
         // a skipped frame commits nothing, so the request goes out on its own
         if !presented && moving {
