@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use super::{data_dirs, walk};
 
@@ -9,19 +10,20 @@ use super::{data_dirs, walk};
 pub fn index() -> HashMap<String, PathBuf> {
     let mut icons = HashMap::new();
 
-    // the user's theme first, hicolor is where programs put icons of their own
-    let mut themes = Vec::new();
-
-    if let Some(theme) = user_theme() {
-        themes.push(theme);
-    }
-
-    themes.push(String::from("hicolor"));
-
     let mut roots = Vec::new();
 
     for dir in data_dirs::find() {
         roots.push(dir.join("icons"));
+    }
+
+    // the user's theme first, hicolor is where programs put icons of their own
+    let mut themes = match user_theme() {
+        Some(theme) => inherited(&theme, &roots),
+        None => Vec::new(),
+    };
+
+    if !themes.iter().any(|theme| theme == "hicolor") {
+        themes.push(String::from("hicolor"));
     }
 
     for theme in &themes {
@@ -36,6 +38,56 @@ pub fn index() -> HashMap<String, PathBuf> {
     }
 
     icons
+}
+
+/*
+ * the theme and every theme it inherits from, nearest first; a theme lists
+ * them in its index.theme, like "Inherits=Papirus-Dark,hicolor"
+ */
+fn inherited(theme: &str, roots: &[PathBuf]) -> Vec<String> {
+    let mut themes = vec![String::from(theme)];
+
+    let mut next = 0;
+
+    while next < themes.len() {
+        let current = themes[next].clone();
+
+        next += 1;
+
+        for parent in parents(&current, roots) {
+            if !themes.contains(&parent) {
+                themes.push(parent);
+            }
+        }
+    }
+
+    themes
+}
+
+// the themes one theme names in its Inherits line, from the first folder that has it
+fn parents(theme: &str, roots: &[PathBuf]) -> Vec<String> {
+    for root in roots {
+        let Ok(index) = fs::read_to_string(root.join(theme).join("index.theme")) else {
+            continue;
+        };
+
+        for line in index.lines() {
+            let Some(list) = line.strip_prefix("Inherits=") else {
+                continue;
+            };
+
+            return list
+                .split(',')
+                .map(str::trim)
+                .filter(|name| !name.is_empty())
+                .map(String::from)
+                .collect();
+        }
+
+        return Vec::new();
+    }
+
+    Vec::new()
 }
 
 // a name found in an earlier theme stays, later themes only fill in the gaps
@@ -73,17 +125,22 @@ fn is_image(path: &Path) -> bool {
 }
 
 /*
- * amane's images load png but not svg, so any png beats an svg,
- * and a bigger png beats a smaller one
+ * an svg stays sharp at any size, so it beats every png; among svgs the
+ * scalable or bigger drawing wins, since the small ones are simplified
  */
 fn score(path: &Path) -> u32 {
-    let is_png = path.extension().is_some_and(|extension| extension == "png");
+    let is_svg = path.extension().is_some_and(|extension| extension == "svg");
 
-    if !is_png {
-        return 0;
+    if !is_svg {
+        return 1 + size(path);
     }
 
-    1 + size(path)
+    let size = match size(path) {
+        0 => 512,
+        size => size,
+    };
+
+    10_000 + size
 }
 
 // the size is the folder name in themes, like icons/hicolor/48x48/apps
@@ -112,7 +169,7 @@ fn user_theme() -> Option<String> {
         _ => PathBuf::from(env::var("HOME").ok()?).join(".config"),
     };
 
-    let settings = fs::read_to_string(config.join("gtk-3.0/settings.ini")).ok()?;
+    let settings = fs::read_to_string(config.join("gtk-3.0/settings.ini")).unwrap_or_default();
 
     for line in settings.lines() {
         let Some((key, value)) = line.split_once('=') else {
@@ -124,5 +181,24 @@ fn user_theme() -> Option<String> {
         }
     }
 
-    None
+    dconf_theme()
+}
+
+// where gnome and gtk 4 keep it when gtk 3's file doesn't say, like "'Papirus-Dark'"
+fn dconf_theme() -> Option<String> {
+    let output = Command::new("dconf")
+        .args(["read", "/org/gnome/desktop/interface/icon-theme"])
+        .stderr(Stdio::null())
+        .output()
+        .ok()?;
+
+    let text = String::from_utf8(output.stdout).ok()?;
+
+    let theme = text.trim().trim_matches('\'');
+
+    if theme.is_empty() {
+        return None;
+    }
+
+    Some(String::from(theme))
 }
