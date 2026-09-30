@@ -16,6 +16,8 @@ impl Window {
         // anything read before belongs to another window
         wake::take_read();
 
+        crate::window::set_size(self.width as f32, self.height as f32);
+
         // the view runs again on every redraw, so it shows the services as they are now
         let window = self.view.run();
 

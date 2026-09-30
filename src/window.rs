@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::rc::Rc;
 use std::sync::Mutex;
 
@@ -103,4 +104,22 @@ pub fn close_window(view: fn() -> Window) {
         .push(view);
 
     wake::wake();
+}
+
+thread_local! {
+    // the size of the window whose view is running, set by the backend before each run
+    static SIZE: Cell<(f32, f32)> = const { Cell::new((0.0, 0.0)) };
+}
+
+/*
+ * the window being drawn, in logical pixels; a compositor can give a
+ * window another size than it asked for, like a tiling one does. 0 by 0
+ * before the compositor has said
+ */
+pub fn window_size() -> (f32, f32) {
+    SIZE.get()
+}
+
+pub(crate) fn set_size(width: f32, height: f32) {
+    SIZE.set((width, height));
 }

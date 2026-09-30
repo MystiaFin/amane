@@ -47,4 +47,4 @@ pub use widgets::{
 
 pub use widgets::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};
 pub use widgets::Size::Parent;
-pub use window::{Window, close_window, open_window};
+pub use window::{Window, close_window, open_window, window_size};
