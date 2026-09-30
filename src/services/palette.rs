@@ -130,17 +130,21 @@ impl Palette {
         pick::plain_on(self.accent())
     }
 
-    // true when the image is bright overall, for choosing a light theme
+    /*
+     * true when the image looks bright overall, for choosing a light theme;
+     * judged by lightness as the eye sees it, where 50 is middle grey, since
+     * linear brightness calls even a pale pastel picture dark
+     */
     pub fn light(&self) -> bool {
         let mut total = 0.0;
 
         for &color in &self.colors {
-            total += pick::luminance(color);
+            total += pick::lightness(color);
         }
 
         let average = total / self.colors.len().max(1) as f32;
 
-        average >= 0.5
+        average >= 50.0
     }
 }
 
