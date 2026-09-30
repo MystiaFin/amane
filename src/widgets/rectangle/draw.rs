@@ -96,7 +96,7 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
 
 fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
     // still decoding, or unreadable
-    let Some(image) = image::load(&fill.path, fill.thumbnail) else {
+    let Some(image) = image::load(&fill.path, fill.thumbnail, fill.blur) else {
         return;
     };
 

@@ -1,4 +1,5 @@
 mod shrink;
+mod soften;
 
 use std::collections::HashMap;
 use std::io::Cursor;
@@ -46,8 +47,8 @@ impl Bitmap {
     }
 }
 
-// a file, and the size it is shrunk to cover, none for its own size
-type Key = (PathBuf, Option<(u32, u32)>);
+// a file, the size it is shrunk to cover (none for its own size), and how far it is blurred
+type Key = (PathBuf, Option<(u32, u32)>, u32);
 
 // every image asked for: none while it is still decoding, or when it could not be read
 static LOADED: LazyLock<Mutex<HashMap<Key, Option<Arc<Bitmap>>>>> =
@@ -58,10 +59,10 @@ static LOADED: LazyLock<Mutex<HashMap<Key, Option<Arc<Bitmap>>>>> =
  * on its own thread; until it is done this gives none and the image is
  * left out, then the window is woken to draw it
  */
-pub fn load(path: &Path, cover: Option<(u32, u32)>) -> Option<Arc<Bitmap>> {
+pub fn load(path: &Path, cover: Option<(u32, u32)>, blur: u32) -> Option<Arc<Bitmap>> {
     let mut loaded = LOADED.lock().expect("failed to lock loaded images");
 
-    let key = (path.to_path_buf(), cover);
+    let key = (path.to_path_buf(), cover, blur);
 
     if let Some(image) = loaded.get(&key) {
         return image.clone();
@@ -75,7 +76,7 @@ pub fn load(path: &Path, cover: Option<(u32, u32)>) -> Option<Arc<Bitmap>> {
 }
 
 fn decode(key: Key) {
-    let (path, cover) = &key;
+    let (path, cover, blur) = &key;
 
     // a broken file stays empty instead of taking the shell down
     let Ok(image) = panic::catch_unwind(|| read(path)) else {
@@ -87,6 +88,9 @@ fn decode(key: Key) {
         Some((width, height)) => shrink::to_cover(image, *width, *height),
         None => image,
     };
+
+    // blurred after shrinking, where there are far fewer pixels to average
+    let image = soften::soften(image, *blur);
 
     LOADED
         .lock()
@@ -103,7 +107,7 @@ fn decode(key: Key) {
 pub fn forget(image: &Arc<Bitmap>) {
     let mut loaded = LOADED.lock().expect("failed to lock loaded images");
 
-    loaded.retain(|(_, cover), kept| {
+    loaded.retain(|(_, cover, _), kept| {
         let same = kept.as_ref().is_some_and(|kept| Arc::ptr_eq(kept, image));
 
         cover.is_some() || !same

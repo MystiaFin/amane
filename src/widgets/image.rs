@@ -10,6 +10,9 @@ pub struct Image {
 
     // the size it is shrunk to cover when decoded, none keeps every pixel
     pub(crate) thumbnail: Option<(u32, u32)>,
+
+    // how far the decoded copy is blurred, in its own pixels
+    pub(crate) blur: u32,
 }
 
 impl Image {
@@ -18,6 +21,7 @@ impl Image {
             path: path.into(),
             fit: Fit::Cover,
             thumbnail: None,
+            blur: 0,
         }
     }
 
@@ -26,6 +30,7 @@ impl Image {
             path: path.into(),
             fit: Fit::Contain,
             thumbnail: None,
+            blur: 0,
         }
     }
 
@@ -34,6 +39,7 @@ impl Image {
             path: path.into(),
             fit: Fit::Stretch,
             thumbnail: None,
+            blur: 0,
         }
     }
 
@@ -48,10 +54,21 @@ impl Image {
     }
 
     /*
+     * blurs the decoded copy once, radius counted in its own pixels; with a
+     * small thumbnail stretched far bigger, like a blurred backdrop, it
+     * looks smooth instead of blocky and costs nothing per frame
+     */
+    pub fn blurred(mut self, radius: u32) -> Self {
+        self.blur = radius;
+
+        self
+    }
+
+    /*
      * starts decoding the file if nothing asked for it yet, and says whether
      * it is ready to draw; a file that can't be read never becomes ready
      */
     pub fn loaded(path: impl AsRef<Path>) -> bool {
-        image::load(path.as_ref(), None).is_some()
+        image::load(path.as_ref(), None, 0).is_some()
     }
 }
