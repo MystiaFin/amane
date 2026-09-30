@@ -1,5 +1,6 @@
 mod device;
 
+use std::mem;
 use std::thread;
 use std::time::Duration;
 
@@ -12,7 +13,7 @@ const ADAPTER: &str = "org.bluez.Adapter1";
 const DEVICE: &str = "org.bluez.Device1";
 const OBJECT_MANAGER: &str = "org.freedesktop.DBus.ObjectManager";
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Bluetooth {
     // none when the machine has no bluetooth or bluez isn't running
     adapter: Option<String>,
@@ -41,17 +42,15 @@ impl Service for Bluetooth {
         Duration::from_secs(2)
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
+        // read from scratch and compared at the end, the device list is rebuilt every poll
+        let before = mem::take(self);
+
         let objects = Bus::system().call(BLUEZ, "/", OBJECT_MANAGER, "GetManagedObjects", &[]);
 
         let Value::Map(objects) = objects else {
-            *self = Self::default();
-
-            return;
+            return *self != before;
         };
-
-        self.adapter = None;
-        self.devices.clear();
 
         for (path, interfaces) in &objects {
             let adapter = interfaces.get(ADAPTER);
@@ -75,6 +74,8 @@ impl Service for Bluetooth {
 
             (order, device.name.to_lowercase())
         });
+
+        *self != before
     }
 }
 

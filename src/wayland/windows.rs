@@ -23,6 +23,13 @@ impl WaylandState {
         }
     }
 
+    // input only changes the window it arrived in, besides the services it wrote
+    pub fn request_frame_on(&mut self, surface: &WlSurface) {
+        if let Some(window) = self.window(surface) {
+            window.request_frame();
+        }
+    }
+
     // only windows that read a service that changed draw again
     pub fn request_changed_frames(&mut self) {
         let Some(changed) = wake::take_changes() else {

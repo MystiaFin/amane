@@ -29,7 +29,9 @@ impl Service for Cpu {
         Duration::from_secs(2)
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
+        let before = self.percent;
+
         let (busy, total) = read();
 
         let busy_since = busy.saturating_sub(self.busy);
@@ -41,6 +43,9 @@ impl Service for Cpu {
 
         self.busy = busy;
         self.total = total;
+
+        // the counters always move, only the percentage is shown
+        self.percent != before
     }
 }
 

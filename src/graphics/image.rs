@@ -1,6 +1,7 @@
 mod shrink;
 mod soften;
 
+use std::any::TypeId;
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::panic;
@@ -47,6 +48,12 @@ impl Bitmap {
     }
 }
 
+/*
+ * what a window waiting on an image counts as having read, so a finished
+ * decode only draws the windows still missing a picture, not every window
+ */
+struct Decoded;
+
 // a file, the size it is shrunk to cover (none for its own size), and how far it is blurred
 type Key = (PathBuf, Option<(u32, u32)>, u32);
 
@@ -65,12 +72,18 @@ pub fn load(path: &Path, cover: Option<(u32, u32)>, blur: u32) -> Option<Arc<Bit
     let key = (path.to_path_buf(), cover, blur);
 
     if let Some(image) = loaded.get(&key) {
+        if image.is_none() {
+            wake::note_read(TypeId::of::<Decoded>());
+        }
+
         return image.clone();
     }
 
     loaded.insert(key.clone(), None);
 
     thread::spawn(move || decode(key));
+
+    wake::note_read(TypeId::of::<Decoded>());
 
     None
 }
@@ -97,7 +110,7 @@ fn decode(key: Key) {
         .expect("failed to lock loaded images")
         .insert(key, Some(Arc::new(image)));
 
-    wake::wake();
+    wake::changed(TypeId::of::<Decoded>());
 }
 
 /*

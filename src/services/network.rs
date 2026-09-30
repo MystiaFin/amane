@@ -62,7 +62,8 @@ impl Service for Network {
         }
     }
 
-    fn update(&mut self) {
+    // its own listen compares whole reads, so this always reports a change
+    fn update(&mut self) -> bool {
         *self = Self::default();
 
         // networks to join are listed even while offline
@@ -74,7 +75,7 @@ impl Service for Network {
         }
 
         if !manager::connected() {
-            return;
+            return true;
         }
 
         let connection = manager::primary_connection();
@@ -82,13 +83,15 @@ impl Service for Network {
         self.link = Link::from_type(connection.get("Type").text());
 
         if self.link != Link::Wifi {
-            return;
+            return true;
         }
 
         let access_point = manager::access_point(connection.get("SpecificObject").text());
 
         self.ssid = ssid(access_point.get("Ssid"));
         self.strength = access_point.get("Strength").number() as u8;
+
+        true
     }
 }
 

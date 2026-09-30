@@ -33,6 +33,10 @@ pub fn set(wake: impl Fn() + Send + Sync + 'static) {
 
 // asks the event loop to draw every window again, from any thread
 pub fn wake() {
+    if crate::wayland::timing::enabled() {
+        eprintln!("change everything");
+    }
+
     CHANGED.lock().expect("failed to lock changes").everything = true;
 
     ping();

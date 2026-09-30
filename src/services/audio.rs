@@ -27,7 +27,9 @@ impl Service for Audio {
         audio
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
+        let before = (self.volume, self.muted, self.microphone_volume, self.microphone_muted);
+
         let output = pulse::read(Device::Output);
         let input = pulse::read(Device::Input);
 
@@ -36,10 +38,19 @@ impl Service for Audio {
 
         self.microphone_volume = input.volume;
         self.microphone_muted = input.muted;
+
+        (self.volume, self.muted, self.microphone_volume, self.microphone_muted) != before
     }
 
+    // the sound server also announces changes to devices nothing shows
     fn listen() {
-        pulse::watch(|| Self::write().update());
+        pulse::watch(|| {
+            let mut audio = Self::write();
+
+            if !audio.update() {
+                audio.quiet();
+            }
+        });
     }
 }
 

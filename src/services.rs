@@ -44,7 +44,10 @@ pub trait Service: Send + Sync + Sized + 'static {
         Duration::from_secs(1)
     }
 
-    fn update(&mut self) {}
+    // reads the source again and says whether anything a window shows changed
+    fn update(&mut self) -> bool {
+        false
+    }
 
     /*
      * runs on the service's own thread, so waiting here never
@@ -56,7 +59,12 @@ pub trait Service: Send + Sync + Sized + 'static {
         loop {
             thread::sleep(Self::interval());
 
-            Self::write().update();
+            let mut service = Self::write();
+
+            // a poll that found nothing new redraws nothing
+            if !service.update() {
+                service.quiet();
+            }
         }
     }
 
@@ -78,6 +86,9 @@ pub trait Service: Send + Sync + Sized + 'static {
             .write()
             .expect("failed to lock service");
 
-        Write { guard }
+        Write {
+            guard,
+            quiet: false,
+        }
     }
 }

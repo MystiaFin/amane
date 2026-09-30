@@ -39,19 +39,23 @@ impl Service for Brightness {
         Duration::from_millis(500)
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
         let Some(path) = &self.path else {
-            return;
+            return false;
         };
 
         let current = read(path, "brightness");
         let highest = read(path, "max_brightness");
 
         if highest == 0 {
-            return;
+            return false;
         }
 
+        let before = self.percent;
+
         self.percent = (current * 100 / highest) as u8;
+
+        self.percent != before
     }
 }
 

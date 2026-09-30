@@ -13,15 +13,21 @@ impl PointerHandler for WaylandState {
         _: &WlPointer,
         events: &[PointerEvent],
     ) {
-        let mut handled = false;
+        let mut handled_on = Vec::new();
 
         for event in events {
-            handled |= self.handle_pointer(event);
+            if self.handle_pointer(event) {
+                handled_on.push(event.surface.clone());
+            }
         }
 
-        // a handler may have changed a service that any window shows
-        if handled {
-            self.request_frames();
+        /*
+         * a service a handler changed already wakes the windows that read it;
+         * only the window the pointer is on redraws for its own state, like a
+         * scroll offset, so hovering never redraws every window
+         */
+        for surface in handled_on {
+            self.request_frame_on(&surface);
         }
     }
 }

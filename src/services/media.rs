@@ -28,7 +28,8 @@ impl Service for Media {
         media
     }
 
-    fn update(&mut self) {
+    // a paused player reads the same every poll; a playing one moves its position
+    fn update(&mut self) -> bool {
         let before = self.active().map(|player| player.name.clone());
 
         let mut players = Vec::new();
@@ -37,9 +38,20 @@ impl Service for Media {
             players.push(MediaPlayer::read(&name));
         }
 
-        self.players = players;
+        let mut fresh = Self {
+            players,
+            active: None,
+        };
 
-        self.active = self.choose_active(before.as_deref());
+        fresh.active = fresh.choose_active(before.as_deref());
+
+        if fresh.players == self.players && fresh.active == self.active {
+            return false;
+        }
+
+        *self = fresh;
+
+        true
     }
 }
 

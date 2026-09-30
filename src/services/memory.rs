@@ -5,6 +5,12 @@ use crate::Service;
 
 const MEMINFO: &str = "/proc/meminfo";
 
+/*
+ * the kernel's count moves by a few kibibytes on every read, so only a
+ * move of about 100 MiB, the finest a bar shows, counts as a change
+ */
+const SHOWN_STEP: u64 = 100 * 1024;
+
 #[derive(Default)]
 pub struct Memory {
     // in kibibytes, the unit the kernel reports
@@ -27,11 +33,15 @@ impl Service for Memory {
         Duration::from_secs(2)
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
+        let before = (self.percent(), self.used_kib() / SHOWN_STEP);
+
         let text = fs::read_to_string(MEMINFO).unwrap_or_default();
 
         self.total = field(&text, "MemTotal:");
         self.available = field(&text, "MemAvailable:");
+
+        (self.percent(), self.used_kib() / SHOWN_STEP) != before
     }
 }
 

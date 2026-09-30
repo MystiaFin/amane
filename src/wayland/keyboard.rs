@@ -30,7 +30,7 @@ impl KeyboardHandler for WaylandState {
         _: &Connection,
         _: &QueueHandle<Self>,
         _: &WlKeyboard,
-        _: &WlSurface,
+        surface: &WlSurface,
         _: u32,
     ) {
         self.keyboard_focus = None;
@@ -38,7 +38,7 @@ impl KeyboardHandler for WaylandState {
         // keys stop arriving, so no text input can stay focused
         focus::clear();
 
-        self.request_frames();
+        self.request_frame_on(surface);
     }
 
     fn press_key(
@@ -57,7 +57,7 @@ impl KeyboardHandler for WaylandState {
 
         // a focused text input takes the key before the window's on_key sees it
         if focus::send(key) {
-            self.request_frames();
+            self.request_frame_on(&surface);
 
             return;
         }
@@ -72,8 +72,8 @@ impl KeyboardHandler for WaylandState {
 
         on_key(key);
 
-        // the handler may have changed a service that any window shows
-        self.request_frames();
+        // a service the handler changed wakes its own readers, this window redraws for the rest
+        self.request_frame_on(&surface);
     }
 
     // only sent to keyboards made with key repeat, which this one is not

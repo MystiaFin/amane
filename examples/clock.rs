@@ -16,8 +16,14 @@ impl Service for Clock {
         Duration::from_secs(1)
     }
 
-    fn update(&mut self) {
-        self.time = read_time();
+    fn update(&mut self) -> bool {
+        let time = read_time();
+
+        let changed = time != self.time;
+
+        self.time = time;
+
+        changed
     }
 }
 

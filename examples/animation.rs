@@ -37,8 +37,6 @@ impl Service for Panel {
     fn interval() -> Duration {
         Duration::from_secs(3600)
     }
-
-    fn update(&mut self) {}
 }
 
 fn main() {

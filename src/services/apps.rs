@@ -32,8 +32,16 @@ impl Service for Apps {
         Duration::from_secs(30)
     }
 
-    fn update(&mut self) {
-        self.list = scan();
+    fn update(&mut self) -> bool {
+        let list = scan();
+
+        if list == self.list {
+            return false;
+        }
+
+        self.list = list;
+
+        true
     }
 }
 

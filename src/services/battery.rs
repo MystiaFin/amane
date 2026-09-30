@@ -37,10 +37,12 @@ impl Service for Battery {
         Duration::from_secs(5)
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> bool {
         let Some(path) = &self.path else {
-            return;
+            return false;
         };
+
+        let before = (self.percent, self.charging, self.full);
 
         let capacity = read(path, "capacity");
         let status = read(path, "status");
@@ -49,6 +51,8 @@ impl Service for Battery {
 
         self.charging = status == "Charging";
         self.full = status == "Full" || status == "Not charging";
+
+        (self.percent, self.charging, self.full) != before
     }
 }
 
