@@ -1,9 +1,13 @@
+use std::mem;
+use std::ptr;
+
 use smithay_client_toolkit::shell::{
     WaylandSurface,
     xdg::window::{Window as XdgWindow, WindowConfigure, WindowDecorations, WindowHandler},
 };
 use wayland_client::{Connection, QueueHandle};
 
+use crate::window::REQUESTED;
 use crate::{LayerWindow, Window};
 
 use super::{WaylandState, layer, role::Role, settings::Settings, view::View};
@@ -38,6 +42,31 @@ impl WaylandState {
         let settings = Settings::from(&content);
 
         self.add(View::Normal(view), None, settings, Role::Normal(xdg_window));
+    }
+
+    // the windows open_window asked for, skipping any already open
+    pub fn open_requested(&mut self) {
+        let mut queue = REQUESTED.lock().expect("failed to lock requested windows");
+
+        let requested = mem::take(&mut *queue);
+
+        drop(queue);
+
+        for view in requested {
+            let mut open = false;
+
+            for window in &self.windows {
+                if let View::Normal(shown) = window.view {
+                    open = open || ptr::fn_addr_eq(shown, view);
+                }
+            }
+
+            if open {
+                continue;
+            }
+
+            self.open_normal(view);
+        }
     }
 }
 

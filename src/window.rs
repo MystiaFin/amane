@@ -1,6 +1,8 @@
 use std::rc::Rc;
+use std::sync::Mutex;
 
 use crate::input::KeyHandler;
+use crate::services::wake;
 use crate::{Key, Widget};
 
 // a regular desktop window with a title bar, like a settings app, next to the layer windows
@@ -72,4 +74,20 @@ impl Default for Window {
     fn default() -> Self {
         Self::new()
     }
+}
+
+// windows asked for from handlers, opened by the event loop when it wakes
+pub static REQUESTED: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
+
+/*
+ * opens a normal window later on, like settings from a button or an ipc call;
+ * asking for one that is already open does nothing
+ */
+pub fn open_window(view: fn() -> Window) {
+    REQUESTED
+        .lock()
+        .expect("failed to lock requested windows")
+        .push(view);
+
+    wake::wake();
 }
