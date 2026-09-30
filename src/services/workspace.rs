@@ -13,6 +13,9 @@ pub struct Workspace {
 
     pub(crate) focused: bool,
     pub(crate) urgent: bool,
+
+    // how many windows are on it
+    pub(crate) windows: u32,
 }
 
 impl Workspace {
@@ -42,5 +45,10 @@ impl Workspace {
 
     pub fn urgent(&self) -> bool {
         self.urgent
+    }
+
+    // 0 for an empty workspace, one that only shows the desktop
+    pub fn windows(&self) -> u32 {
+        self.windows
     }
 }

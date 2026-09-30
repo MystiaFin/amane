@@ -16,6 +16,9 @@ pub fn parse(value: &Value) -> Option<Workspace> {
         active: value["is_active"].as_bool()?,
         focused: value["is_focused"].as_bool()?,
         urgent: value["is_urgent"].as_bool()?,
+
+        // counted from the window events, see Workspaces
+        windows: 0,
     };
 
     Some(workspace)

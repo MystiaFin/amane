@@ -1,18 +1,35 @@
+use std::collections::HashMap;
+
 use crate::niri::{self, Event};
 use crate::{Service, Workspace};
 
 pub struct Workspaces {
     list: Vec<Workspace>,
+
+    // every window by its id, and the workspace it is on
+    windows: HashMap<u64, Option<u64>>,
 }
 
 impl Service for Workspaces {
     fn new() -> Self {
-        Self { list: Vec::new() }
+        Self {
+            list: Vec::new(),
+            windows: HashMap::new(),
+        }
     }
 
     fn listen() {
         for event in niri::events() {
-            Self::write().apply(event);
+            let mut workspaces = Self::write();
+
+            let before = workspaces.list.clone();
+
+            workspaces.apply(event);
+
+            // a window's title changing is a window event too, and changes no workspace
+            if workspaces.list == before {
+                workspaces.quiet();
+            }
         }
     }
 }
@@ -32,7 +49,21 @@ impl Workspaces {
             Event::Workspaces(list) => self.replace(list),
             Event::Activated { id, focused } => self.activate(id, focused),
             Event::Urgent { id, urgent } => self.mark_urgent(id, urgent),
+
+            Event::Windows(windows) => {
+                self.windows = windows.into_iter().collect();
+            }
+
+            Event::WindowChanged { id, workspace } => {
+                self.windows.insert(id, workspace);
+            }
+
+            Event::WindowClosed { id } => {
+                self.windows.remove(&id);
+            }
         }
+
+        self.count_windows();
     }
 
     fn replace(&mut self, mut list: Vec<Workspace>) {
@@ -71,6 +102,21 @@ impl Workspaces {
             if workspace.id == id {
                 workspace.urgent = urgent;
             }
+        }
+    }
+
+    // a new workspace list starts at 0 windows each, so the counts are made again after any event
+    fn count_windows(&mut self) {
+        for workspace in &mut self.list {
+            let mut count = 0;
+
+            for on in self.windows.values() {
+                if *on == Some(workspace.id) {
+                    count += 1;
+                }
+            }
+
+            workspace.windows = count;
         }
     }
 }

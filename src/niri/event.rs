@@ -9,4 +9,12 @@ pub enum Event {
     Activated { id: u64, focused: bool },
 
     Urgent { id: u64, urgent: bool },
+
+    // every window and the workspace it is on, if any; sent first
+    Windows(Vec<(u64, Option<u64>)>),
+
+    // a window opened, or moved to another workspace
+    WindowChanged { id: u64, workspace: Option<u64> },
+
+    WindowClosed { id: u64 },
 }

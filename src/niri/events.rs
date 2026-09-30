@@ -42,8 +42,38 @@ fn parse(line: &str) -> Option<Event> {
         "WorkspacesChanged" => workspaces_changed(body),
         "WorkspaceActivated" => workspace_activated(body),
         "WorkspaceUrgencyChanged" => urgency_changed(body),
+        "WindowsChanged" => windows_changed(body),
+        "WindowOpenedOrChanged" => window_changed(body),
+        "WindowClosed" => window_closed(body),
         _ => None,
     }
+}
+
+fn windows_changed(body: &Value) -> Option<Event> {
+    let mut windows = Vec::new();
+
+    for window in body["windows"].as_array()? {
+        windows.push((window["id"].as_u64()?, window["workspace_id"].as_u64()));
+    }
+
+    Some(Event::Windows(windows))
+}
+
+fn window_changed(body: &Value) -> Option<Event> {
+    let window = &body["window"];
+
+    let id = window["id"].as_u64()?;
+
+    // null while the window is on no workspace
+    let workspace = window["workspace_id"].as_u64();
+
+    Some(Event::WindowChanged { id, workspace })
+}
+
+fn window_closed(body: &Value) -> Option<Event> {
+    let id = body["id"].as_u64()?;
+
+    Some(Event::WindowClosed { id })
 }
 
 fn workspaces_changed(body: &Value) -> Option<Event> {
