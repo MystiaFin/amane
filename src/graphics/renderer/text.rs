@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use ttf_parser::{Face, GlyphId};
 
-use crate::graphics::{Color, Outline, Path, Rect, Renderer, Transform};
+use crate::graphics::{Color, Outline, Path, Rect, Renderer, Transform, font};
 
 use super::Command;
 
@@ -56,18 +56,21 @@ impl Renderer {
         let mut pen = 0.0;
 
         for letter in content.chars() {
-            let id = font.glyph_index(letter).unwrap_or_default();
+            let (face, id) = font::with_letter(font, letter);
 
-            let advance = font
+            let advance = face
                 .glyph_hor_advance(id)
                 .expect("failed to read letter advance");
 
+            // a fallback font can measure in other units than the text's own
+            let face_units = pixel_size / f32::from(face.units_per_em());
+
             let letter_x = line_x + f32::round(pen);
 
-            pen += f32::from(advance) * units;
+            pen += f32::from(advance) * face_units;
 
             self.commands.push(Command::Glyph {
-                face: font,
+                face,
                 id: id.0,
                 size: pixel_size,
                 color,
@@ -86,24 +89,27 @@ impl Renderer {
         let mut pen_x = area.x;
 
         for letter in content.chars() {
-            // a letter the font lacks draws as its placeholder box
-            let id = font.glyph_index(letter).unwrap_or_default();
+            let (face, id) = font::with_letter(font, letter);
 
-            let advance = font
+            let advance = face
                 .glyph_hor_advance(id)
                 .expect("failed to read letter advance");
 
+            // a fallback font can measure in other units than the text's own
+            let face_units = size / f32::from(face.units_per_em());
+
             let letter_x = pen_x;
 
-            pen_x += f32::from(advance) * units;
+            pen_x += f32::from(advance) * face_units;
 
             // a space has no outline but still moves the pen
-            let Some(path) = outline(font, id) else {
+            let Some(path) = outline(face, id) else {
                 continue;
             };
 
             // fonts point y upward, the screen points it downward
-            let letter_transform = Transform::from_row(units, 0.0, 0.0, -units, letter_x, baseline);
+            let letter_transform =
+                Transform::from_row(face_units, 0.0, 0.0, -face_units, letter_x, baseline);
             let transform = letter_transform.post_concat(self.transform);
 
             self.commands.push(Command::Fill {

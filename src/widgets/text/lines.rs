@@ -1,5 +1,7 @@
 use ttf_parser::Face;
 
+use crate::graphics::font;
+
 // how text that is too wide for its area gets handled
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Rules {
@@ -9,20 +11,19 @@ pub struct Rules {
 }
 
 pub fn measure(content: &str, font: &Face, size: f32) -> f32 {
-    // fonts measure in their own units, this turns them into pixels
-    let units = size / f32::from(font.units_per_em());
-
     let mut total = 0.0;
 
     for letter in content.chars() {
-        // a letter the font lacks draws as its placeholder box
-        let id = font.glyph_index(letter).unwrap_or_default();
+        let (face, id) = font::with_letter(font, letter);
 
-        let advance = font
+        let advance = face
             .glyph_hor_advance(id)
             .expect("failed to read letter advance");
 
-        total += f32::from(advance) * units;
+        // a fallback font can measure in other units than the text's own
+        let face_units = size / f32::from(face.units_per_em());
+
+        total += f32::from(advance) * face_units;
     }
 
     total
@@ -138,23 +139,24 @@ fn elide(line: &str, font: &Face, size: f32, width: f32) -> String {
 
 // where the letters' ink starts and ends, counted from the pen's starting point
 pub fn ink(content: &str, font: &Face, size: f32) -> (f32, f32) {
-    let units = size / f32::from(font.units_per_em());
-
     let mut pen = 0.0;
 
     let mut left = f32::MAX;
     let mut right = f32::MIN;
 
     for letter in content.chars() {
-        let id = font.glyph_index(letter).unwrap_or_default();
+        let (face, id) = font::with_letter(font, letter);
+
+        // a fallback font can measure in other units than the text's own
+        let units = size / f32::from(face.units_per_em());
 
         // a space has no ink, only an advance
-        if let Some(bounds) = font.glyph_bounding_box(id) {
+        if let Some(bounds) = face.glyph_bounding_box(id) {
             left = left.min(pen + f32::from(bounds.x_min) * units);
             right = right.max(pen + f32::from(bounds.x_max) * units);
         }
 
-        let advance = font
+        let advance = face
             .glyph_hor_advance(id)
             .expect("failed to read letter advance");
 
