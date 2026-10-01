@@ -10,6 +10,12 @@ use crate::graphics::letter;
 use super::Gpu;
 
 /*
+ * letters normally go to the quads; this is the way vello draws them, for the
+ * rare letters inside a turned clip, like text turned back upright inside a
+ * rotated rectangle that clips
+ */
+
+/*
  * a hover fade makes a new picture every frame for the letters it colors,
  * so the cache is emptied now and then instead of growing without end
  */
