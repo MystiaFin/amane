@@ -1,20 +1,18 @@
 mod horizontal;
-mod input;
 mod input_area;
-mod input_region;
 mod keyboard;
 mod layer;
 mod margin;
-mod namespace;
 mod needs_height;
 mod needs_width;
 mod vertical;
-mod visible;
 mod window_size;
 mod zone;
 
-use crate::Widget;
+use std::rc::Rc;
+
 use crate::input::KeyHandler;
+use crate::{Key, Widget};
 
 pub use horizontal::Horizontal;
 pub use input_area::InputArea;
@@ -89,6 +87,39 @@ impl LayerWindow {
 
     pub fn space(mut self, zone: Zone) -> Self {
         self.zone = zone;
+
+        self
+    }
+
+    // the name compositors match rules on, like niri's layer-rule; only read when the window opens
+    pub fn namespace(mut self, namespace: &'static str) -> Self {
+        self.namespace = namespace;
+
+        self
+    }
+
+    // a hidden window keeps running and shows again once the view says so
+    pub fn visible(mut self, visible: bool) -> Self {
+        self.visible = visible;
+
+        self
+    }
+
+    // only these areas take the pointer, everywhere else clicks go to the windows below
+    pub fn input_region(mut self, areas: Vec<InputArea>) -> Self {
+        self.input_region = Some(areas);
+
+        self
+    }
+
+    // no area takes the pointer, so every click goes to the windows below
+    pub fn click_through(self) -> Self {
+        self.input_region(Vec::new())
+    }
+
+    // keys only arrive while the window has keyboard focus, see Keyboard
+    pub fn on_key(mut self, handler: impl Fn(Key) + 'static) -> Self {
+        self.on_key = Some(Rc::new(handler));
 
         self
     }
