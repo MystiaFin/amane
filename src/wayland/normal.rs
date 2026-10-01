@@ -1,6 +1,5 @@
 use std::mem;
 use std::num::NonZeroU32;
-use std::ptr;
 
 use smithay_client_toolkit::shell::{
     WaylandSurface,
@@ -58,9 +57,7 @@ impl WaylandState {
             let mut open = false;
 
             for window in &self.windows {
-                if let View::Normal(shown) = window.view {
-                    open = open || ptr::fn_addr_eq(shown, view);
-                }
+                open = open || window.view.shows(view);
             }
 
             if open {
@@ -83,10 +80,8 @@ impl WaylandState {
             let mut surfaces = Vec::new();
 
             for window in &self.windows {
-                if let View::Normal(shown) = window.view {
-                    if ptr::fn_addr_eq(shown, view) {
-                        surfaces.push(window.role.wl_surface().clone());
-                    }
+                if window.view.shows(view) {
+                    surfaces.push(window.role.wl_surface().clone());
                 }
             }
 

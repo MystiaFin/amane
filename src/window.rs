@@ -82,7 +82,8 @@ pub static REQUESTED: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
 
 /*
  * opens a normal window later on, like settings from a button or an ipc call;
- * asking for one that is already open does nothing
+ * asking for one that is already open does nothing. windows are told apart by
+ * their view function, so two view functions with the same body count as one
  */
 pub fn open_window(view: fn() -> Window) {
     REQUESTED

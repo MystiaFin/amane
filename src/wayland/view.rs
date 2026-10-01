@@ -1,3 +1,5 @@
+use std::ptr;
+
 use crate::input::KeyHandler;
 use crate::{LayerWindow, Monitor, Widget, Window};
 
@@ -25,6 +27,19 @@ impl View {
             View::Monitor(view, monitor) => Content::Layer(view(monitor)),
             View::Normal(view) => Content::Normal(view()),
         }
+    }
+
+    /*
+     * a normal window is known by the view function that draws it; the compiler
+     * may merge two functions with the same body into one address, so two view
+     * functions that are exactly alike count as the same window
+     */
+    pub fn shows(&self, view: fn() -> Window) -> bool {
+        let View::Normal(shown) = *self else {
+            return false;
+        };
+
+        ptr::fn_addr_eq(shown, view)
     }
 }
 
