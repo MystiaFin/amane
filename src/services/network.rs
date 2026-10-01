@@ -37,11 +37,7 @@ pub struct Network {
  */
 impl Service for Network {
     fn new() -> Self {
-        let mut network = Self::default();
-
-        network.update();
-
-        network
+        fetch()
     }
 
     /*
@@ -53,7 +49,7 @@ impl Service for Network {
         loop {
             thread::sleep(Self::interval());
 
-            let fresh = Self::new();
+            let fresh = fetch();
 
             if *Self::read() == fresh {
                 continue;
@@ -61,38 +57,6 @@ impl Service for Network {
 
             *Self::write() = fresh;
         }
-    }
-
-    // its own listen compares whole reads, so this always reports a change
-    fn update(&mut self) -> bool {
-        *self = Self::default();
-
-        // networks to join are listed even while offline
-        self.wifi_enabled = manager::wifi_enabled();
-
-        if let Some(device) = wifi::device() {
-            self.access_points = wifi::access_points(&device);
-            self.connecting = wifi::connecting(&device);
-        }
-
-        if !manager::connected() {
-            return true;
-        }
-
-        let connection = manager::primary_connection();
-
-        self.link = Link::from_type(connection.get("Type").text());
-
-        if self.link != Link::Wifi {
-            return true;
-        }
-
-        let access_point = manager::access_point(connection.get("SpecificObject").text());
-
-        self.ssid = ssid(access_point.get("Ssid"));
-        self.strength = access_point.get("Strength").number() as u8;
-
-        true
     }
 }
 
@@ -193,4 +157,36 @@ fn ssid(bytes: &Value) -> String {
     }
 
     String::from_utf8_lossy(&raw).into_owned()
+}
+
+// asks networkmanager for everything shown, from scratch
+fn fetch() -> Network {
+    let mut network = Network::default();
+
+    // networks to join are listed even while offline
+    network.wifi_enabled = manager::wifi_enabled();
+
+    if let Some(device) = wifi::device() {
+        network.access_points = wifi::access_points(&device);
+        network.connecting = wifi::connecting(&device);
+    }
+
+    if !manager::connected() {
+        return network;
+    }
+
+    let connection = manager::primary_connection();
+
+    network.link = Link::from_type(connection.get("Type").text());
+
+    if network.link != Link::Wifi {
+        return network;
+    }
+
+    let access_point = manager::access_point(connection.get("SpecificObject").text());
+
+    network.ssid = ssid(access_point.get("Ssid"));
+    network.strength = access_point.get("Strength").number() as u8;
+
+    network
 }
