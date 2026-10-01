@@ -313,9 +313,3 @@ fn device_clip(rect: Rect, radius: f32, transform: Transform) -> Option<Clip> {
         radius: radius * scale,
     })
 }
-
-/*
- * only two rounded clips reach the quads, so deeper ones merge into their
- * overlap, rounded like the inner one; clips inside clips are almost
- * always smaller, so this is close enough for them
- */
