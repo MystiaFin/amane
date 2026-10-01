@@ -1,9 +1,7 @@
 use smithay_client_toolkit::seat::pointer::AxisScroll;
 
 use crate::Scroll;
-
-// how many pixels a compositor usually reports for one wheel step
-const PIXELS_PER_LINE: f64 = 15.0;
+use crate::input::PIXELS_PER_LINE;
 
 pub fn translate(horizontal: &AxisScroll, vertical: &AxisScroll) -> Scroll {
     Scroll {
@@ -24,7 +22,7 @@ fn lines(axis: &AxisScroll) -> f32 {
     }
 
     // a touchpad only reports pixels
-    let lines = axis.absolute / PIXELS_PER_LINE;
+    let pixels = axis.absolute as f32;
 
-    lines as f32
+    pixels / PIXELS_PER_LINE
 }

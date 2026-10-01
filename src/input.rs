@@ -16,5 +16,5 @@ pub use handlers::{Handlers, KeyHandler};
 pub use key::Key;
 pub use point::Point;
 pub use pointer::Pointer;
-pub use scroll::Scroll;
+pub use scroll::{PIXELS_PER_LINE, Scroll};
 pub use target::Target;

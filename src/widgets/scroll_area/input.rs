@@ -2,12 +2,9 @@ use std::rc::Rc;
 
 use crate::Scroll;
 use crate::graphics::Rect;
-use crate::input::{Handlers, Target, clip};
+use crate::input::{Handlers, PIXELS_PER_LINE, Target, clip};
 
 use super::{ScrollArea, offsets};
-
-// the rate the backend turns touchpad pixels into lines, so a touchpad moves the list 1:1
-const PIXELS_PER_LINE: f32 = 15.0;
 
 pub fn collect_targets(scroll_area: &ScrollArea, area: Rect, targets: &mut Vec<Target>) {
     let id = scroll_area.id;
