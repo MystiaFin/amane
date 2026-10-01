@@ -70,3 +70,36 @@ impl Field {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn edits_by_letter_not_by_byte() {
+        let mut field = Field::default();
+
+        for letter in "héllo".chars() {
+            field.apply(Key::Character(letter));
+        }
+
+        field.apply(Key::Left);
+        field.apply(Key::Left);
+        field.apply(Key::Left);
+
+        // the cursor sits after "hé", two letters but three bytes
+        assert_eq!(field.before_cursor(), "hé");
+
+        assert!(field.apply(Key::Backspace));
+        assert_eq!(field.text, "hllo");
+
+        assert!(!field.apply(Key::Home));
+        assert!(!field.apply(Key::Backspace));
+
+        field.apply(Key::End);
+        field.apply(Key::Space);
+
+        assert_eq!(field.text, "hllo ");
+        assert_eq!(field.cursor, 5);
+    }
+}
