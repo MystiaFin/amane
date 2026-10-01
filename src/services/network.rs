@@ -161,10 +161,11 @@ fn ssid(bytes: &Value) -> String {
 
 // asks networkmanager for everything shown, from scratch
 fn fetch() -> Network {
-    let mut network = Network::default();
-
     // networks to join are listed even while offline
-    network.wifi_enabled = manager::wifi_enabled();
+    let mut network = Network {
+        wifi_enabled: manager::wifi_enabled(),
+        ..Network::default()
+    };
 
     if let Some(device) = wifi::device() {
         network.access_points = wifi::access_points(&device);
