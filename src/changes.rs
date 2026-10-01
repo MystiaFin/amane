@@ -1,7 +1,7 @@
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::HashSet;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Mutex, OnceLock, PoisonError};
 
 use crate::timing;
 
@@ -39,14 +39,14 @@ pub fn mark_all() {
         eprintln!("change everything");
     }
 
-    CHANGED.lock().expect("failed to lock changes").everything = true;
+    CHANGED.lock().unwrap_or_else(PoisonError::into_inner).everything = true;
 
     ping();
 }
 
 // only the windows that read this service are drawn again
 pub fn mark(service: TypeId) {
-    let mut changes = CHANGED.lock().expect("failed to lock changes");
+    let mut changes = CHANGED.lock().unwrap_or_else(PoisonError::into_inner);
 
     changes
         .services
@@ -60,7 +60,7 @@ pub fn mark(service: TypeId) {
 
 // none means every window should draw
 pub fn take() -> Option<HashSet<TypeId>> {
-    let mut changes = CHANGED.lock().expect("failed to lock changes");
+    let mut changes = CHANGED.lock().unwrap_or_else(PoisonError::into_inner);
 
     let services = changes.services.take().unwrap_or_default();
 

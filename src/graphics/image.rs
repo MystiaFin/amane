@@ -6,7 +6,7 @@ use std::any::TypeId;
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{Arc, LazyLock, Mutex, PoisonError};
 use std::thread;
 
 use png::{ColorType, Decoder, Transformations};
@@ -68,7 +68,7 @@ static LOADED: LazyLock<Mutex<HashMap<Key, Option<Arc<Bitmap>>>>> =
  * left out, then the window is woken to draw it
  */
 pub fn load(path: &Path, cover: Option<(u32, u32)>, blur: u32) -> Option<Arc<Bitmap>> {
-    let mut loaded = LOADED.lock().expect("failed to lock loaded images");
+    let mut loaded = LOADED.lock().unwrap_or_else(PoisonError::into_inner);
 
     let key = (path.to_path_buf(), cover, blur);
 
@@ -108,7 +108,7 @@ fn decode(key: Key) {
 
     LOADED
         .lock()
-        .expect("failed to lock loaded images")
+        .unwrap_or_else(PoisonError::into_inner)
         .insert(key, Some(Arc::new(image)));
 
     changes::mark(TypeId::of::<Decoded>());
@@ -119,7 +119,7 @@ fn decode(key: Key) {
  * they cost little and decoding them again is slow
  */
 pub fn forget(image: &Arc<Bitmap>) {
-    let mut loaded = LOADED.lock().expect("failed to lock loaded images");
+    let mut loaded = LOADED.lock().unwrap_or_else(PoisonError::into_inner);
 
     loaded.retain(|(_, cover, _), kept| {
         let same = kept.as_ref().is_some_and(|kept| Arc::ptr_eq(kept, image));

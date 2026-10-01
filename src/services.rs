@@ -17,7 +17,7 @@ mod workspaces;
 mod write;
 
 use std::any::TypeId;
-use std::sync::RwLockReadGuard;
+use std::sync::{PoisonError, RwLockReadGuard};
 use std::thread;
 use std::time::Duration;
 
@@ -76,7 +76,7 @@ pub trait Service: Send + Sync + Sized + 'static {
 
         store::find::<Self>()
             .read()
-            .expect("failed to lock service")
+            .unwrap_or_else(PoisonError::into_inner)
     }
 
     /*
@@ -86,11 +86,42 @@ pub trait Service: Send + Sync + Sized + 'static {
     fn write() -> Write<Self> {
         let guard = store::find::<Self>()
             .write()
-            .expect("failed to lock service");
+            .unwrap_or_else(PoisonError::into_inner);
 
         Write {
             guard,
             quiet: false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::thread;
+
+    use super::*;
+
+    #[derive(Default)]
+    struct Counter(u32);
+
+    impl Service for Counter {
+        fn new() -> Self {
+            Self::default()
+        }
+
+        fn listen() {}
+    }
+
+    #[test]
+    fn reads_after_a_write_panicked() {
+        let failed = thread::spawn(|| {
+            let _counter = Counter::write();
+
+            panic!("a write that fails halfway");
+        });
+
+        assert!(failed.join().is_err());
+
+        assert_eq!(Counter::read().0, 0);
     }
 }

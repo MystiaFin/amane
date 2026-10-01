@@ -60,9 +60,12 @@ impl WaylandState {
         // a new lock starts clean, not with the last one's unlocked or failed state
         *Lock::write() = Lock::default();
 
-        let session_lock = lock_state
-            .lock(&self.qh)
-            .expect("failed to lock the session with ext-session-lock");
+        // a compositor without ext-session-lock cannot lock, which must not take the shell down
+        let Ok(session_lock) = lock_state.lock(&self.qh) else {
+            eprintln!("amane: the compositor does not support ext-session-lock");
+
+            return;
+        };
 
         // the lock screens open once the compositor answers that the session is locked
         self.session_lock = Some(session_lock);

@@ -1,5 +1,6 @@
 use std::mem;
 use std::num::NonZeroU32;
+use std::sync::PoisonError;
 
 use smithay_client_toolkit::shell::{
     WaylandSurface,
@@ -47,7 +48,7 @@ impl WaylandState {
 
     // the windows open_window asked for, skipping any already open
     pub fn open_requested(&mut self) {
-        let mut queue = REQUESTED.lock().expect("failed to lock requested windows");
+        let mut queue = REQUESTED.lock().unwrap_or_else(PoisonError::into_inner);
 
         let requested = mem::take(&mut *queue);
 
@@ -70,7 +71,7 @@ impl WaylandState {
 
     // the windows close_window asked to close
     pub fn close_requested(&mut self) {
-        let mut queue = CLOSING.lock().expect("failed to lock closing windows");
+        let mut queue = CLOSING.lock().unwrap_or_else(PoisonError::into_inner);
 
         let closing = mem::take(&mut *queue);
 

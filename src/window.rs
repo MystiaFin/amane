@@ -1,6 +1,6 @@
 use std::cell::Cell;
 use std::rc::Rc;
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
 
 use crate::changes;
 use crate::input::KeyHandler;
@@ -88,7 +88,7 @@ pub static REQUESTED: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
 pub fn open_window(view: fn() -> Window) {
     REQUESTED
         .lock()
-        .expect("failed to lock requested windows")
+        .unwrap_or_else(PoisonError::into_inner)
         .push(view);
 
     changes::mark_all();
@@ -101,7 +101,7 @@ pub static CLOSING: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
 pub fn close_window(view: fn() -> Window) {
     CLOSING
         .lock()
-        .expect("failed to lock closing windows")
+        .unwrap_or_else(PoisonError::into_inner)
         .push(view);
 
     changes::mark_all();
