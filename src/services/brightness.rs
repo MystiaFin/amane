@@ -79,7 +79,7 @@ impl Brightness {
 }
 
 fn write_level(percent: u8) {
-    let Some(path) = find() else {
+    let Some(path) = Brightness::read().path.clone() else {
         return;
     };
 
