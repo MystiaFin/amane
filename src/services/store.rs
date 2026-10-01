@@ -1,7 +1,9 @@
-use std::any::{Any, TypeId};
+use std::any::{self, Any, TypeId};
 use std::collections::HashMap;
+use std::panic;
 use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
 use std::thread;
+use std::time::Duration;
 
 use crate::Service;
 
@@ -27,7 +29,22 @@ pub fn find<S: Service>() -> &'static RwLock<S> {
         .insert(id, service);
 
     // stored first, so the thread's own reads and writes find this same service
-    thread::spawn(S::listen);
+    thread::spawn(keep_listening::<S>);
 
     service
+}
+
+// how long a service that panicked waits before it listens again
+const RESTART_DELAY: Duration = Duration::from_secs(5);
+
+/*
+ * a listen that panics, like on a bus that went away, starts again after a
+ * pause instead of leaving the service frozen; one that returns is done
+ */
+fn keep_listening<S: Service>() {
+    while panic::catch_unwind(S::listen).is_err() {
+        eprintln!("amane: {} stopped, starting it again", any::type_name::<S>());
+
+        thread::sleep(RESTART_DELAY);
+    }
 }
