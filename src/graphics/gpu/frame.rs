@@ -74,7 +74,8 @@ impl Gpu {
             // a hidden or busy window skips this frame, the next redraw catches up
             CurrentSurfaceTexture::Timeout | CurrentSurfaceTexture::Occluded => None,
 
-            CurrentSurfaceTexture::Validation => panic!("failed to get the next frame"),
+            // already reported to the gpu error log, and the next redraw tries again
+            CurrentSurfaceTexture::Validation => None,
         }
     }
 }

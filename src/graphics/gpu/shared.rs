@@ -1,9 +1,11 @@
 use std::cell::{Cell, RefCell};
+use std::process;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use vello::wgpu::{
-    Adapter, Device, DeviceDescriptor, Instance, InstanceDescriptor, Queue, RequestAdapterOptions,
-    Surface,
+    Adapter, Device, DeviceDescriptor, DeviceLostReason, Instance, InstanceDescriptor, Queue,
+    RequestAdapterOptions, Surface,
 };
 use vello::{AaSupport, RendererOptions};
 
@@ -58,6 +60,24 @@ fn open(surface: &Surface) -> Shared {
 
     let (device, queue) =
         wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
+
+    // one bad command only loses its frame, the default handler would panic and end the shell
+    device.on_uncaptured_error(Arc::new(|error| eprintln!("amane: gpu error: {error}")));
+
+    /*
+     * a driver reset or a gpu taken away loses every texture and pipeline; amane
+     * cannot build them again yet, so it exits with a message instead of freezing
+     */
+    device.set_device_lost_callback(|reason, message| {
+        // the device is also reported lost when it is dropped on the way out
+        if reason == DeviceLostReason::Destroyed {
+            return;
+        }
+
+        eprintln!("amane: lost the gpu ({message}), start the shell again");
+
+        process::exit(1);
+    });
 
     // area anti-aliasing matches how edges looked with the cpu renderer
     let vello_options = RendererOptions {
