@@ -9,11 +9,11 @@ use super::Bitmap;
  * drawn once at a fixed size and then cached like any image; drawing the
  * paths again every frame cost a full launcher of icons most of its frame
  */
-// ponytail: one size for every svg, key the cache by shown size if a big svg looks soft
+// one size for every svg; keying the cache by the shown size would sharpen a big svg that looks soft
 const LONGEST_SIDE: f32 = 256.0;
 
-pub fn rasterize(bytes: &[u8]) -> Bitmap {
-    let tree = Tree::from_data(bytes, &Options::default()).expect("failed to parse svg");
+pub fn rasterize(bytes: &[u8]) -> Option<Bitmap> {
+    let tree = Tree::from_data(bytes, &Options::default()).ok()?;
 
     let size = tree.size();
 
@@ -22,7 +22,8 @@ pub fn rasterize(bytes: &[u8]) -> Bitmap {
     let width = (size.width() * scale).ceil() as u32;
     let height = (size.height() * scale).ceil() as u32;
 
-    let mut pixmap = Pixmap::new(width, height).expect("failed to create svg pixmap");
+    // none for an svg with no size to draw at
+    let mut pixmap = Pixmap::new(width, height)?;
 
     resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
 
@@ -35,11 +36,13 @@ pub fn rasterize(bytes: &[u8]) -> Bitmap {
         pixels.extend([plain.red(), plain.green(), plain.blue(), plain.alpha()]);
     }
 
-    Bitmap {
+    let bitmap = Bitmap {
         width,
         height,
         pixels: Arc::new(pixels),
-    }
+    };
+
+    Some(bitmap)
 }
 
 #[cfg(test)]
@@ -50,7 +53,7 @@ mod tests {
     fn fills_the_longest_side() {
         let bytes = br#"<svg xmlns="http://www.w3.org/2000/svg" width="20" height="10"><rect width="20" height="10" fill="red" fill-opacity="0.5"/></svg>"#;
 
-        let image = rasterize(bytes);
+        let image = rasterize(bytes).expect("failed to rasterize the test svg");
 
         assert_eq!((image.width, image.height), (256, 128));
 

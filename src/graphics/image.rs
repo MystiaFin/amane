@@ -5,7 +5,6 @@ mod svg;
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::io::Cursor;
-use std::panic;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
@@ -94,7 +93,7 @@ fn decode(key: Key) {
     let (path, cover, blur) = &key;
 
     // a broken file stays empty instead of taking the shell down
-    let Ok(image) = panic::catch_unwind(|| read(path)) else {
+    let Some(image) = read(path) else {
         return;
     };
 
@@ -129,8 +128,9 @@ pub fn forget(image: &Arc<Bitmap>) {
     });
 }
 
-pub fn read(path: &Path) -> Bitmap {
-    let bytes = std::fs::read(path).expect("failed to read image file");
+// none for a file that can't be read or decoded, like one still being written
+pub fn read(path: &Path) -> Option<Bitmap> {
+    let bytes = std::fs::read(path).ok()?;
 
     // the file's first bytes say its format, whatever its name ends in
     if bytes.starts_with(&PNG_SIGNATURE) {
@@ -145,32 +145,33 @@ pub fn read(path: &Path) -> Bitmap {
         return svg::rasterize(&bytes);
     }
 
-    panic!("failed to load image: only png, jpeg and svg are supported");
+    // only png, jpeg and svg are supported
+    None
 }
 
-fn decode_png(bytes: &[u8]) -> Bitmap {
+fn decode_png(bytes: &[u8]) -> Option<Bitmap> {
     let mut decoder = Decoder::new(Cursor::new(bytes));
 
     // palettes, tiny bit depths and 16 bit samples all turn into plain 8 bit channels
     decoder.set_transformations(Transformations::normalize_to_color8());
 
-    let mut reader = decoder.read_info().expect("failed to decode png");
+    let mut reader = decoder.read_info().ok()?;
 
-    let size = reader.output_buffer_size().expect("failed to measure png");
+    let size = reader.output_buffer_size()?;
 
     let mut pixels = vec![0; size];
 
-    let frame = reader
-        .next_frame(&mut pixels)
-        .expect("failed to decode png");
+    let frame = reader.next_frame(&mut pixels).ok()?;
 
     pixels.truncate(frame.buffer_size());
 
-    Bitmap {
+    let bitmap = Bitmap {
         width: frame.width,
         height: frame.height,
         pixels: Arc::new(expand(&pixels, frame.color_type)),
-    }
+    };
+
+    Some(bitmap)
 }
 
 // fills in the channels a png left out, so every pixel is red, green, blue, alpha
@@ -197,19 +198,21 @@ fn expand(pixels: &[u8], color_type: ColorType) -> Vec<u8> {
     }
 }
 
-fn decode_jpeg(bytes: &[u8]) -> Bitmap {
+fn decode_jpeg(bytes: &[u8]) -> Option<Bitmap> {
     // a bitmap has four channels, jpeg only stores three
     let options = DecoderOptions::default().jpeg_set_out_colorspace(ColorSpace::RGBA);
 
     let mut decoder = JpegDecoder::new_with_options(ZCursor::new(bytes), options);
 
-    let pixels = decoder.decode().expect("failed to decode jpeg");
+    let pixels = decoder.decode().ok()?;
 
-    let info = decoder.info().expect("failed to read jpeg size");
+    let info = decoder.info()?;
 
-    Bitmap {
+    let bitmap = Bitmap {
         width: u32::from(info.width),
         height: u32::from(info.height),
         pixels: Arc::new(pixels),
-    }
+    };
+
+    Some(bitmap)
 }

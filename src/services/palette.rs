@@ -3,7 +3,6 @@ mod pick;
 mod sample;
 
 use std::fs;
-use std::panic;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::{Duration, SystemTime};
@@ -153,7 +152,7 @@ fn quantize(path: &Path, count: usize) -> Vec<Color> {
      * a wallpaper can be read while it's still being written,
      * and a half written file must not take the shell down with it
      */
-    let Ok(image) = panic::catch_unwind(|| image::read(path)) else {
+    let Some(image) = image::read(path) else {
         return Vec::new();
     };
 
