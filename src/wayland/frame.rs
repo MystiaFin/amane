@@ -8,9 +8,9 @@ use crate::services::wake;
 use crate::{LayerWindow, Widget};
 
 use super::timing::{self, Timing};
-use super::window::Window;
+use super::surface::Surface;
 
-impl Window {
+impl Surface {
     // one frame: run the view, send its settings, draw it and show it
     pub fn redraw(&mut self) {
         let started = Instant::now();

@@ -2,11 +2,11 @@ use wayland_client::protocol::wl_surface::WlSurface;
 
 use crate::services::wake;
 
-use super::{WaylandState, window::Window};
+use super::{WaylandState, surface::Surface};
 
 impl WaylandState {
     // wayland events name the surface they are about, this finds its window
-    pub fn window(&mut self, surface: &WlSurface) -> Option<&mut Window> {
+    pub fn window(&mut self, surface: &WlSurface) -> Option<&mut Surface> {
         for window in &mut self.windows {
             if window.role.wl_surface() == surface {
                 return Some(window);

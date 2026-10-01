@@ -14,7 +14,7 @@ use crate::input::{KeyHandler, Pointer};
 use super::{WaylandState, layer, role::Role, settings::Settings, view::View};
 
 // one surface on screen, with everything it needs to draw and take input
-pub struct Window {
+pub struct Surface {
     pub view: View,
 
     // only windows made per monitor are tied to one, the rest let the compositor choose
@@ -54,7 +54,7 @@ pub struct Window {
     pub qh: QueueHandle<WaylandState>,
 }
 
-impl Window {
+impl Surface {
     // a size of 0 leaves the choice to the window, which then keeps the size it asked for
     pub fn resize(&mut self, width: u32, height: u32) {
         self.width = match width {

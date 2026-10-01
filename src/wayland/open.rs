@@ -6,7 +6,7 @@ use crate::graphics::Gpu;
 use crate::input::Pointer;
 use crate::services::wake;
 
-use super::{WaylandState, layer, role::Role, settings::Settings, view::View, window::Window};
+use super::{WaylandState, layer, role::Role, settings::Settings, surface::Surface, view::View};
 
 impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {
@@ -49,7 +49,7 @@ impl WaylandState {
 
         let gpu = Gpu::new(display, surface);
 
-        let window = Window {
+        let window = Surface {
             view,
 
             output,

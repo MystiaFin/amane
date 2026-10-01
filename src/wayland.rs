@@ -21,11 +21,11 @@ mod seat;
 mod settings;
 mod shm;
 mod socket;
+mod surface;
 pub mod timing;
 mod update;
 mod view;
 mod wake;
-mod window;
 mod windows;
 
 use smithay_client_toolkit::{
@@ -45,14 +45,15 @@ use wayland_client::{
     protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
 };
 
-use crate::{Cursor, LayerWindow, Monitor, Window as NormalWindow, ipc::Handlers};
+use crate::ipc::Handlers;
+use crate::{Cursor, LayerWindow, Monitor, Window};
 
+use surface::Surface;
 use view::View;
-use window::Window;
 
 struct WaylandState {
     // every window has its own layer surface and gpu, and is dropped before the connection
-    windows: Vec<Window>,
+    windows: Vec<Surface>,
 
     // each of these gets a window on every monitor, including ones plugged in later
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
@@ -101,7 +102,7 @@ pub struct WaylandApp {
 impl WaylandApp {
     pub fn new(
         views: Vec<fn() -> LayerWindow>,
-        normal_views: Vec<fn() -> NormalWindow>,
+        normal_views: Vec<fn() -> Window>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: Handlers,

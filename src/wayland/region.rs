@@ -2,9 +2,9 @@ use wayland_client::{Connection, Dispatch, QueueHandle, protocol::wl_region::{se
 
 use crate::LayerWindow;
 
-use super::{WaylandState, window::Window};
+use super::{WaylandState, surface::Surface};
 
-impl Window {
+impl Surface {
     // only a changed region is sent, it takes effect with the next commit like the rest
     pub fn update_input_region(&mut self, window: &LayerWindow) {
         if window.input_region == self.input_region {

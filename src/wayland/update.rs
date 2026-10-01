@@ -1,8 +1,8 @@
 use crate::LayerWindow;
 
-use super::{layer, role::Role, settings::Settings, window::Window};
+use super::{layer, role::Role, settings::Settings, surface::Surface};
 
-impl Window {
+impl Surface {
     // settings changed by input or services reach the compositor before anything is drawn
     pub fn update_surface(&mut self, window: &LayerWindow) {
         self.update_input_region(window);
