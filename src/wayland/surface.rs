@@ -11,7 +11,7 @@ use crate::graphics::Gpu;
 use crate::InputArea;
 use crate::input::{KeyHandler, Pointer};
 
-use super::{WaylandState, layer, role::Role, view::View};
+use super::{WaylandState, layer, role::Role, scale::Fractional, view::View};
 
 // one surface on screen, with everything it needs to draw and take input
 pub struct Surface {
@@ -42,6 +42,9 @@ pub struct Surface {
 
     // the gpu draws into the surface, so it has to go first when both are dropped
     pub gpu: Gpu,
+
+    // none at whole scales; dropped before the role, since it belongs to its surface
+    pub fractional: Option<Fractional>,
 
     pub role: Role,
 

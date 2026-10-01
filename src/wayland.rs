@@ -16,6 +16,7 @@ mod pointer;
 mod region;
 mod role;
 mod registry;
+mod scale;
 mod scroll;
 mod seat;
 mod settings;
@@ -37,6 +38,10 @@ use smithay_client_toolkit::{
     session_lock::{SessionLock, SessionLockState},
     shell::{wlr_layer::LayerShell, xdg::XdgShell},
     shm::Shm,
+};
+use smithay_client_toolkit::reexports::protocols::wp::{
+    fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1,
+    viewporter::client::wp_viewporter::WpViewporter,
 };
 use wayland_client::{
     Connection, QueueHandle,
@@ -69,6 +74,10 @@ struct WaylandState {
     layer_shell: LayerShell,
     xdg_shell: XdgShell,
     shm: Shm,
+
+    // both are needed for fractional scales like 1.25, none when the compositor lacks one
+    fractional_scale: Option<WpFractionalScaleManagerV1>,
+    viewporter: Option<WpViewporter>,
 
     /*
      * the lock screen's view, what asks the compositor for a lock (kept, so
@@ -124,6 +133,9 @@ impl WaylandApp {
 
         let shm = Shm::bind(&globals, &qh).expect("failed to bind wl_shm");
 
+        let fractional_scale = globals.bind(&qh, 1..=1, ()).ok();
+        let viewporter = globals.bind(&qh, 1..=1, ()).ok();
+
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
             windows: Vec::new(),
@@ -140,6 +152,9 @@ impl WaylandApp {
             layer_shell,
             xdg_shell,
             shm,
+
+            fractional_scale,
+            viewporter,
 
             lock_view,
             lock_state: None,

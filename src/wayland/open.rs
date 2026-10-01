@@ -54,6 +54,8 @@ impl WaylandState {
 
         let gpu = Gpu::new(display, surface);
 
+        let fractional = self.make_fractional(role.wl_surface());
+
         let window = Surface {
             view,
 
@@ -74,6 +76,8 @@ impl WaylandState {
             on_key: None,
 
             gpu,
+
+            fractional,
 
             role,
 

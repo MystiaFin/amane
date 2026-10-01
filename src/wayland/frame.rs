@@ -112,15 +112,37 @@ impl Surface {
         surface.frame(&self.qh, FrameCallbackData(surface.clone()));
     }
 
-    // false when the gpu skipped the frame, so nothing was committed
+    /*
+     * false when the gpu skipped the frame, so nothing was committed; the window
+     * is measured in logical pixels, the buffer in real ones, and the scale goes
+     * out with the commit that presenting the frame makes
+     */
     fn present(&mut self, renderer: Renderer) -> bool {
-        // the scale goes out with the commit that presenting the frame makes
-        self.role.wl_surface().set_buffer_scale(self.scale as i32);
+        let (buffer_width, buffer_height) = match &self.fractional {
+            // a buffer at the exact scale, shown back at the window's size
+            Some(fractional) => {
+                let width = self.width as i32;
+                let height = self.height as i32;
 
-        // the window is measured in logical pixels, the buffer in real ones
-        let buffer_width = self.width * self.scale as u32;
-        let buffer_height = self.height * self.scale as u32;
+                fractional.viewport.set_destination(width, height);
+
+                (to_real_pixels(self.width, self.scale), to_real_pixels(self.height, self.scale))
+            }
+
+            None => {
+                self.role.wl_surface().set_buffer_scale(self.scale as i32);
+
+                (self.width * self.scale as u32, self.height * self.scale as u32)
+            }
+        };
 
         self.gpu.draw(renderer.finish(), buffer_width, buffer_height)
     }
+}
+
+// a logical size in real pixels at a fractional scale
+fn to_real_pixels(size: u32, scale: f32) -> u32 {
+    let pixels = size as f32 * scale;
+
+    pixels.round() as u32
 }

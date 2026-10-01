@@ -18,6 +18,11 @@ impl CompositorHandler for WaylandState {
             return;
         };
 
+        // a fractional scale, when there is one, already says the exact scale
+        if window.fractional.is_some() {
+            return;
+        }
+
         window.scale = new_factor as f32;
         window.redraw();
     }
