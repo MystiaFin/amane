@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::Bitmap;
 
 /*
@@ -11,8 +13,8 @@ pub fn soften(mut image: Bitmap, radius: u32) -> Bitmap {
     }
 
     for _ in 0..3 {
-        image.pixels = pass(&image, radius, 1, 0);
-        image.pixels = pass(&image, radius, 0, 1);
+        image.pixels = Arc::new(pass(&image, radius, 1, 0));
+        image.pixels = Arc::new(pass(&image, radius, 0, 1));
     }
 
     image
@@ -73,7 +75,7 @@ mod tests {
             pixels.extend([value, value, value, 255]);
         }
 
-        let image = soften(Bitmap { width, height: 1, pixels }, 2);
+        let image = soften(Bitmap { width, height: 1, pixels: Arc::new(pixels) }, 2);
 
         let red: Vec<u8> = image.pixels.chunks(4).map(|pixel| pixel[0]).collect();
 

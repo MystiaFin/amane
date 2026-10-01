@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::Bitmap;
 
 /*
@@ -35,7 +37,7 @@ pub fn to_cover(image: Bitmap, width: u32, height: u32) -> Bitmap {
     Bitmap {
         width: new_width,
         height: new_height,
-        pixels,
+        pixels: Arc::new(pixels),
     }
 }
 

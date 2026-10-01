@@ -27,7 +27,8 @@ pub struct Bitmap {
     width: u32,
     height: u32,
 
-    pub(crate) pixels: Vec<u8>,
+    // shared with the gpu, which draws from the same pixels instead of a copy
+    pub(crate) pixels: Arc<Vec<u8>>,
 }
 
 impl Bitmap {
@@ -36,7 +37,7 @@ impl Bitmap {
         Self {
             width: 1,
             height: 1,
-            pixels: vec![0; 4],
+            pixels: Arc::new(vec![0; 4]),
         }
     }
 
@@ -168,7 +169,7 @@ fn decode_png(bytes: &[u8]) -> Bitmap {
     Bitmap {
         width: frame.width,
         height: frame.height,
-        pixels: expand(&pixels, frame.color_type),
+        pixels: Arc::new(expand(&pixels, frame.color_type)),
     }
 }
 
@@ -209,6 +210,6 @@ fn decode_jpeg(bytes: &[u8]) -> Bitmap {
     Bitmap {
         width: u32::from(info.width),
         height: u32::from(info.height),
-        pixels,
+        pixels: Arc::new(pixels),
     }
 }

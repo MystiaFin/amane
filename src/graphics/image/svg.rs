@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use resvg::tiny_skia::{Pixmap, Transform};
 use resvg::usvg::{Options, Tree};
 
@@ -36,7 +38,7 @@ pub fn rasterize(bytes: &[u8]) -> Bitmap {
     Bitmap {
         width,
         height,
-        pixels,
+        pixels: Arc::new(pixels),
     }
 }
 

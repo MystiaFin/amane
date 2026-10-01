@@ -62,7 +62,7 @@ impl Gpu {
         let key = std::ptr::from_ref(image) as usize;
 
         let converted = self.images.entry(key).or_insert_with(|| ImageData {
-            data: Blob::from(image.pixels.clone()),
+            data: Blob::new(image.pixels.clone()),
             format: ImageFormat::Rgba8,
             alpha_type: ImageAlphaType::Alpha,
             width: image.width(),
