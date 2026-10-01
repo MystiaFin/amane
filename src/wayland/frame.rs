@@ -35,8 +35,11 @@ impl Surface {
 
         let (root, on_key) = content.into_parts();
 
+        // a window without a child has nothing to show, which is a mistake but not a crash
         let Some(root) = root else {
-            panic!("failed to draw window: no child set");
+            eprintln!("amane: {name} has no child to draw, see child()");
+
+            return;
         };
 
         let frame = frame::build(root.as_ref(), self.width, self.height, self.scale);
