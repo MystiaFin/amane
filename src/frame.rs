@@ -61,3 +61,89 @@ fn root_area(root: &dyn Widget, width: u32, height: u32) -> Rect {
 
     Rect::new(0.0, 0.0, root_width, root_height)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Center, Column, End, Justify, Parent, Rectangle, Row, Stack, children};
+
+    // where each rectangle landed, in the order the tree lists them
+    fn areas(root: &dyn Widget, width: u32, height: u32) -> Vec<Rect> {
+        let frame = build(root, width, height, 1.0);
+
+        let mut areas = Vec::new();
+
+        for target in frame.targets {
+            areas.push(target.area);
+        }
+
+        areas
+    }
+
+    fn block(width: f32, height: f32) -> Rectangle {
+        Rectangle::new().width(width).height(height)
+    }
+
+    #[test]
+    fn row_gives_the_rest_to_parent_sized_children() {
+        let row = Row::new(children![
+            block(100.0, 20.0),
+            Rectangle::new().width(Parent).height(20.0),
+        ])
+        .width(Parent);
+
+        let placed = areas(&row, 400, 50);
+
+        assert_eq!(placed[0], Rect::new(0.0, 0.0, 100.0, 20.0));
+        assert_eq!(placed[1], Rect::new(100.0, 0.0, 300.0, 20.0));
+    }
+
+    #[test]
+    fn column_centers_and_spreads() {
+        let centered = Column::new(children![block(10.0, 10.0), block(10.0, 10.0)])
+            .width(Parent)
+            .height(Parent)
+            .justify(Center)
+            .align(End);
+
+        let placed = areas(&centered, 30, 100);
+
+        // 80 free pixels, half of them above the first child; End pushes them right
+        assert_eq!(placed[0], Rect::new(20.0, 40.0, 10.0, 10.0));
+        assert_eq!(placed[1], Rect::new(20.0, 50.0, 10.0, 10.0));
+
+        let spread = Row::new(children![block(10.0, 10.0), block(10.0, 10.0), block(10.0, 10.0)])
+            .width(Parent)
+            .justify(Justify::SpaceBetween);
+
+        let placed = areas(&spread, 100, 10);
+
+        assert_eq!(placed[1].x, 45.0);
+        assert_eq!(placed[2].x, 90.0);
+    }
+
+    #[test]
+    fn stack_puts_children_at_the_same_corner() {
+        let stack = Stack::new(children![block(50.0, 50.0), block(20.0, 30.0)]);
+
+        let placed = areas(&stack, 200, 200);
+
+        assert_eq!(placed[0], Rect::new(0.0, 0.0, 50.0, 50.0));
+        assert_eq!(placed[1], Rect::new(0.0, 0.0, 20.0, 30.0));
+    }
+
+    #[test]
+    fn rectangle_places_its_child_inside_the_padding() {
+        let card = block(100.0, 60.0)
+            .padding(10.0)
+            .align_child(Center, End)
+            .child(block(20.0, 20.0));
+
+        let placed = areas(&card, 100, 60);
+
+        assert_eq!(placed[0], Rect::new(0.0, 0.0, 100.0, 60.0));
+
+        // 80 by 40 inside the padding: centered across, at the bottom down
+        assert_eq!(placed[1], Rect::new(40.0, 30.0, 20.0, 20.0));
+    }
+}
