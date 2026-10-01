@@ -64,7 +64,7 @@ impl WaylandState {
 
         let session_lock = lock_state
             .lock(&self.qh)
-            .expect("compositor does not support ext-session-lock");
+            .expect("failed to lock the session with ext-session-lock");
 
         // the lock screens open once the compositor answers that the session is locked
         self.session_lock = Some(session_lock);

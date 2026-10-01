@@ -114,15 +114,15 @@ impl WaylandApp {
         let qh = event_queue.handle();
 
         let compositor = CompositorState::bind(&globals, &qh)
-            .expect("compositor does not provide wl_compositor");
+            .expect("failed to bind wl_compositor");
 
         let layer_shell =
-            LayerShell::bind(&globals, &qh).expect("compositor does not support wlr-layer-shell");
+            LayerShell::bind(&globals, &qh).expect("failed to bind wlr-layer-shell");
 
         let xdg_shell =
-            XdgShell::bind(&globals, &qh).expect("compositor does not support xdg-shell");
+            XdgShell::bind(&globals, &qh).expect("failed to bind xdg-shell");
 
-        let shm = Shm::bind(&globals, &qh).expect("compositor does not provide wl_shm");
+        let shm = Shm::bind(&globals, &qh).expect("failed to bind wl_shm");
 
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
