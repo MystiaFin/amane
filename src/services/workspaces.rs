@@ -18,8 +18,13 @@ impl Service for Workspaces {
         }
     }
 
+    // without niri the list stays empty
     fn listen() {
-        for event in niri::events() {
+        let Some(events) = niri::events() else {
+            return;
+        };
+
+        for event in events {
             let mut workspaces = Self::write();
 
             let before = workspaces.list.clone();

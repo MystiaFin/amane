@@ -13,7 +13,9 @@ pub fn focus_workspace(id: u64) {
         }
     });
 
-    let stream = socket::send(&request.to_string());
+    let Some(stream) = socket::send(&request.to_string()) else {
+        return;
+    };
 
     // waiting for the one-line answer keeps niri from seeing a connection that closed mid-request
     let mut reply = String::new();

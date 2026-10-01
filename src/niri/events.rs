@@ -9,13 +9,15 @@ pub struct Events {
     lines: Lines<BufReader<UnixStream>>,
 }
 
-// streams niri's events until niri exits, so call it from a service thread
-pub fn events() -> Events {
-    let stream = socket::send("\"EventStream\"");
+// streams niri's events until niri exits, so call it from a service thread; none without niri
+pub fn events() -> Option<Events> {
+    let stream = socket::send("\"EventStream\"")?;
 
-    Events {
+    let events = Events {
         lines: BufReader::new(stream).lines(),
-    }
+    };
+
+    Some(events)
 }
 
 impl Iterator for Events {
