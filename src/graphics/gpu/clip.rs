@@ -4,27 +4,32 @@ use vello::peniko::{Fill, Mix};
 use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
-use crate::graphics::{Color, Path, Transform};
+use crate::graphics::{Color, Path, Rect, Transform};
 
 use super::Gpu;
 use super::convert::{affine, bezier, paint};
 
 impl Gpu {
-    // the commands are drawn into a group that vello only shows inside the path
+    // the commands are drawn into a group that vello only shows inside the rounded rectangle
     pub(super) fn clip(
         &mut self,
         scene: &mut Scene,
-        path: &Path,
+        rect: Rect,
+        radius: f32,
         transform: Transform,
         commands: Vec<Command>,
         canvas: &Texture,
     ) {
+        let Some(path) = rect.trace(radius) else {
+            return;
+        };
+
         scene.push_layer(
             Fill::NonZero,
             Mix::Normal,
             1.0,
             affine(transform),
-            &bezier(path),
+            &bezier(&path),
         );
 
         for command in commands {

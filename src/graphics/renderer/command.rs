@@ -57,11 +57,10 @@ pub enum Command {
         cap: Cap,
     },
 
-    // the image is only shown inside the clip path, which traces the rounded rectangle
+    // the image is only shown inside the rounded rectangle
     Image {
         image: Arc<Bitmap>,
         transform: Transform,
-        clip: Path,
         rect: Rect,
         radius: f32,
         clip_transform: Transform,
@@ -115,9 +114,8 @@ pub enum Command {
         opacity: f32,
     },
 
-    // commands that only show inside the path, which traces the rounded rectangle
+    // commands that only show inside the rounded rectangle
     Clip {
-        path: Path,
         rect: Rect,
         radius: f32,
         transform: Transform,

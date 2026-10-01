@@ -4,7 +4,7 @@ use vello::Scene;
 use vello::peniko::{Blob, Fill, ImageAlphaType, ImageBrush, ImageData, ImageFormat, ImageQuality};
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Path, Transform};
+use crate::graphics::{Rect, Transform};
 
 use super::Gpu;
 use super::convert::{affine, bezier};
@@ -15,15 +15,20 @@ impl Gpu {
         scene: &mut Scene,
         image: Arc<Bitmap>,
         transform: Transform,
-        clip: &Path,
+        rect: Rect,
+        radius: f32,
         clip_transform: Transform,
     ) {
-        // bicubic keeps a large image smooth when it shrinks to fit
+        let Some(clip) = rect.trace(radius) else {
+            return;
+        };
+
         self.note_shown(&image);
 
+        // bicubic keeps a large image smooth when it shrinks to fit
         let brush = ImageBrush::new(self.image(&image)).with_quality(ImageQuality::High);
 
-        scene.push_clip_layer(Fill::NonZero, affine(clip_transform), &bezier(clip));
+        scene.push_clip_layer(Fill::NonZero, affine(clip_transform), &bezier(&clip));
 
         scene.draw_image(&brush, affine(transform));
 

@@ -57,10 +57,10 @@ impl Gpu {
             Command::Image {
                 image,
                 transform,
-                clip,
+                rect,
+                radius,
                 clip_transform,
-                ..
-            } => self.draw_image(scene, image, transform, &clip, clip_transform),
+            } => self.draw_image(scene, image, transform, rect, radius, clip_transform),
 
             Command::Shadow {
                 rect,
@@ -82,11 +82,11 @@ impl Gpu {
             Command::Group { commands, opacity } => self.group(scene, commands, opacity, canvas),
 
             Command::Clip {
-                path,
+                rect,
+                radius,
                 transform,
                 commands,
-                ..
-            } => self.clip(scene, &path, transform, commands, canvas),
+            } => self.clip(scene, rect, radius, transform, commands, canvas),
 
             // blurs, cuts and shaders split the drawing, so run handles them before they get here
             Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => {}

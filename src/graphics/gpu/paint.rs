@@ -116,15 +116,15 @@ impl Gpu {
      * a blur, cut or shader is drawn apart too, so those only see the clip's drawing
      */
     fn draw_on_own_canvas(&mut self, command: Command, canvas: &Texture, clips: Clips) {
-        let (commands, opacity, outline) = match command {
+        let (commands, opacity, clipped_to) = match command {
             Command::Group { commands, opacity } => (commands, opacity, None),
 
             Command::Clip {
-                path,
+                rect,
+                radius,
                 transform,
                 commands,
-                ..
-            } => (commands, 1.0, Some((path, transform))),
+            } => (commands, 1.0, Some((rect, radius, transform))),
 
             _ => unreachable!("only groups and clips are drawn on their own canvas"),
         };
@@ -133,7 +133,9 @@ impl Gpu {
 
         self.run_clipped(commands, &own, clips);
 
-        if let Some((path, transform)) = outline {
+        if let Some((rect, radius, transform)) = clipped_to
+            && let Some(path) = rect.trace(radius)
+        {
             self.trim(&own, &path, transform);
         }
 

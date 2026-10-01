@@ -6,12 +6,11 @@ impl Renderer {
     // what the group drew only shows inside the rounded rectangle
     pub fn clip(&mut self, group: Renderer, rect: Rect, radius: f32) {
         // an empty rectangle shows none of the group
-        let Some(path) = rect.trace(radius) else {
+        if rect.width <= 0.0 || rect.height <= 0.0 {
             return;
-        };
+        }
 
         self.commands.push(Command::Clip {
-            path,
             rect,
             radius,
             transform: self.transform,
