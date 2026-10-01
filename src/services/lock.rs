@@ -55,7 +55,7 @@ impl Lock {
     pub fn start() {
         REQUESTED.store(true, Ordering::Relaxed);
 
-        changes::wake();
+        changes::mark_all();
     }
 
     pub(crate) fn take_request() -> bool {

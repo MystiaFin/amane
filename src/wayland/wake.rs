@@ -21,5 +21,5 @@ pub fn insert(handle: &LoopHandle<'static, WaylandState>) {
         })
         .expect("failed to insert wake ping");
 
-    changes::set(move || ping.ping());
+    changes::set_waker(move || ping.ping());
 }

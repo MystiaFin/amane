@@ -45,6 +45,6 @@ impl<S: 'static> Drop for Write<S> {
             eprintln!("change {}", any::type_name::<S>());
         }
 
-        changes::changed(TypeId::of::<S>());
+        changes::mark(TypeId::of::<S>());
     }
 }

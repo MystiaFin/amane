@@ -90,7 +90,7 @@ pub fn open_window(view: fn() -> Window) {
         .expect("failed to lock requested windows")
         .push(view);
 
-    changes::wake();
+    changes::mark_all();
 }
 
 // windows asked to close from handlers, closed by the event loop when it wakes
@@ -103,7 +103,7 @@ pub fn close_window(view: fn() -> Window) {
         .expect("failed to lock closing windows")
         .push(view);
 
-    changes::wake();
+    changes::mark_all();
 }
 
 thread_local! {

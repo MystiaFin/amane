@@ -112,7 +112,7 @@ fn decode(key: Key) {
         .expect("failed to lock loaded images")
         .insert(key, Some(Arc::new(image)));
 
-    changes::changed(TypeId::of::<Decoded>());
+    changes::mark(TypeId::of::<Decoded>());
 }
 
 /*

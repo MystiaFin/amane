@@ -25,14 +25,14 @@ thread_local! {
     static READ: RefCell<HashSet<TypeId>> = RefCell::new(HashSet::new());
 }
 
-pub fn set(wake: impl Fn() + Send + Sync + 'static) {
+pub fn set_waker(wake: impl Fn() + Send + Sync + 'static) {
     if WAKE.set(Box::new(wake)).is_err() {
         panic!("failed to set wake: already set");
     }
 }
 
 // asks the event loop to draw every window again, from any thread
-pub fn wake() {
+pub fn mark_all() {
     if crate::wayland::timing::enabled() {
         eprintln!("change everything");
     }
@@ -43,7 +43,7 @@ pub fn wake() {
 }
 
 // only the windows that read this service are drawn again
-pub fn changed(service: TypeId) {
+pub fn mark(service: TypeId) {
     let mut changes = CHANGED.lock().expect("failed to lock changes");
 
     changes
@@ -57,7 +57,7 @@ pub fn changed(service: TypeId) {
 }
 
 // none means every window should draw
-pub fn take_changes() -> Option<HashSet<TypeId>> {
+pub fn take() -> Option<HashSet<TypeId>> {
     let mut changes = CHANGED.lock().expect("failed to lock changes");
 
     let services = changes.services.take().unwrap_or_default();

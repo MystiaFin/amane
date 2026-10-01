@@ -32,7 +32,7 @@ impl WaylandState {
 
     // only windows that read a service that changed draw again
     pub fn request_changed_frames(&mut self) {
-        let Some(changed) = changes::take_changes() else {
+        let Some(changed) = changes::take() else {
             self.request_frames();
 
             return;
