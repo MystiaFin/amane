@@ -78,31 +78,30 @@ impl Default for Window {
 }
 
 // windows asked for from handlers, opened by the event loop when it wakes
-pub static REQUESTED: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
+pub static REQUESTED: Mutex<Vec<(&'static str, fn() -> Window)>> = Mutex::new(Vec::new());
 
 /*
  * opens a normal window later on, like settings from a button or an ipc call;
- * asking for one that is already open does nothing. windows are told apart by
- * their view function, so two view functions with the same body count as one
+ * the name tells windows apart, so asking for a name already open does nothing
  */
-pub fn open_window(view: fn() -> Window) {
+pub fn open_window(name: &'static str, view: fn() -> Window) {
     REQUESTED
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
-        .push(view);
+        .push((name, view));
 
     changes::mark_all();
 }
 
 // windows asked to close from handlers, closed by the event loop when it wakes
-pub static CLOSING: Mutex<Vec<fn() -> Window>> = Mutex::new(Vec::new());
+pub static CLOSING: Mutex<Vec<&'static str>> = Mutex::new(Vec::new());
 
-// closes a window open_window opened, like a close button inside it; a closed one is left alone
-pub fn close_window(view: fn() -> Window) {
+// closes the window open with this name, like a close button inside it; a closed one is left alone
+pub fn close_window(name: &'static str) {
     CLOSING
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
-        .push(view);
+        .push(name);
 
     changes::mark_all();
 }

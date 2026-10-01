@@ -4,7 +4,7 @@ use amane::{
 
 // a bar on top, and a normal window beside it like a settings app would have
 fn main() {
-    App::new().window(bar).normal_window(settings).run();
+    App::new().window(bar).normal_window("settings", settings).run();
 }
 
 fn bar() -> LayerWindow {

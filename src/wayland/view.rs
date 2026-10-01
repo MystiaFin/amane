@@ -1,5 +1,3 @@
-use std::ptr;
-
 use crate::input::KeyHandler;
 use crate::{LayerWindow, Monitor, Widget, Window};
 
@@ -10,7 +8,8 @@ pub enum View {
     // the monitor is replaced when the compositor reports a change to it
     Monitor(fn(&Monitor) -> LayerWindow, Monitor),
 
-    Normal(fn() -> Window),
+    // the name tells it apart from other normal windows
+    Normal(&'static str, fn() -> Window),
 }
 
 // what a view gave back
@@ -25,21 +24,16 @@ impl View {
         match self {
             View::Plain(view) => Content::Layer(view()),
             View::Monitor(view, monitor) => Content::Layer(view(monitor)),
-            View::Normal(view) => Content::Normal(view()),
+            View::Normal(_, view) => Content::Normal(view()),
         }
     }
 
-    /*
-     * a normal window is known by the view function that draws it; the compiler
-     * may merge two functions with the same body into one address, so two view
-     * functions that are exactly alike count as the same window
-     */
-    pub fn shows(&self, view: fn() -> Window) -> bool {
-        let View::Normal(shown) = *self else {
+    pub fn shows(&self, name: &str) -> bool {
+        let View::Normal(shown, _) = self else {
             return false;
         };
 
-        ptr::fn_addr_eq(shown, view)
+        *shown == name
     }
 }
 

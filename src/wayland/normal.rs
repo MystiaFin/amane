@@ -14,7 +14,7 @@ use crate::Window;
 use super::{WaylandState, role::Role, view::View};
 
 impl WaylandState {
-    pub fn open_normal(&mut self, view: fn() -> Window) {
+    pub fn open_normal(&mut self, name: &'static str, view: fn() -> Window) {
         let surface = self.compositor.create_surface(&self.qh);
 
         let window = view();
@@ -43,7 +43,7 @@ impl WaylandState {
             size,
         };
 
-        self.add(View::Normal(view), None, role);
+        self.add(View::Normal(name, view), None, role);
     }
 
     // the windows open_window asked for, skipping any already open
@@ -54,18 +54,18 @@ impl WaylandState {
 
         drop(queue);
 
-        for view in requested {
+        for (name, view) in requested {
             let mut open = false;
 
             for window in &self.windows {
-                open = open || window.view.shows(view);
+                open = open || window.view.shows(name);
             }
 
             if open {
                 continue;
             }
 
-            self.open_normal(view);
+            self.open_normal(name, view);
         }
     }
 
@@ -77,11 +77,11 @@ impl WaylandState {
 
         drop(queue);
 
-        for view in closing {
+        for name in closing {
             let mut surfaces = Vec::new();
 
             for window in &self.windows {
-                if window.view.shows(view) {
+                if window.view.shows(name) {
                     surfaces.push(window.role.wl_surface().clone());
                 }
             }

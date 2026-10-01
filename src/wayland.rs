@@ -110,7 +110,7 @@ pub struct WaylandApp {
 impl WaylandApp {
     pub fn new(
         views: Vec<fn() -> LayerWindow>,
-        normal_views: Vec<fn() -> Window>,
+        normal_views: Vec<(&'static str, fn() -> Window)>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: Handlers,
@@ -174,8 +174,8 @@ impl WaylandApp {
             state.open(View::Plain(view), None);
         }
 
-        for view in normal_views {
-            state.open_normal(view);
+        for (name, view) in normal_views {
+            state.open_normal(name, view);
         }
 
         if lock_view.is_some() {

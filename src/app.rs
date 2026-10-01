@@ -9,7 +9,7 @@ pub struct App {
     font: Option<String>,
 
     windows: Vec<fn() -> LayerWindow>,
-    normal_windows: Vec<fn() -> Window>,
+    normal_windows: Vec<(&'static str, fn() -> Window)>,
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
     lock: Option<fn(&Monitor) -> LayerWindow>,
 
@@ -34,9 +34,9 @@ impl App {
         self
     }
 
-    // a regular desktop window with a title bar, it can be added next to layer windows
-    pub fn normal_window(mut self, view: fn() -> Window) -> Self {
-        self.normal_windows.push(view);
+    // a regular desktop window with a title bar, next to layer windows; close_window takes the name
+    pub fn normal_window(mut self, name: &'static str, view: fn() -> Window) -> Self {
+        self.normal_windows.push((name, view));
 
         self
     }
