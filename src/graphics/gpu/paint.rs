@@ -98,7 +98,7 @@ impl Gpu {
                     transform,
                     commands,
                     ..
-                } if separate(&commands) => {
+                } if needs_own_canvas(&commands) => {
                     self.flush(scene, canvas, borrowed);
 
                     let layer = self.take_canvas(canvas.width(), canvas.height());
@@ -129,7 +129,7 @@ impl Gpu {
                             commands,
                         };
 
-                        self.to_vello(scene, command, canvas, clips);
+                        self.add_to_vello(scene, command, canvas, clips);
 
                         continue;
                     };
@@ -143,7 +143,7 @@ impl Gpu {
                     transform,
                     color,
                 } if transform.even_scale().is_some() => {
-                    self.to_quads(scene, canvas, borrowed);
+                    self.paint_pending_vello(scene, canvas, borrowed);
 
                     let scale = transform.even_scale().unwrap_or(1.0);
 
@@ -159,7 +159,7 @@ impl Gpu {
                     transform,
                     color,
                 } if transform.even_scale().is_some() => {
-                    self.to_quads(scene, canvas, borrowed);
+                    self.paint_pending_vello(scene, canvas, borrowed);
 
                     let scale = transform.even_scale().unwrap_or(1.0);
 
@@ -177,7 +177,7 @@ impl Gpu {
                     x,
                     y,
                 } => {
-                    self.to_quads(scene, canvas, borrowed);
+                    self.paint_pending_vello(scene, canvas, borrowed);
 
                     self.quads
                         .letter(&self.queue, face, id, size, color, x, y, clips);
@@ -191,7 +191,7 @@ impl Gpu {
                     clip_transform,
                     ..
                 } if straight(transform) && clip_transform.even_scale().is_some() => {
-                    self.to_quads(scene, canvas, borrowed);
+                    self.paint_pending_vello(scene, canvas, borrowed);
 
                     self.note_shown(&image);
 
@@ -211,20 +211,25 @@ impl Gpu {
                         .picture(&self.device, &self.queue, &image, placement, clips);
                 }
 
-                command => self.to_vello(scene, command, canvas, clips),
+                command => self.add_to_vello(scene, command, canvas, clips),
             }
         }
     }
 
     // vello's drawing so far goes down first, so the quads land on top of it
-    fn to_quads(&mut self, scene: &mut Scene, canvas: &Texture, borrowed: &mut Vec<ImageData>) {
+    fn paint_pending_vello(
+        &mut self,
+        scene: &mut Scene,
+        canvas: &Texture,
+        borrowed: &mut Vec<ImageData>,
+    ) {
         if !scene.encoding().is_empty() {
             self.paint(scene, canvas, borrowed);
         }
     }
 
     // and the other way round, with the quads' clip handed to vello
-    fn to_vello(
+    fn add_to_vello(
         &mut self,
         scene: &mut Scene,
         command: Command,
@@ -268,10 +273,11 @@ impl Gpu {
     }
 }
 
-fn separate(commands: &[Command]) -> bool {
+// blurs, cuts and shaders work on the canvas itself, so a clip holding one draws on a canvas of its own
+fn needs_own_canvas(commands: &[Command]) -> bool {
     commands.iter().any(|command| match command {
         Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => true,
-        Command::Layer { commands, .. } | Command::Clip { commands, .. } => separate(commands),
+        Command::Layer { commands, .. } | Command::Clip { commands, .. } => needs_own_canvas(commands),
         _ => false,
     })
 }
