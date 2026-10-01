@@ -13,7 +13,6 @@ thiserror = "2"
 vello = "0.10.0"
 # only for glsl shaders, vello already brings wgpu and this turns on its glsl reader
 wgpu = { version = "29.0.4", default-features = false, features = ["glsl"] }
-tempfile = "3"
 wayland-client = "0.31.15"
 wayland-backend = { version = "0.3.17", features = ["client_system"] }
 wayland-protocols-wlr = { version = "=0.3.12", features = ["client"] }
