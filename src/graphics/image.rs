@@ -28,7 +28,7 @@ pub struct Bitmap {
     height: u32,
 
     // shared with the gpu, which draws from the same pixels instead of a copy
-    pub(crate) pixels: Arc<Vec<u8>>,
+    pub pixels: Arc<Vec<u8>>,
 }
 
 impl Bitmap {

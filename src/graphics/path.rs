@@ -16,7 +16,7 @@ pub enum Segment {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Path {
-    pub(crate) segments: Vec<Segment>,
+    pub segments: Vec<Segment>,
 }
 
 #[derive(Debug, Clone, Default)]

@@ -20,11 +20,11 @@ pub struct Layout {
     measured_width: Size,
     measured_height: Size,
 
-    pub(crate) width: Option<Size>,
-    pub(crate) height: Option<Size>,
+    pub width: Option<Size>,
+    pub height: Option<Size>,
 
-    pub(crate) justify: Justify,
-    pub(crate) align: Align,
+    pub justify: Justify,
+    pub align: Align,
 
     // the empty space between each pair of children
     gap: f32,

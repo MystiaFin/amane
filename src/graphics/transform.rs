@@ -7,12 +7,12 @@ mod make;
  */
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Transform {
-    pub(crate) sx: f32,
-    pub(crate) ky: f32,
-    pub(crate) kx: f32,
-    pub(crate) sy: f32,
-    pub(crate) tx: f32,
-    pub(crate) ty: f32,
+    pub sx: f32,
+    pub ky: f32,
+    pub kx: f32,
+    pub sy: f32,
+    pub tx: f32,
+    pub ty: f32,
 }
 
 impl Transform {

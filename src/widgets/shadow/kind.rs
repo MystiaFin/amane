@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub(crate) enum Kind {
+pub enum Kind {
     // cast behind the rectangle, onto whatever is under it
     #[default]
     Drop,

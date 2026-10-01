@@ -3,7 +3,7 @@ mod kind;
 use crate::Color;
 use crate::graphics::Rect;
 
-pub(crate) use kind::Kind;
+pub use kind::Kind;
 
 pub struct Shadow {
     pub(crate) color: Color,

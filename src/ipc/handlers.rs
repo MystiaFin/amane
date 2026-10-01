@@ -6,7 +6,7 @@ type Handler = fn(&[String]) -> String;
 
 #[derive(Default)]
 pub struct Handlers {
-    pub(crate) by_name: HashMap<String, Handler>,
+    pub by_name: HashMap<String, Handler>,
 }
 
 impl Handlers {

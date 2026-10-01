@@ -1,7 +1,7 @@
 use crate::graphics::Rect;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Fit {
+pub enum Fit {
     // fills the rectangle exactly, bending the image's shape to match
     Stretch,
 
@@ -13,7 +13,7 @@ pub(crate) enum Fit {
 }
 
 impl Fit {
-    pub(crate) fn place(self, area: Rect, image_width: f32, image_height: f32) -> Rect {
+    pub fn place(self, area: Rect, image_width: f32, image_height: f32) -> Rect {
         let horizontal_scale = area.width / image_width;
         let vertical_scale = area.height / image_height;
 
