@@ -14,6 +14,7 @@ mod monitor;
 mod niri;
 mod process;
 mod services;
+mod timing;
 mod wayland;
 mod widgets;
 mod window;

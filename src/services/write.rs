@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use std::sync::RwLockWriteGuard;
 
 use crate::changes;
-use crate::wayland::timing;
+use crate::timing;
 
 pub struct Write<S: 'static> {
     pub(crate) guard: RwLockWriteGuard<'static, S>,

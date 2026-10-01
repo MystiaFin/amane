@@ -3,6 +3,8 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::sync::{Mutex, OnceLock};
 
+use crate::timing;
+
 // the backend sets this once, so services never name the event loop's types
 static WAKE: OnceLock<Box<dyn Fn() + Send + Sync>> = OnceLock::new();
 
@@ -33,7 +35,7 @@ pub fn set_waker(wake: impl Fn() + Send + Sync + 'static) {
 
 // asks the event loop to draw every window again, from any thread
 pub fn mark_all() {
-    if crate::wayland::timing::enabled() {
+    if timing::enabled() {
         eprintln!("change everything");
     }
 

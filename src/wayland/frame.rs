@@ -5,10 +5,10 @@ use smithay_client_toolkit::compositor::FrameCallbackData;
 use crate::animation::moving;
 use crate::changes;
 use crate::graphics::{Rect, Renderer};
+use crate::timing::{self, Timing};
 use crate::{LayerWindow, Widget};
 
 use super::surface::Surface;
-use super::timing::{self, Timing};
 
 impl Surface {
     // one frame: run the view, send its settings, draw it and show it

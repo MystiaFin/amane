@@ -22,7 +22,6 @@ mod settings;
 mod shm;
 mod socket;
 mod surface;
-pub mod timing;
 mod update;
 mod view;
 mod wake;
