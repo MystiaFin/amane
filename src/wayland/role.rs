@@ -4,21 +4,33 @@ use smithay_client_toolkit::{
 };
 use wayland_client::protocol::wl_surface::WlSurface;
 
+use super::settings::Settings;
+
 // what a window is to the compositor: a layer like a bar, one screen of the session lock, or a normal window
 pub enum Role {
-    Layer(LayerSurface),
+    Layer {
+        surface: LayerSurface,
+
+        // what the compositor was last told, so only a real change is sent again
+        settings: Settings,
+    },
 
     Lock(SessionLockSurface),
 
-    Normal(XdgWindow),
+    Normal {
+        window: XdgWindow,
+
+        // the size it opened at, kept for as long as the compositor leaves the size to it
+        size: (u32, u32),
+    },
 }
 
 impl Role {
     pub fn wl_surface(&self) -> &WlSurface {
         match self {
-            Role::Layer(layer_surface) => layer_surface.wl_surface(),
+            Role::Layer { surface, .. } => surface.wl_surface(),
             Role::Lock(lock_surface) => lock_surface.wl_surface(),
-            Role::Normal(xdg_window) => xdg_window.wl_surface(),
+            Role::Normal { window, .. } => window.wl_surface(),
         }
     }
 

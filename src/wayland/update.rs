@@ -1,26 +1,34 @@
-use crate::LayerWindow;
-
+use super::view::Content;
 use super::{layer, role::Role, settings::Settings, surface::Surface};
 
 impl Surface {
     // settings changed by input or services reach the compositor before anything is drawn
-    pub fn update_surface(&mut self, window: &LayerWindow) {
+    pub fn update_surface(&mut self, content: &Content) {
+        // a normal window's title and size are only read when it opens
+        let Content::Layer(window) = content else {
+            return;
+        };
+
         self.update_input_region(window);
 
         // the compositor sizes lock screens itself, and never lets them hide
-        let Role::Layer(layer_surface) = &self.role else {
+        let Role::Layer {
+            surface: layer_surface,
+            settings: current,
+        } = &mut self.role
+        else {
             return;
         };
 
         let settings = Settings::from(window);
 
-        if settings == self.settings {
+        if settings == *current {
             return;
         }
 
-        let was_visible = self.settings.visible;
+        let was_visible = current.visible;
 
-        self.settings = settings;
+        *current = settings;
 
         // the rest waits until the window shows again, which sends every setting
         if !settings.visible {

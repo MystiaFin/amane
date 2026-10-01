@@ -9,9 +9,9 @@ use smithay_client_toolkit::shell::{
 use wayland_client::{Connection, QueueHandle};
 
 use crate::window::{CLOSING, REQUESTED};
-use crate::{LayerWindow, Window};
+use crate::Window;
 
-use super::{WaylandState, role::Role, settings::Settings, view::View};
+use super::{WaylandState, role::Role, view::View};
 
 impl WaylandState {
     pub fn open_normal(&mut self, view: fn() -> Window) {
@@ -27,22 +27,23 @@ impl WaylandState {
         xdg_window.set_title(window.title.clone());
         xdg_window.set_app_id("amane");
 
+        let size = (window.width.round() as u32, window.height.round() as u32);
+
         // the same smallest and biggest size is how a window says it cannot be resized
         if !window.resizable {
-            let size = Some((window.width as u32, window.height as u32));
-
-            xdg_window.set_min_size(size);
-            xdg_window.set_max_size(size);
+            xdg_window.set_min_size(Some(size));
+            xdg_window.set_max_size(Some(size));
         }
 
         // the compositor answers the first commit with a configure, drawing starts there
         xdg_window.commit();
 
-        let content = content(window);
+        let role = Role::Normal {
+            window: xdg_window,
+            size,
+        };
 
-        let settings = Settings::from(&content);
-
-        self.add(View::Normal(view), None, settings, Role::Normal(xdg_window));
+        self.add(View::Normal(view), None, role);
     }
 
     // the windows open_window asked for, skipping any already open
@@ -94,21 +95,6 @@ impl WaylandState {
             }
         }
     }
-}
-
-/*
- * the widgets and key handler, in the form the rest of the backend draws;
- * the size is only used until the compositor gives one
- */
-pub fn content(window: Window) -> LayerWindow {
-    let mut content = LayerWindow::new()
-        .width(window.width)
-        .height(window.height);
-
-    content.root = window.root;
-    content.on_key = window.on_key;
-
-    content
 }
 
 impl WindowHandler for WaylandState {

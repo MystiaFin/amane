@@ -6,7 +6,7 @@ use crate::frame;
 use crate::graphics::Gpu;
 use crate::input::Pointer;
 
-use super::{WaylandState, layer, role::Role, settings::Settings, surface::Surface, view::View};
+use super::{WaylandState, layer, role::Role, settings::Settings, surface::Surface, view::{Content, View}};
 
 impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {
@@ -17,7 +17,12 @@ impl WaylandState {
          * last ones; a window that starts hidden never gets a configure, so it never
          * draws, and what its first view read is all that can wake it to show
          */
-        let (window, reads) = frame::run_view(|| view.run(), 0, 0);
+        let (content, reads) = frame::run_view(|| view.run(), 0, 0);
+
+        // normal windows open in open_normal
+        let Content::Layer(window) = content else {
+            unreachable!("only layer views open as layer windows");
+        };
 
         let settings = Settings::from(&window);
 
@@ -29,7 +34,12 @@ impl WaylandState {
             &settings,
         );
 
-        self.add(view, output, settings, Role::Layer(layer_surface));
+        let role = Role::Layer {
+            surface: layer_surface,
+            settings,
+        };
+
+        self.add(view, output, role);
 
         if let Some(window) = self.windows.last_mut() {
             window.reads = reads;
@@ -37,7 +47,7 @@ impl WaylandState {
     }
 
     // everything a window needs besides its surface is the same for layers and lock screens
-    pub fn add(&mut self, view: View, output: Option<WlOutput>, settings: Settings, role: Role) {
+    pub fn add(&mut self, view: View, output: Option<WlOutput>, role: Role) {
         // the gpu draws straight into the surface, so it gets libwayland's own pointers
         let display = self.connection.backend().display_ptr().cast();
         let surface = role.wl_surface().id().as_ptr().cast();
@@ -48,8 +58,6 @@ impl WaylandState {
             view,
 
             output,
-
-            settings,
 
             input_region: None,
 

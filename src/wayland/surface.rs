@@ -11,7 +11,7 @@ use crate::graphics::Gpu;
 use crate::InputArea;
 use crate::input::{KeyHandler, Pointer};
 
-use super::{WaylandState, layer, role::Role, settings::Settings, view::View};
+use super::{WaylandState, layer, role::Role, view::View};
 
 // one surface on screen, with everything it needs to draw and take input
 pub struct Surface {
@@ -20,10 +20,7 @@ pub struct Surface {
     // only windows made per monitor are tied to one, the rest let the compositor choose
     pub output: Option<WlOutput>,
 
-    // what the compositor was last told, so only a real change is sent again
-    pub settings: Settings,
-
-    // the input region is not Copy like the rest, so it is kept on its own
+    // the input region last sent, so only a real change is sent again
     pub input_region: Option<Vec<InputArea>>,
 
     pub width: u32,
@@ -57,16 +54,34 @@ pub struct Surface {
 impl Surface {
     // a size of 0 leaves the choice to the window, which then keeps the size it asked for
     pub fn resize(&mut self, width: u32, height: u32) {
+        let (asked_width, asked_height) = self.asked_size();
+
         self.width = match width {
-            0 => layer::to_pixels(self.settings.width),
+            0 => asked_width,
             width => width,
         };
 
         self.height = match height {
-            0 => layer::to_pixels(self.settings.height),
+            0 => asked_height,
             height => height,
         };
 
         self.redraw();
+    }
+
+    fn asked_size(&self) -> (u32, u32) {
+        match &self.role {
+            Role::Layer { settings, .. } => {
+                let width = layer::to_pixels(settings.width);
+                let height = layer::to_pixels(settings.height);
+
+                (width, height)
+            }
+
+            Role::Normal { size, .. } => *size,
+
+            // the compositor always gives a lock screen its monitor's size
+            Role::Lock(_) => (0, 0),
+        }
     }
 }

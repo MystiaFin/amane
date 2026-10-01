@@ -14,7 +14,7 @@ impl Surface {
     pub fn redraw(&mut self) {
         let started = Instant::now();
 
-        let (window, reads) = frame::run_view(|| self.view.run(), self.width, self.height);
+        let (content, reads) = frame::run_view(|| self.view.run(), self.width, self.height);
 
         // a later change to one of these services draws this window again
         self.reads = reads;
@@ -24,16 +24,18 @@ impl Surface {
 
         let viewed = Instant::now();
 
-        let name = window.namespace;
+        let name = content.name();
 
-        self.update_surface(&window);
+        self.update_surface(&content);
 
         // 0 until the compositor configures the window, and again while it is hidden
         if self.width == 0 || self.height == 0 {
             return;
         }
 
-        let Some(root) = window.root else {
+        let (root, on_key) = content.into_parts();
+
+        let Some(root) = root else {
             panic!("failed to draw window: no child set");
         };
 
@@ -45,7 +47,7 @@ impl Surface {
         // the handlers are rebuilt with the view, so each frame replaces the last frame's
         self.pointer.set_targets(frame.targets);
 
-        self.on_key = window.on_key;
+        self.on_key = on_key;
 
         /*
          * an animation that has not arrived yet needs the next frame too; asking

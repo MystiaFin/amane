@@ -1,10 +1,10 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
+use crate::Widget;
 use crate::changes;
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
-use crate::{LayerWindow, Widget};
 
 // one window's frame: what the gpu draws, and where the widgets take the pointer
 pub struct Frame {
@@ -19,22 +19,18 @@ pub struct Frame {
  * runs a window's view at the window's size; the services it read come
  * back with it, so a later change to one of them draws the window again
  */
-pub fn run_view(
-    view: impl FnOnce() -> LayerWindow,
-    width: u32,
-    height: u32,
-) -> (LayerWindow, HashSet<TypeId>) {
+pub fn run_view<T>(view: impl FnOnce() -> T, width: u32, height: u32) -> (T, HashSet<TypeId>) {
     // anything read before belongs to another window
     changes::take_read();
 
     crate::window::set_size(width as f32, height as f32);
 
     // the view runs again on every redraw, so it shows the services as they are now
-    let window = view();
+    let content = view();
 
     let reads = changes::take_read();
 
-    (window, reads)
+    (content, reads)
 }
 
 // lays the root out in the window, draws it, and collects where it reacts to the pointer

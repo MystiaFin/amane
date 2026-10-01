@@ -5,7 +5,7 @@ use wayland_client::{Connection, QueueHandle, protocol::wl_output::WlOutput};
 
 use crate::{Lock, Service};
 
-use super::{WaylandState, monitor, role::Role, settings::Settings, view::View};
+use super::{WaylandState, monitor, role::Role, view::View};
 
 impl WaylandState {
     // every monitor gets its own lock screen, the compositor shows nothing else while locked
@@ -33,13 +33,11 @@ impl WaylandState {
 
         let view = View::Monitor(view, monitor::describe(&info));
 
-        let settings = Settings::from(&view.run());
-
         let surface = self.compositor.create_surface(&self.qh);
 
         let lock_surface = session_lock.create_lock_surface(surface, &output, &self.qh);
 
-        self.add(view, Some(output), settings, Role::Lock(lock_surface));
+        self.add(view, Some(output), Role::Lock(lock_surface));
     }
 
     // runs on every wake, since that is when a Lock::start shows up
