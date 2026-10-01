@@ -13,6 +13,7 @@ mod layer_window;
 mod macros;
 mod monitor;
 mod niri;
+mod placement;
 mod process;
 mod services;
 mod timing;
@@ -37,6 +38,7 @@ pub use monitor::Monitor;
 pub use layer_window::{
     Horizontal, InputArea, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
 };
+pub use placement::{Align, Center, End, Justify, Padding, Size, Start};
 pub use process::{lines, output, spawn};
 pub use services::{
     AccessPoint, Action, Apps, Audio, Battery, Bluetooth, BluetoothDevice, Brightness, Cpu,
@@ -44,11 +46,10 @@ pub use services::{
     Palette, Service, Urgency, Workspace, Workspaces,
 };
 pub use widgets::{
-    Align, Arc, Canvas, Center, Circle, Column, End, Fill, Image, Justify, Line, Mask, Padding,
-    Path, Radius, Rectangle, Row, ScrollArea, Shadow, Shape, Size, Stack, Start, Text, TextInput,
-    Widget,
+    Arc, Canvas, Circle, Column, Fill, Image, Line, Mask, Path, Radius, Rectangle, Row, ScrollArea,
+    Shadow, Shape, Stack, Text, TextInput, Widget,
 };
 
-pub use widgets::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};
-pub use widgets::Size::Parent;
+pub use placement::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};
+pub use placement::Size::Parent;
 pub use window::{Window, close_window, open_window, window_size};
