@@ -9,7 +9,6 @@ path = "src/lib.rs"
 
 [dependencies]
 smithay-client-toolkit = { version = "0.21.1", default-features = false, features = ["calloop", "xkbcommon"] }
-thiserror = "2"
 vello = "0.10.0"
 # only for glsl shaders, vello already brings wgpu and this turns on its glsl reader
 wgpu = { version = "29.0.4", default-features = false, features = ["glsl"] }

@@ -26,7 +26,6 @@ dependencies = [
  "resvg",
  "serde_json",
  "smithay-client-toolkit",
- "thiserror",
  "ttf-parser",
  "vello",
  "wayland-backend",
