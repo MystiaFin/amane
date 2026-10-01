@@ -28,7 +28,7 @@ impl Renderer {
         color: Color,
         area: Rect,
     ) {
-        match pixel_scale(self.transform) {
+        match self.transform.even_scale() {
             Some(scale) => self.text_pictures(content, font, size * scale, color, area),
             None => self.text_outlines(content, font, size, color, area),
         }
@@ -119,18 +119,6 @@ impl Renderer {
             });
         }
     }
-}
-
-// the scale when the transform only moves and scales evenly, none when it rotates or stretches
-fn pixel_scale(transform: Transform) -> Option<f32> {
-    let even = (transform.sx - transform.sy).abs() < 0.0001;
-    let straight = transform.kx == 0.0 && transform.ky == 0.0;
-
-    if !even || !straight || transform.sx <= 0.0 {
-        return None;
-    }
-
-    Some(transform.sx)
 }
 
 fn device_point(transform: Transform, x: f32, y: f32) -> (f32, f32) {

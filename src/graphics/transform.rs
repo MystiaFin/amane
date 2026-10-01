@@ -42,4 +42,16 @@ impl Transform {
             ty: other.ky * self.tx + other.sy * self.ty + other.ty,
         }
     }
+
+    // the scale when the transform only moves and scales evenly, none when it rotates or stretches
+    pub fn even_scale(self) -> Option<f32> {
+        let even = (self.sx - self.sy).abs() < 0.0001;
+        let straight = self.kx == 0.0 && self.ky == 0.0;
+
+        if !even || !straight || self.sx <= 0.0 {
+            return None;
+        }
+
+        Some(self.sx)
+    }
 }

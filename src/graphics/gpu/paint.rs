@@ -142,10 +142,10 @@ impl Gpu {
                     radius,
                     transform,
                     color,
-                } if even_scale(transform).is_some() => {
+                } if transform.even_scale().is_some() => {
                     self.to_quads(scene, canvas, borrowed);
 
-                    let scale = even_scale(transform).unwrap_or(1.0);
+                    let scale = transform.even_scale().unwrap_or(1.0);
 
                     let rect = device_rect(rect, transform);
 
@@ -158,10 +158,10 @@ impl Gpu {
                     thickness,
                     transform,
                     color,
-                } if even_scale(transform).is_some() => {
+                } if transform.even_scale().is_some() => {
                     self.to_quads(scene, canvas, borrowed);
 
-                    let scale = even_scale(transform).unwrap_or(1.0);
+                    let scale = transform.even_scale().unwrap_or(1.0);
 
                     let rect = device_rect(rect, transform);
 
@@ -190,7 +190,7 @@ impl Gpu {
                     radius,
                     clip_transform,
                     ..
-                } if straight(transform) && even_scale(clip_transform).is_some() => {
+                } if straight(transform) && clip_transform.even_scale().is_some() => {
                     self.to_quads(scene, canvas, borrowed);
 
                     self.note_shown(&image);
@@ -276,18 +276,6 @@ fn separate(commands: &[Command]) -> bool {
     })
 }
 
-// the scale when the transform only moves and scales evenly, none when it rotates or stretches
-fn even_scale(transform: Transform) -> Option<f32> {
-    let even = (transform.sx - transform.sy).abs() < 0.0001;
-    let straight = transform.kx == 0.0 && transform.ky == 0.0;
-
-    if !even || !straight || transform.sx <= 0.0 {
-        return None;
-    }
-
-    Some(transform.sx)
-}
-
 // moves and scales without turning or flipping, each side may scale differently
 fn straight(transform: Transform) -> bool {
     let turned = transform.kx != 0.0 || transform.ky != 0.0;
@@ -306,7 +294,7 @@ fn device_rect(rect: Rect, transform: Transform) -> Rect {
 }
 
 fn device_clip(rect: Rect, radius: f32, transform: Transform) -> Option<Clip> {
-    let scale = even_scale(transform)?;
+    let scale = transform.even_scale()?;
 
     Some(Clip {
         rect: device_rect(rect, transform),
