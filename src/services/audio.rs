@@ -1,6 +1,7 @@
 mod pulse;
 
 use crate::Service;
+use crate::services::worker;
 
 use pulse::Device;
 
@@ -73,23 +74,25 @@ impl Audio {
 
     // anything above 100 is treated as 100
     pub fn set_volume(volume: u8) {
-        pulse::set_volume(Device::Output, volume.min(100));
+        worker::run(move || pulse::set_volume(Device::Output, volume.min(100)));
     }
 
     pub fn toggle_mute() {
-        let output = pulse::read(Device::Output);
-
-        pulse::set_muted(Device::Output, !output.muted);
+        worker::run(|| toggle(Device::Output));
     }
 
     // anything above 100 is treated as 100
     pub fn set_microphone_volume(volume: u8) {
-        pulse::set_volume(Device::Input, volume.min(100));
+        worker::run(move || pulse::set_volume(Device::Input, volume.min(100)));
     }
 
     pub fn toggle_microphone_mute() {
-        let input = pulse::read(Device::Input);
-
-        pulse::set_muted(Device::Input, !input.muted);
+        worker::run(|| toggle(Device::Input));
     }
+}
+
+fn toggle(device: Device) {
+    let level = pulse::read(device);
+
+    pulse::set_muted(device, !level.muted);
 }

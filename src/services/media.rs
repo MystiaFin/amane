@@ -4,6 +4,7 @@ mod player;
 use std::time::Duration;
 
 use crate::Service;
+use crate::services::worker;
 
 pub use player::MediaPlayer;
 
@@ -124,14 +125,16 @@ impl Media {
     }
 }
 
-// the name is copied out, so the lock is let go before waiting on the player
-fn send_to_active(method: &str) {
-    let name = Media::read().active().map(|player| player.name.clone());
+fn send_to_active(method: &'static str) {
+    worker::run(move || {
+        // the name is copied out, so the lock is let go before waiting on the player
+        let name = Media::read().active().map(|player| player.name.clone());
 
-    // with no player open there is nothing to control
-    let Some(name) = name else {
-        return;
-    };
+        // with no player open there is nothing to control
+        let Some(name) = name else {
+            return;
+        };
 
-    mpris::send(&name, method);
+        mpris::send(&name, method);
+    });
 }

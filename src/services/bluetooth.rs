@@ -4,6 +4,7 @@ use std::mem;
 use std::thread;
 use std::time::Duration;
 
+use crate::services::worker;
 use crate::{Argument, Bus, Service, Value};
 
 pub use device::BluetoothDevice;
@@ -97,13 +98,17 @@ impl Bluetooth {
     }
 
     pub fn set_powered(powered: bool) {
-        let Some(adapter) = adapter() else {
-            return;
-        };
+        worker::run(move || {
+            let Some(adapter) = adapter() else {
+                return;
+            };
 
-        Bus::system().set_property(BLUEZ, &adapter, ADAPTER, "Powered", Argument::from(powered));
+            let value = Argument::from(powered);
 
-        Self::write().update();
+            Bus::system().set_property(BLUEZ, &adapter, ADAPTER, "Powered", value);
+
+            Self::write().update();
+        });
     }
 
     // new devices show up in devices() while scanning

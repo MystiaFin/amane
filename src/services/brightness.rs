@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use crate::services::worker;
 use crate::{Argument, Bus, Service};
 
 const BACKLIGHTS: &str = "/sys/class/backlight";
@@ -73,31 +74,35 @@ impl Brightness {
      * it allows that for whoever sits at the machine, with no password
      */
     pub fn set(percent: u8) {
-        let Some(path) = find() else {
-            return;
-        };
-
-        let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
-            return;
-        };
-
-        let highest = read(&path, "max_brightness");
-
-        // never 0, a black screen is hard to undo without seeing it
-        let percent = u64::from(percent.clamp(1, 100));
-
-        let level = (highest * percent / 100) as u32;
-
-        let arguments = [
-            Argument::from("backlight"),
-            Argument::from(name),
-            Argument::from(level),
-        ];
-
-        Bus::system().call(LOGIND, SESSION_PATH, SESSION, "SetBrightness", &arguments);
-
-        Self::write().update();
+        worker::run(move || write_level(percent));
     }
+}
+
+fn write_level(percent: u8) {
+    let Some(path) = find() else {
+        return;
+    };
+
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return;
+    };
+
+    let highest = read(&path, "max_brightness");
+
+    // never 0, a black screen is hard to undo without seeing it
+    let percent = u64::from(percent.clamp(1, 100));
+
+    let level = (highest * percent / 100) as u32;
+
+    let arguments = [
+        Argument::from("backlight"),
+        Argument::from(name),
+        Argument::from(level),
+    ];
+
+    Bus::system().call(LOGIND, SESSION_PATH, SESSION, "SetBrightness", &arguments);
+
+    Brightness::write().update();
 }
 
 // the first backlight the kernel lists, a laptop usually has exactly one

@@ -6,6 +6,7 @@ mod wifi;
 
 use std::thread;
 
+use crate::services::worker;
 use crate::{Service, Value};
 
 pub use access_point::AccessPoint;
@@ -132,44 +133,55 @@ impl Network {
 impl Network {
     // new networks show up in access_points a few seconds later
     pub fn scan() {
-        let Some(device) = wifi::device() else {
-            return;
-        };
+        worker::run(|| {
+            let Some(device) = wifi::device() else {
+                return;
+            };
 
-        wifi::scan(&device);
+            wifi::scan(&device);
+        });
     }
 
-    /*
-     * a saved profile already holds its password, so it is joined as it is;
-     * otherwise networkmanager saves a new one, password included
-     */
     pub fn connect(ssid: &str, password: Option<&str>) {
-        let Some(device) = wifi::device() else {
-            return;
-        };
+        let ssid = String::from(ssid);
+        let password = password.map(String::from);
 
-        if let Some(profile) = profile::find(ssid) {
-            manager::activate(&profile, &device);
-
-            return;
-        }
-
-        let settings = profile::settings(ssid, password);
-
-        manager::add_and_activate(settings, &device);
+        worker::run(move || join(&ssid, password.as_deref()));
     }
 
     pub fn disconnect() {
-        let Some(device) = wifi::device() else {
-            return;
-        };
+        worker::run(|| {
+            let Some(device) = wifi::device() else {
+                return;
+            };
 
-        wifi::disconnect(&device);
+            wifi::disconnect(&device);
+        });
     }
 
     pub fn set_wifi(enabled: bool) {
-        manager::set_wifi(enabled);
+        worker::run(move || manager::set_wifi(enabled));
     }
+}
+
+/*
+ * a saved profile already holds its password, so it is joined as it is;
+ * otherwise networkmanager saves a new one, password included
+ */
+fn join(ssid: &str, password: Option<&str>) {
+    let Some(device) = wifi::device() else {
+        return;
+    };
+
+    if let Some(profile) = profile::find(ssid) {
+        manager::activate(&profile, &device);
+
+        return;
+    }
+
+    let settings = profile::settings(ssid, password);
+
+    manager::add_and_activate(settings, &device);
 }
 
 // the ssid comes as raw bytes, and is almost always utf-8

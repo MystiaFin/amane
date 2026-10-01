@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::niri::{self, Event};
+use crate::services::worker;
 use crate::{Service, Workspace};
 
 pub struct Workspaces {
@@ -46,7 +47,7 @@ impl Workspaces {
     }
 
     pub fn focus(id: u64) {
-        niri::focus_workspace(id);
+        worker::run(move || niri::focus_workspace(id));
     }
 
     fn apply(&mut self, event: Event) {

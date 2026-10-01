@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use crate::Value;
+use crate::services::worker;
 
 use super::mpris;
 
@@ -77,15 +78,21 @@ impl MediaPlayer {
     }
 
     pub fn play_pause(&self) {
-        mpris::send(&self.name, "PlayPause");
+        self.send("PlayPause");
     }
 
     pub fn next(&self) {
-        mpris::send(&self.name, "Next");
+        self.send("Next");
     }
 
     pub fn previous(&self) {
-        mpris::send(&self.name, "Previous");
+        self.send("Previous");
+    }
+
+    fn send(&self, method: &'static str) {
+        let name = self.name.clone();
+
+        worker::run(move || mpris::send(&name, method));
     }
 }
 

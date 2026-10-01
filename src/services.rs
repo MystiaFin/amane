@@ -13,6 +13,7 @@ mod network;
 mod notifications;
 mod palette;
 mod workspace;
+mod worker;
 mod workspaces;
 mod write;
 
