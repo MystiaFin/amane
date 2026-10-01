@@ -123,37 +123,28 @@ impl Quads {
 
         let index = (self.waiting.len() / QUAD_SIZE) as u32;
 
-        self.waiting.extend([
-            rect.x,
-            rect.y,
-            rect.width,
-            rect.height,
-            outer.rect.x,
-            outer.rect.y,
-            outer.rect.width,
-            outer.rect.height,
-            channel(color.r),
-            channel(color.g),
-            channel(color.b),
-            channel(color.a),
-            radius,
-            thickness,
-            outer.radius,
-            kind,
-        ]);
+        // the fields of Quad in quads.wgsl, in the same order
+        let rect_row = [rect.x, rect.y, rect.width, rect.height];
+        let clip_row = [outer.rect.x, outer.rect.y, outer.rect.width, outer.rect.height];
+        let color_row = [channel(color.r), channel(color.g), channel(color.b), channel(color.a)];
+        let shape_row = [radius, thickness, outer.radius, kind];
+        let source_row = source;
+        let inner_clip_row = [inner.rect.x, inner.rect.y, inner.rect.width, inner.rect.height];
+        let inner_radius_row = [inner.radius, 0.0, 0.0, 0.0];
 
-        self.waiting.extend(source);
+        let rows = [
+            rect_row,
+            clip_row,
+            color_row,
+            shape_row,
+            source_row,
+            inner_clip_row,
+            inner_radius_row,
+        ];
 
-        self.waiting.extend([
-            inner.rect.x,
-            inner.rect.y,
-            inner.rect.width,
-            inner.rect.height,
-            inner.radius,
-            0.0,
-            0.0,
-            0.0,
-        ]);
+        for row in rows {
+            self.waiting.extend(row);
+        }
 
         // a quad reading the same image as the one before joins its run
         if let Some(run) = self.runs.last_mut()
