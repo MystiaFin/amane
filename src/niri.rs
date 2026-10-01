@@ -7,3 +7,4 @@ mod workspace;
 pub use action::focus_workspace;
 pub use event::Event;
 pub use events::events;
+pub use workspace::NiriWorkspace;

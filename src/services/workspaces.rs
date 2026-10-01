@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::niri::{self, Event};
+use crate::niri::{self, Event, NiriWorkspace};
 use crate::services::worker;
 use crate::{Service, Workspace};
 
@@ -72,7 +72,26 @@ impl Workspaces {
         self.count_windows();
     }
 
-    fn replace(&mut self, mut list: Vec<Workspace>) {
+    fn replace(&mut self, reported: Vec<NiriWorkspace>) {
+        let mut list = Vec::new();
+
+        for workspace in reported {
+            list.push(Workspace {
+                id: workspace.id,
+                index: workspace.index,
+
+                name: workspace.name,
+                output: workspace.output,
+
+                active: workspace.active,
+                focused: workspace.focused,
+                urgent: workspace.urgent,
+
+                // counted from the window events, after every event
+                windows: 0,
+            });
+        }
+
         // niri sends them in no particular order
         list.sort_by(|first, second| {
             let first_place = (&first.output, first.index);
