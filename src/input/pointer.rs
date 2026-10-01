@@ -5,9 +5,6 @@ mod hover;
 mod motion;
 mod scroll;
 
-use crate::Widget;
-use crate::graphics::Rect;
-
 use super::Target;
 
 #[derive(Default)]
@@ -25,11 +22,8 @@ pub struct Pointer {
 }
 
 impl Pointer {
-    pub fn collect(&mut self, root: &dyn Widget, area: Rect) {
-        let mut targets = Vec::new();
-
-        root.collect_targets(area, &mut targets);
-
+    // the hit areas of a new frame replace the last frame's
+    pub fn set_targets(&mut self, targets: Vec<Target>) {
         self.targets = targets;
     }
 

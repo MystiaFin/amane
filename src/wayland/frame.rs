@@ -3,10 +3,9 @@ use std::time::Instant;
 use smithay_client_toolkit::compositor::FrameCallbackData;
 
 use crate::animation::moving;
-use crate::changes;
-use crate::graphics::{Rect, Renderer};
+use crate::frame;
+use crate::graphics::Renderer;
 use crate::timing::{self, Timing};
-use crate::{LayerWindow, Widget};
 
 use super::surface::Surface;
 
@@ -15,7 +14,10 @@ impl Surface {
     pub fn redraw(&mut self) {
         let started = Instant::now();
 
-        let window = self.run_view();
+        let (window, reads) = frame::run_view(|| self.view.run(), self.width, self.height);
+
+        // a later change to one of these services draws this window again
+        self.reads = reads;
 
         // asked right after the view, so it says whether the view is still animating
         let moving = moving::take();
@@ -35,12 +37,13 @@ impl Surface {
             panic!("failed to draw window: no child set");
         };
 
-        let area = self.root_area(root.as_ref());
+        let frame = frame::build(root.as_ref(), self.width, self.height, self.scale);
 
-        let renderer = self.draw(root.as_ref(), area);
+        // some widgets read services while drawing
+        self.reads.extend(frame.reads);
 
         // the handlers are rebuilt with the view, so each frame replaces the last frame's
-        self.pointer.collect(root.as_ref(), area);
+        self.pointer.set_targets(frame.targets);
 
         self.on_key = window.on_key;
 
@@ -55,7 +58,7 @@ impl Surface {
 
         let drawn = Instant::now();
 
-        let presented = self.present(renderer);
+        let presented = self.present(frame.renderer);
 
         let timing = Timing {
             started,
@@ -93,42 +96,6 @@ impl Surface {
         self.ask_for_frame();
 
         self.role.commit();
-    }
-
-    // runs the user's view, and remembers which services it read
-    fn run_view(&mut self) -> LayerWindow {
-        // anything read before belongs to another window
-        changes::take_read();
-
-        crate::window::set_size(self.width as f32, self.height as f32);
-
-        // the view runs again on every redraw, so it shows the services as they are now
-        let window = self.view.run();
-
-        // a later change to one of these services draws this window again
-        self.reads = changes::take_read();
-
-        window
-    }
-
-    // the root at its own size, from the window's top left corner
-    fn root_area(&self, root: &dyn Widget) -> Rect {
-        let width = root.width().resolve(self.width as f32);
-        let height = root.height().resolve(self.height as f32);
-
-        Rect::new(0.0, 0.0, width, height)
-    }
-
-    // lays the widgets out and collects what they draw
-    fn draw(&mut self, root: &dyn Widget, area: Rect) -> Renderer {
-        let mut renderer = Renderer::new(self.scale);
-
-        root.draw(&mut renderer, area);
-
-        // some widgets read services while drawing
-        self.reads.extend(changes::take_read());
-
-        renderer
     }
 
     // the compositor answers once, when the next frame is due

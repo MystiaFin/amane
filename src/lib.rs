@@ -4,6 +4,7 @@ mod app;
 mod changes;
 mod dbus;
 mod files;
+mod frame;
 mod full;
 mod graphics;
 mod input;

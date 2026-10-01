@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use wayland_client::{Proxy, protocol::wl_output::WlOutput};
 
-use crate::changes;
+use crate::frame;
 use crate::graphics::Gpu;
 use crate::input::Pointer;
 
@@ -12,17 +12,12 @@ impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {
         let surface = self.compositor.create_surface(&self.qh);
 
-        // anything read before belongs to another window
-        changes::take_read();
-
-        // later views can change these, each redraw compares them with the last ones
-        let window = view.run();
-
         /*
-         * a window that starts hidden never gets a configure, so it never
-         * draws; what its first view read is all that can wake it to show
+         * later views can change the settings, each redraw compares them with the
+         * last ones; a window that starts hidden never gets a configure, so it never
+         * draws, and what its first view read is all that can wake it to show
          */
-        let reads = changes::take_read();
+        let (window, reads) = frame::run_view(|| view.run(), 0, 0);
 
         let settings = Settings::from(&window);
 
