@@ -62,6 +62,11 @@ impl Lock {
         REQUESTED.swap(false, Ordering::Relaxed)
     }
 
+    // a new lock starts clean, not with the last one's unlocked or failed state
+    pub(crate) fn reset() {
+        *Self::write() = Self::default();
+    }
+
     /*
      * pam can take seconds to answer, so it runs on its own thread
      * and the screen unlocks only if it accepts the password

@@ -57,8 +57,7 @@ impl WaylandState {
             return;
         }
 
-        // a new lock starts clean, not with the last one's unlocked or failed state
-        *Lock::write() = Lock::default();
+        Lock::reset();
 
         // a compositor without ext-session-lock cannot lock, which must not take the shell down
         let Ok(session_lock) = lock_state.lock(&self.qh) else {
