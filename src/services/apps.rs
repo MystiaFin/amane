@@ -77,7 +77,7 @@ fn scan() -> Vec<DesktopApp> {
                 continue;
             }
 
-            let Some(app) = parse::read(&path, &icons) else {
+            let Some(app) = parse::read(&path, icons) else {
                 continue;
             };
 

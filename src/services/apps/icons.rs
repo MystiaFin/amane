@@ -3,11 +3,22 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::OnceLock;
 
 use super::{data_dirs, walk};
 
+/*
+ * walking the themes takes seconds, so it happens once per run; an icon
+ * installed or a theme switched while the shell runs shows after a restart
+ */
+static INDEX: OnceLock<HashMap<String, PathBuf>> = OnceLock::new();
+
 // every icon name the themes have, with the best file for it
-pub fn index() -> HashMap<String, PathBuf> {
+pub fn index() -> &'static HashMap<String, PathBuf> {
+    INDEX.get_or_init(walk_themes)
+}
+
+fn walk_themes() -> HashMap<String, PathBuf> {
     let mut icons = HashMap::new();
 
     let mut roots = Vec::new();
