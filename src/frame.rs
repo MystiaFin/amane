@@ -2,6 +2,7 @@ use std::any::TypeId;
 use std::collections::HashSet;
 
 use crate::Widget;
+use crate::animation::moving;
 use crate::changes;
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
@@ -13,6 +14,9 @@ pub struct Frame {
 
     // services read while drawing, on top of the ones the view read
     pub reads: HashSet<TypeId>,
+
+    // something the view or a widget drew has not arrived yet, so another frame is needed
+    pub moving: bool,
 }
 
 /*
@@ -20,8 +24,10 @@ pub struct Frame {
  * back with it, so a later change to one of them draws the window again
  */
 pub fn run_view<T>(view: impl FnOnce() -> T, width: u32, height: u32) -> (T, HashSet<TypeId>) {
-    // anything read before belongs to another window
+    // anything read or set moving before belongs to another window
     changes::take_read();
+
+    moving::take();
 
     crate::window::set_size(width as f32, height as f32);
 
@@ -43,6 +49,9 @@ pub fn build(root: &dyn Widget, width: u32, height: u32, scale: f32) -> Frame {
 
     let reads = changes::take_read();
 
+    // read after drawing, since a shader that runs on time sets it while drawing
+    let moving = moving::take();
+
     let mut targets = Vec::new();
 
     root.collect_targets(area, &mut targets);
@@ -51,6 +60,7 @@ pub fn build(root: &dyn Widget, width: u32, height: u32, scale: f32) -> Frame {
         renderer,
         targets,
         reads,
+        moving,
     }
 }
 
@@ -145,5 +155,32 @@ mod tests {
 
         // 80 by 40 inside the padding: centered across, at the bottom down
         assert_eq!(placed[1], Rect::new(40.0, 30.0, 20.0, 20.0));
+    }
+
+    // like a rectangle whose shader reads time
+    struct Ticking;
+
+    impl Widget for Ticking {
+        fn width(&self) -> crate::Size {
+            Parent
+        }
+
+        fn height(&self) -> crate::Size {
+            Parent
+        }
+
+        fn draw(&self, _: &mut Renderer, _: Rect) {
+            moving::set();
+        }
+    }
+
+    #[test]
+    fn sees_motion_started_while_drawing() {
+        let (_, _) = run_view(|| (), 10, 10);
+
+        assert!(build(&Ticking, 10, 10, 1.0).moving);
+
+        // taken by that frame, so the next window starts still
+        assert!(!build(&block(1.0, 1.0), 10, 10, 1.0).moving);
     }
 }

@@ -2,7 +2,6 @@ use std::time::Instant;
 
 use smithay_client_toolkit::compositor::FrameCallbackData;
 
-use crate::animation::moving;
 use crate::frame;
 use crate::graphics::Renderer;
 use crate::timing::{self, Timing};
@@ -18,9 +17,6 @@ impl Surface {
 
         // a later change to one of these services draws this window again
         self.reads = reads;
-
-        // asked right after the view, so it says whether the view is still animating
-        let moving = moving::take();
 
         let viewed = Instant::now();
 
@@ -57,7 +53,7 @@ impl Surface {
          * in the same commit as this frame gets the answer on the next refresh,
          * a hidden window never gets here so it waits until it shows again
          */
-        if moving {
+        if frame.moving {
             self.ask_for_frame();
         }
 
@@ -77,7 +73,7 @@ impl Surface {
         self.last_frame = Some(started);
 
         // a skipped frame commits nothing, so the request goes out on its own
-        if !presented && moving {
+        if !presented && frame.moving {
             self.role.commit();
         }
     }
