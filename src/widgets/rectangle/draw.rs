@@ -1,5 +1,5 @@
 use crate::animation::moving;
-use crate::graphics::{Rect, Renderer, image, svg};
+use crate::graphics::{Rect, Renderer, image};
 use crate::input::Target;
 use crate::widgets::Widget;
 use crate::{Fill, Image, Size};
@@ -95,19 +95,6 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
 }
 
 fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
-    // a vector picture is scaled to its place instead of decoded to pixels
-    if svg::is_svg(&fill.path) {
-        let Some(svg) = svg::load(&fill.path) else {
-            return;
-        };
-
-        let placement = fill.fit.place(area, svg.width(), svg.height());
-
-        renderer.svg(area, radius, svg, placement);
-
-        return;
-    }
-
     // still decoding, or unreadable
     let Some(image) = image::load(&fill.path, fill.thumbnail, fill.blur) else {
         return;

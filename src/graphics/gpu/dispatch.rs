@@ -3,7 +3,6 @@ use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
 
-use super::image::draw_svg;
 use super::{Gpu, gradient, shadow, shape};
 
 impl Gpu {
@@ -62,13 +61,6 @@ impl Gpu {
                 clip_transform,
                 ..
             } => self.draw_image(scene, image, transform, &clip, clip_transform),
-
-            Command::Svg {
-                svg,
-                transform,
-                clip,
-                clip_transform,
-            } => draw_svg(scene, &svg, transform, &clip, clip_transform),
 
             Command::Shadow {
                 rect,

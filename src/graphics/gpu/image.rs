@@ -4,7 +4,6 @@ use vello::Scene;
 use vello::peniko::{Blob, Fill, ImageAlphaType, ImageBrush, ImageData, ImageFormat, ImageQuality};
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::svg::Svg;
 use crate::graphics::{Path, Transform};
 
 use super::Gpu;
@@ -72,19 +71,4 @@ impl Gpu {
 
         converted.clone()
     }
-}
-
-// the picture's own scene laid into the frame's, kept inside the rounded shape
-pub(super) fn draw_svg(
-    scene: &mut Scene,
-    svg: &Svg,
-    transform: Transform,
-    clip: &Path,
-    clip_transform: Transform,
-) {
-    scene.push_clip_layer(Fill::NonZero, affine(clip_transform), &bezier(clip));
-
-    scene.append(&svg.scene, Some(affine(transform)));
-
-    scene.pop_layer();
 }

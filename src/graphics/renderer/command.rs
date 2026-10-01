@@ -1,5 +1,4 @@
 use crate::graphics::image::Bitmap;
-use crate::graphics::svg::Svg;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -65,14 +64,6 @@ pub enum Command {
         clip: Path,
         rect: Rect,
         radius: f32,
-        clip_transform: Transform,
-    },
-
-    // a vector picture, drawn at its transform and only shown inside the clip path
-    Svg {
-        svg: Arc<Svg>,
-        transform: Transform,
-        clip: Path,
         clip_transform: Transform,
     },
 

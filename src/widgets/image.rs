@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::graphics::{image, svg};
+use crate::graphics::image;
 
 use super::fit::Fit;
 
@@ -70,10 +70,6 @@ impl Image {
      */
     pub fn loaded(path: impl AsRef<Path>) -> bool {
         let path = path.as_ref();
-
-        if svg::is_svg(path) {
-            return svg::load(path).is_some();
-        }
 
         image::load(path, None, 0).is_some()
     }

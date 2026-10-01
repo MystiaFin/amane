@@ -1,5 +1,6 @@
 mod shrink;
 mod soften;
+mod svg;
 
 use std::any::TypeId;
 use std::collections::HashMap;
@@ -139,7 +140,11 @@ pub fn read(path: &Path) -> Bitmap {
         return decode_jpeg(&bytes);
     }
 
-    panic!("failed to load image: only png and jpeg are supported");
+    if path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("svg")) {
+        return svg::rasterize(&bytes);
+    }
+
+    panic!("failed to load image: only png, jpeg and svg are supported");
 }
 
 fn decode_png(bytes: &[u8]) -> Bitmap {

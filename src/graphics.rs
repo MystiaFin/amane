@@ -6,7 +6,6 @@ pub mod letter;
 mod gpu;
 mod gradient;
 pub mod image;
-pub mod svg;
 mod outline;
 mod path;
 mod renderer;
