@@ -28,7 +28,7 @@ fn paint(shape: &dyn Shape, renderer: &mut Renderer, area: Rect) {
     let style = shape.style();
 
     // fill and line are faded together, so the line doesn't show the fill through it
-    let mut group = renderer.layer();
+    let mut group = renderer.group();
 
     // shapes start without a fill, and drawing an invisible one would still cost the gpu
     if style.fill != Color::TRANSPARENT {

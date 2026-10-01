@@ -10,7 +10,7 @@ mod flush;
 mod forget;
 mod frame;
 mod image;
-mod layer;
+mod group;
 mod paint;
 mod painted;
 mod pass;

@@ -79,7 +79,7 @@ impl Gpu {
                 blur,
             } => shadow::inner_shadow(scene, &clip, hole, radius, transform, color, blur),
 
-            Command::Layer { commands, opacity } => self.layer(scene, commands, opacity, canvas),
+            Command::Group { commands, opacity } => self.group(scene, commands, opacity, canvas),
 
             Command::Clip {
                 path,

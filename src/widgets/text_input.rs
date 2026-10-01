@@ -159,7 +159,7 @@ impl Widget for TextInput {
         };
 
         // text longer than the input is cut off at its edge
-        let mut inside = renderer.layer();
+        let mut inside = renderer.group();
 
         label.draw(&mut inside, area);
 

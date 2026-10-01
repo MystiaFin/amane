@@ -38,7 +38,7 @@ fn draw_in_place(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect) {
     }
 
     // collected apart, so a mask inside this rectangle cuts no further than its edge
-    let mut group = renderer.layer();
+    let mut group = renderer.group();
 
     paint(rectangle, &mut group, area, radius);
 
@@ -87,7 +87,7 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
         return;
     }
 
-    let mut inside = renderer.layer();
+    let mut inside = renderer.group();
 
     child.draw(&mut inside, child_area);
 

@@ -80,7 +80,7 @@ impl Gpu {
                  * a faded group is drawn on its own canvas and laid down faded as one,
                  * so where its parts overlap they don't show through each other
                  */
-                Command::Layer { commands, opacity } => {
+                Command::Group { commands, opacity } => {
                     self.flush(scene, canvas, borrowed);
 
                     let layer = self.take_canvas(canvas.width(), canvas.height());
@@ -277,7 +277,7 @@ impl Gpu {
 fn needs_own_canvas(commands: &[Command]) -> bool {
     commands.iter().any(|command| match command {
         Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => true,
-        Command::Layer { commands, .. } | Command::Clip { commands, .. } => needs_own_canvas(commands),
+        Command::Group { commands, .. } | Command::Clip { commands, .. } => needs_own_canvas(commands),
         _ => false,
     })
 }

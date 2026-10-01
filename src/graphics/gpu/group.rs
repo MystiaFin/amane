@@ -9,7 +9,7 @@ use super::Gpu;
 
 impl Gpu {
     // the commands are drawn into a group that is then faded as one
-    pub(super) fn layer(
+    pub(super) fn group(
         &mut self,
         scene: &mut Scene,
         commands: Vec<Command>,

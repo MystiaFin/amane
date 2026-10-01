@@ -67,7 +67,7 @@ impl Widget for ScrollArea {
     }
 
     fn draw(&self, renderer: &mut Renderer, area: Rect) {
-        let mut inside = renderer.layer();
+        let mut inside = renderer.group();
 
         self.child.draw(&mut inside, self.child_area(area));
 

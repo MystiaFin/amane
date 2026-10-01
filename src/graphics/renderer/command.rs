@@ -110,7 +110,7 @@ pub enum Command {
     },
 
     // commands drawn on their own, then laid over the rest at an opacity
-    Layer {
+    Group {
         commands: Vec<Command>,
         opacity: f32,
     },
