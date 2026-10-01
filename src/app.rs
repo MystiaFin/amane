@@ -1,4 +1,8 @@
-use crate::{LayerWindow, Monitor, Window, allocator, graphics::font, ipc::Handlers, wayland::WaylandApp};
+use crate::allocator;
+use crate::graphics::font;
+use crate::ipc::Handlers;
+use crate::wayland::WaylandApp;
+use crate::{LayerWindow, Monitor, Window};
 
 #[derive(Default)]
 pub struct App {
