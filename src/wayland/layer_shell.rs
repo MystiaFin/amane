@@ -4,7 +4,7 @@ use smithay_client_toolkit::shell::{
 };
 use wayland_client::{Connection, QueueHandle};
 
-use super::{WaylandState, layer};
+use super::WaylandState;
 
 impl LayerShellHandler for WaylandState {
     fn configure(
@@ -21,21 +21,7 @@ impl LayerShellHandler for WaylandState {
 
         let (width, height) = configure.new_size;
 
-        let width = if width == 0 {
-            layer::pixels(window.settings.width)
-        } else {
-            width
-        };
-        let height = if height == 0 {
-            layer::pixels(window.settings.height)
-        } else {
-            height
-        };
-
-        window.width = width;
-        window.height = height;
-
-        window.redraw();
+        window.resize(width, height);
     }
 
     fn closed(&mut self, _: &Connection, _: &QueueHandle<Self>, layer_surface: &LayerSurface) {

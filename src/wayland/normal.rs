@@ -1,4 +1,5 @@
 use std::mem;
+use std::num::NonZeroU32;
 use std::ptr;
 
 use smithay_client_toolkit::shell::{
@@ -10,7 +11,7 @@ use wayland_client::{Connection, QueueHandle};
 use crate::window::{CLOSING, REQUESTED};
 use crate::{LayerWindow, Window};
 
-use super::{WaylandState, layer, role::Role, settings::Settings, view::View};
+use super::{WaylandState, role::Role, settings::Settings, view::View};
 
 impl WaylandState {
     pub fn open_normal(&mut self, view: fn() -> Window) {
@@ -127,22 +128,12 @@ impl WindowHandler for WaylandState {
             return;
         };
 
-        // none means the compositor leaves the size to the window
+        // none means the compositor leaves the size to the window, like 0 does for layers
         let (width, height) = configure.new_size;
 
-        let width = match width {
-            Some(width) => width.get(),
-            None => layer::pixels(window.settings.width),
-        };
+        let width = width.map_or(0, NonZeroU32::get);
+        let height = height.map_or(0, NonZeroU32::get);
 
-        let height = match height {
-            Some(height) => height.get(),
-            None => layer::pixels(window.settings.height),
-        };
-
-        window.width = width;
-        window.height = height;
-
-        window.redraw();
+        window.resize(width, height);
     }
 }

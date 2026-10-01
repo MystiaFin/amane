@@ -11,7 +11,7 @@ use crate::graphics::Gpu;
 use crate::InputArea;
 use crate::input::{KeyHandler, Pointer};
 
-use super::{WaylandState, role::Role, settings::Settings, view::View};
+use super::{WaylandState, layer, role::Role, settings::Settings, view::View};
 
 // one surface on screen, with everything it needs to draw and take input
 pub struct Window {
@@ -52,4 +52,21 @@ pub struct Window {
     pub compositor: WlCompositor,
 
     pub qh: QueueHandle<WaylandState>,
+}
+
+impl Window {
+    // a size of 0 leaves the choice to the window, which then keeps the size it asked for
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.width = match width {
+            0 => layer::pixels(self.settings.width),
+            width => width,
+        };
+
+        self.height = match height {
+            0 => layer::pixels(self.settings.height),
+            height => height,
+        };
+
+        self.redraw();
+    }
 }

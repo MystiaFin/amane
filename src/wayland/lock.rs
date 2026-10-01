@@ -138,9 +138,6 @@ impl SessionLockHandler for WaylandState {
         // a lock screen always covers its whole monitor
         let (width, height) = configure.new_size;
 
-        window.width = width;
-        window.height = height;
-
-        window.redraw();
+        window.resize(width, height);
     }
 }
