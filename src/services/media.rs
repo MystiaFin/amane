@@ -111,10 +111,10 @@ impl Media {
             return Some(playing);
         }
 
-        if let Some(before) = before {
-            if let Some(kept) = self.players.iter().position(|player| player.name == before) {
-                return Some(kept);
-            }
+        if let Some(before) = before
+            && let Some(kept) = self.players.iter().position(|player| player.name == before)
+        {
+            return Some(kept);
         }
 
         if self.players.is_empty() {
