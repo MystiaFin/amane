@@ -1,3 +1,4 @@
+mod allocator;
 mod animation;
 mod app;
 mod dbus;

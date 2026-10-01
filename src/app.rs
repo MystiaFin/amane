@@ -1,4 +1,4 @@
-use crate::{LayerWindow, Monitor, Window, graphics::font, ipc::Handlers, wayland::WaylandApp};
+use crate::{LayerWindow, Monitor, Window, allocator, graphics::font, ipc::Handlers, wayland::WaylandApp};
 
 #[derive(Default)]
 pub struct App {
@@ -67,6 +67,8 @@ impl App {
         if no_windows && self.per_monitor.is_empty() && self.lock.is_none() {
             panic!("failed to run: no window set");
         }
+
+        allocator::limit();
 
         if let Some(family) = &self.font {
             font::set_default(family);
