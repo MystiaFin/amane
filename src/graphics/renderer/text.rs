@@ -48,7 +48,7 @@ impl Renderer {
     ) {
         let units = pixel_size / f32::from(font.units_per_em());
 
-        let start = device_point(self.transform, area.x, area.y);
+        let start = self.transform.map(area.x, area.y);
 
         let line_x = start.0.round();
         let baseline = (start.1 + f32::from(font.ascender()) * units).round();
@@ -119,13 +119,6 @@ impl Renderer {
             });
         }
     }
-}
-
-fn device_point(transform: Transform, x: f32, y: f32) -> (f32, f32) {
-    (
-        transform.sx * x + transform.kx * y + transform.tx,
-        transform.ky * x + transform.sy * y + transform.ty,
-    )
 }
 
 fn outline(font: &Face, id: GlyphId) -> Option<Path> {
