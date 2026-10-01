@@ -5,25 +5,19 @@ use smithay_client_toolkit::compositor::FrameCallbackData;
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer};
 use crate::services::wake;
+use crate::{LayerWindow, Widget};
 
 use super::timing::{self, Timing};
 use super::window::Window;
 
 impl Window {
+    // one frame: run the view, send its settings, draw it and show it
     pub fn redraw(&mut self) {
         let started = Instant::now();
 
-        // anything read before belongs to another window
-        wake::take_read();
+        let window = self.run_view();
 
-        crate::window::set_size(self.width as f32, self.height as f32);
-
-        // the view runs again on every redraw, so it shows the services as they are now
-        let window = self.view.run();
-
-        // a later change to one of these services draws this window again
-        self.reads = wake::take_read();
-
+        // asked right after the view, so it says whether the view is still animating
         let moving = moving::take();
 
         let viewed = Instant::now();
@@ -32,10 +26,8 @@ impl Window {
 
         self.update_surface(&window);
 
-        let (width, height) = (self.width, self.height);
-
         // 0 until the compositor configures the window, and again while it is hidden
-        if width == 0 || height == 0 {
+        if self.width == 0 || self.height == 0 {
             return;
         }
 
@@ -43,50 +35,27 @@ impl Window {
             panic!("failed to draw window: no child set");
         };
 
-        // the window is measured in logical pixels, the buffer in real ones
-        let buffer_width = width * self.scale as u32;
-        let buffer_height = height * self.scale as u32;
+        let area = self.root_area(root.as_ref());
 
-        let mut renderer = Renderer::new(self.scale);
-
-        let area = Rect::new(
-            0.0,
-            0.0,
-            root.width().resolve(width as f32),
-            root.height().resolve(height as f32),
-        );
-
-        root.draw(&mut renderer, area);
-
-        // some widgets read services while drawing
-        self.reads.extend(wake::take_read());
+        let renderer = self.draw(root.as_ref(), area);
 
         // the handlers are rebuilt with the view, so each frame replaces the last frame's
         self.pointer.collect(root.as_ref(), area);
 
         self.on_key = window.on_key;
 
-        let surface = self.role.wl_surface();
-
-        // the scale goes out with the commit that presenting the frame makes
-        surface.set_buffer_scale(self.scale as i32);
-
         /*
          * an animation that has not arrived yet needs the next frame too; asking
          * in the same commit as this frame gets the answer on the next refresh,
          * a hidden window never gets here so it waits until it shows again
          */
-        if moving && !self.frame_requested {
-            self.frame_requested = true;
-
-            surface.frame(&self.qh, FrameCallbackData(surface.clone()));
+        if moving {
+            self.ask_for_frame();
         }
-
-        let commands = renderer.finish();
 
         let drawn = Instant::now();
 
-        let presented = self.gpu.draw(commands, buffer_width, buffer_height);
+        let presented = self.present(renderer);
 
         let timing = Timing {
             started,
@@ -95,7 +64,7 @@ impl Window {
             presented: Instant::now(),
         };
 
-        timing::log(name, width, height, self.last_frame, &timing);
+        timing::log(name, self.width, self.height, self.last_frame, &timing);
 
         self.last_frame = Some(started);
 
@@ -121,12 +90,69 @@ impl Window {
             return;
         }
 
+        self.ask_for_frame();
+
+        self.role.commit();
+    }
+
+    // runs the user's view, and remembers which services it read
+    fn run_view(&mut self) -> LayerWindow {
+        // anything read before belongs to another window
+        wake::take_read();
+
+        crate::window::set_size(self.width as f32, self.height as f32);
+
+        // the view runs again on every redraw, so it shows the services as they are now
+        let window = self.view.run();
+
+        // a later change to one of these services draws this window again
+        self.reads = wake::take_read();
+
+        window
+    }
+
+    // the root at its own size, from the window's top left corner
+    fn root_area(&self, root: &dyn Widget) -> Rect {
+        let width = root.width().resolve(self.width as f32);
+        let height = root.height().resolve(self.height as f32);
+
+        Rect::new(0.0, 0.0, width, height)
+    }
+
+    // lays the widgets out and collects what they draw
+    fn draw(&mut self, root: &dyn Widget, area: Rect) -> Renderer {
+        let mut renderer = Renderer::new(self.scale);
+
+        root.draw(&mut renderer, area);
+
+        // some widgets read services while drawing
+        self.reads.extend(wake::take_read());
+
+        renderer
+    }
+
+    // the compositor answers once, when the next frame is due
+    fn ask_for_frame(&mut self) {
+        if self.frame_requested {
+            return;
+        }
+
         self.frame_requested = true;
 
         let surface = self.role.wl_surface();
 
         surface.frame(&self.qh, FrameCallbackData(surface.clone()));
+    }
 
-        self.role.commit();
+    // false when the gpu skipped the frame, so nothing was committed
+    fn present(&mut self, renderer: Renderer) -> bool {
+        // the scale goes out with the commit that presenting the frame makes
+        self.role.wl_surface().set_buffer_scale(self.scale as i32);
+
+        // the window is measured in logical pixels, the buffer in real ones
+        let buffer_width = self.width * self.scale as u32;
+        let buffer_height = self.height * self.scale as u32;
+
+        self.gpu.draw(renderer.finish(), buffer_width, buffer_height)
     }
 }
