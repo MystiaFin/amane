@@ -1,5 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
+use std::thread;
+use std::time::Duration;
 
 use libpulse_binding::callbacks::ListResult;
 use libpulse_binding::context::subscribe::InterestMaskSet;
@@ -42,13 +44,36 @@ struct Levels {
     muted: bool,
 }
 
+// how long to wait before trying the sound server again while it is down
+const RETRY: Duration = Duration::from_secs(5);
+
 thread_local! {
     // pulse objects can't move between threads, so each thread opens its own
-    static CONNECTION: RefCell<Connection> = RefCell::new(Connection::open());
+    static CONNECTION: RefCell<Option<Connection>> = const { RefCell::new(None) };
+}
+
+/*
+ * runs work on this thread's connection, opened again when the sound server
+ * went away, like when it restarts; with no sound server work gets the default
+ */
+fn with_connection<T: Default>(work: impl FnOnce(&mut Connection) -> T) -> T {
+    CONNECTION.with_borrow_mut(|slot| {
+        let alive = slot.as_ref().is_some_and(Connection::ready);
+
+        if !alive {
+            *slot = Connection::open();
+        }
+
+        let Some(connection) = slot else {
+            return T::default();
+        };
+
+        work(connection)
+    })
 }
 
 pub fn read(device: Device) -> Level {
-    CONNECTION.with_borrow_mut(|connection| {
+    with_connection(|connection| {
         let Some(levels) = connection.levels(device) else {
             return Level::default();
         };
@@ -61,7 +86,7 @@ pub fn read(device: Device) -> Level {
 }
 
 pub fn set_volume(device: Device, volume: u8) {
-    CONNECTION.with_borrow_mut(|connection| {
+    with_connection(|connection| {
         let Some(levels) = connection.levels(device) else {
             return;
         };
@@ -84,7 +109,7 @@ pub fn set_volume(device: Device, volume: u8) {
 }
 
 pub fn set_muted(device: Device, muted: bool) {
-    CONNECTION.with_borrow_mut(|connection| {
+    with_connection(|connection| {
         let mut introspect = connection.context.introspect();
 
         let operation = match device {
@@ -102,8 +127,18 @@ pub fn set_muted(device: Device, muted: bool) {
  * connection, so changed can still use read()
  */
 pub fn watch(mut changed: impl FnMut()) {
-    let mut connection = Connection::open();
+    loop {
+        if let Some(connection) = Connection::open() {
+            follow(connection, &mut changed);
+        }
 
+        // the sound server is down or restarting, so it is tried again after a pause
+        thread::sleep(RETRY);
+    }
+}
+
+// returns once the connection breaks
+fn follow(mut connection: Connection, changed: &mut impl FnMut()) {
     let dirty = Rc::new(Cell::new(false));
     let marked = Rc::clone(&dirty);
 
@@ -119,9 +154,10 @@ pub fn watch(mut changed: impl FnMut()) {
 
     connection.context.subscribe(interests, |_| {});
 
-    loop {
-        connection.iterate();
+    // a new connection may come after a restart that changed the levels
+    changed();
 
+    while connection.iterate() {
         if dirty.replace(false) {
             changed();
         }
@@ -134,23 +170,26 @@ struct Connection {
 }
 
 impl Connection {
-    fn open() -> Self {
-        let mainloop = Mainloop::new().expect("failed to create pulse mainloop");
+    // none when the sound server can't be reached
+    fn open() -> Option<Self> {
+        let mainloop = Mainloop::new()?;
 
-        let mut context = Context::new(&mainloop, "amane").expect("failed to create pulse context");
+        let mut context = Context::new(&mainloop, "amane")?;
 
         context
             .connect(None, FlagSet::NOFLAGS, None)
-            .expect("failed to connect to pulse");
+            .ok()?;
 
         let mut connection = Self { mainloop, context };
 
         loop {
-            connection.iterate();
+            if !connection.iterate() {
+                return None;
+            }
 
             match connection.context.get_state() {
-                State::Ready => return connection,
-                State::Failed | State::Terminated => panic!("failed to connect to pulse"),
+                State::Ready => return Some(connection),
+                State::Failed | State::Terminated => return None,
                 _ => {}
             }
         }
@@ -202,14 +241,21 @@ impl Connection {
     // blocks until pulse has answered
     fn wait<F: ?Sized>(&mut self, operation: Operation<F>) {
         while operation.get_state() == operation::State::Running {
-            self.iterate();
+            if !self.iterate() {
+                return;
+            }
         }
     }
 
-    fn iterate(&mut self) {
-        let IterateResult::Success(_) = self.mainloop.iterate(true) else {
-            panic!("failed to run pulse mainloop");
-        };
+    fn ready(&self) -> bool {
+        self.context.get_state() == State::Ready
+    }
+
+    // false once the connection to the sound server is broken
+    fn iterate(&mut self) -> bool {
+        let result = self.mainloop.iterate(true);
+
+        matches!(result, IterateResult::Success(_))
     }
 }
 
