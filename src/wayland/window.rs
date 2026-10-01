@@ -58,12 +58,12 @@ impl Window {
     // a size of 0 leaves the choice to the window, which then keeps the size it asked for
     pub fn resize(&mut self, width: u32, height: u32) {
         self.width = match width {
-            0 => layer::pixels(self.settings.width),
+            0 => layer::to_pixels(self.settings.width),
             width => width,
         };
 
         self.height = match height {
-            0 => layer::pixels(self.settings.height),
+            0 => layer::to_pixels(self.settings.height),
             height => height,
         };
 

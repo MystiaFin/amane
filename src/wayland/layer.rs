@@ -22,7 +22,7 @@ pub fn create(
     let layer_surface = layer_shell.create_layer_surface(
         qh,
         surface,
-        layer(settings.layer),
+        to_layer(settings.layer),
         Some(settings.namespace),
         output,
     );
@@ -39,30 +39,30 @@ pub fn create(
 
 // the requests only take effect with the next commit
 pub fn apply(layer_surface: &LayerSurface, settings: &Settings) {
-    layer_surface.set_layer(layer(settings.layer));
+    layer_surface.set_layer(to_layer(settings.layer));
 
-    layer_surface.set_size(pixels(settings.width), pixels(settings.height));
+    layer_surface.set_size(to_pixels(settings.width), to_pixels(settings.height));
 
-    layer_surface.set_anchor(anchor(settings));
+    layer_surface.set_anchor(to_anchor(settings));
 
     let margin = settings.margin;
 
     layer_surface.set_margin(margin.top, margin.right, margin.bottom, margin.left);
 
-    layer_surface.set_keyboard_interactivity(keyboard(settings.keyboard));
+    layer_surface.set_keyboard_interactivity(to_interactivity(settings.keyboard));
 
-    layer_surface.set_exclusive_zone(zone(settings));
+    layer_surface.set_exclusive_zone(to_exclusive_zone(settings));
 }
 
 // 0 tells the compositor to stretch between the anchored edges
-pub fn pixels(size: WindowSize) -> u32 {
+pub fn to_pixels(size: WindowSize) -> u32 {
     match size {
         WindowSize::Full => 0,
         WindowSize::Fixed(pixels) => pixels.round() as u32,
     }
 }
 
-fn anchor(settings: &Settings) -> Anchor {
+fn to_anchor(settings: &Settings) -> Anchor {
     let mut anchor = Anchor::empty();
 
     match settings.vertical {
@@ -89,7 +89,7 @@ fn anchor(settings: &Settings) -> Anchor {
     anchor
 }
 
-fn layer(layer: Layer) -> wlr_layer::Layer {
+fn to_layer(layer: Layer) -> wlr_layer::Layer {
     match layer {
         Layer::Background => wlr_layer::Layer::Background,
         Layer::Bottom => wlr_layer::Layer::Bottom,
@@ -98,7 +98,7 @@ fn layer(layer: Layer) -> wlr_layer::Layer {
     }
 }
 
-fn keyboard(keyboard: Keyboard) -> KeyboardInteractivity {
+fn to_interactivity(keyboard: Keyboard) -> KeyboardInteractivity {
     match keyboard {
         Keyboard::None => KeyboardInteractivity::None,
         Keyboard::Exclusive => KeyboardInteractivity::Exclusive,
@@ -106,22 +106,22 @@ fn keyboard(keyboard: Keyboard) -> KeyboardInteractivity {
     }
 }
 
-fn zone(settings: &Settings) -> i32 {
+fn to_exclusive_zone(settings: &Settings) -> i32 {
     match settings.zone {
-        Zone::Reserve => reserve(settings),
+        Zone::Reserve => measure_thickness(settings),
         Zone::Respect => 0,
         Zone::Ignore => -1,
     }
 }
 
 // a bar on the left or right edge is as thick as its width, any other bar as its height
-fn reserve(settings: &Settings) -> i32 {
+fn measure_thickness(settings: &Settings) -> i32 {
     let size = match (settings.horizontal, settings.width) {
         (Horizontal::Left | Horizontal::Right, WindowSize::Fixed(_)) => settings.width,
         _ => settings.height,
     };
 
-    let reserved = pixels(size);
+    let reserved = to_pixels(size);
 
     i32::try_from(reserved).expect("failed to convert reserved space")
 }
