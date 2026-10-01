@@ -1,6 +1,5 @@
 use crate::graphics::{Rect, Renderer};
-use crate::widgets::Widget;
-use crate::{Color, Shape, Size};
+use crate::{Color, Shape, Size, Widget};
 
 use super::Canvas;
 

@@ -1,8 +1,7 @@
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer, image};
 use crate::input::Target;
-use crate::widgets::Widget;
-use crate::{Fill, Image, Size};
+use crate::{Fill, Image, Size, Widget};
 
 use super::{Rectangle, child, input, shadow, time, transform};
 

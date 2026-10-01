@@ -1,5 +1,4 @@
-use crate::Size;
-use crate::widgets::Widget;
+use crate::{Size, Widget};
 
 use super::Direction;
 

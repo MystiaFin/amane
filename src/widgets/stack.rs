@@ -1,7 +1,6 @@
-use crate::Size;
 use crate::graphics::{Rect, Renderer};
 use crate::input::Target;
-use crate::widgets::Widget;
+use crate::{Size, Widget};
 
 use super::Direction;
 use super::layout::measure;

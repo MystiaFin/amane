@@ -1,5 +1,5 @@
 use crate::graphics::Rect;
-use crate::widgets::Widget;
+use crate::Widget;
 
 use super::Rectangle;
 
