@@ -2,8 +2,8 @@ use std::cell::Cell;
 use std::rc::Rc;
 use std::sync::Mutex;
 
+use crate::changes;
 use crate::input::KeyHandler;
-use crate::services::wake;
 use crate::{Key, Widget};
 
 // a regular desktop window with a title bar, like a settings app, next to the layer windows
@@ -90,7 +90,7 @@ pub fn open_window(view: fn() -> Window) {
         .expect("failed to lock requested windows")
         .push(view);
 
-    wake::wake();
+    changes::wake();
 }
 
 // windows asked to close from handlers, closed by the event loop when it wakes
@@ -103,7 +103,7 @@ pub fn close_window(view: fn() -> Window) {
         .expect("failed to lock closing windows")
         .push(view);
 
-    wake::wake();
+    changes::wake();
 }
 
 thread_local! {

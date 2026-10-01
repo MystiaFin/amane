@@ -2,9 +2,8 @@ use std::any::{self, TypeId};
 use std::ops::{Deref, DerefMut};
 use std::sync::RwLockWriteGuard;
 
+use crate::changes;
 use crate::wayland::timing;
-
-use super::wake;
 
 pub struct Write<S: 'static> {
     pub(crate) guard: RwLockWriteGuard<'static, S>,
@@ -46,6 +45,6 @@ impl<S: 'static> Drop for Write<S> {
             eprintln!("change {}", any::type_name::<S>());
         }
 
-        wake::changed(TypeId::of::<S>());
+        changes::changed(TypeId::of::<S>());
     }
 }

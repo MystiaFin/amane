@@ -16,7 +16,7 @@ use zune_jpeg::zune_core::bytestream::ZCursor;
 use zune_jpeg::zune_core::colorspace::ColorSpace;
 use zune_jpeg::zune_core::options::DecoderOptions;
 
-use crate::services::wake;
+use crate::changes;
 
 const PNG_SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
@@ -75,7 +75,7 @@ pub fn load(path: &Path, cover: Option<(u32, u32)>, blur: u32) -> Option<Arc<Bit
 
     if let Some(image) = loaded.get(&key) {
         if image.is_none() {
-            wake::note_read(TypeId::of::<Decoded>());
+            changes::note_read(TypeId::of::<Decoded>());
         }
 
         return image.clone();
@@ -85,7 +85,7 @@ pub fn load(path: &Path, cover: Option<(u32, u32)>, blur: u32) -> Option<Arc<Bit
 
     thread::spawn(move || decode(key));
 
-    wake::note_read(TypeId::of::<Decoded>());
+    changes::note_read(TypeId::of::<Decoded>());
 
     None
 }
@@ -112,7 +112,7 @@ fn decode(key: Key) {
         .expect("failed to lock loaded images")
         .insert(key, Some(Arc::new(image)));
 
-    wake::changed(TypeId::of::<Decoded>());
+    changes::changed(TypeId::of::<Decoded>());
 }
 
 /*

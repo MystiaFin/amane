@@ -1,5 +1,4 @@
 pub mod store;
-pub mod wake;
 mod apps;
 mod audio;
 mod battery;
@@ -21,6 +20,8 @@ use std::any::TypeId;
 use std::sync::RwLockReadGuard;
 use std::thread;
 use std::time::Duration;
+
+use crate::changes;
 
 pub use apps::{Apps, DesktopApp};
 pub use audio::Audio;
@@ -71,7 +72,7 @@ pub trait Service: Send + Sync + Sized + 'static {
 
     fn read() -> RwLockReadGuard<'static, Self> {
         // remembered, so a later change redraws only the windows that read it
-        wake::note_read(TypeId::of::<Self>());
+        changes::note_read(TypeId::of::<Self>());
 
         store::find::<Self>()
             .read()

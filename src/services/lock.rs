@@ -5,8 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 use crate::Service;
-
-use super::wake;
+use crate::changes;
 
 // set by Lock::start, taken by the event loop when it wakes
 static REQUESTED: AtomicBool = AtomicBool::new(false);
@@ -56,7 +55,7 @@ impl Lock {
     pub fn start() {
         REQUESTED.store(true, Ordering::Relaxed);
 
-        wake::wake();
+        changes::wake();
     }
 
     pub(crate) fn take_request() -> bool {

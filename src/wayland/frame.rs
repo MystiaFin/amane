@@ -3,12 +3,12 @@ use std::time::Instant;
 use smithay_client_toolkit::compositor::FrameCallbackData;
 
 use crate::animation::moving;
+use crate::changes;
 use crate::graphics::{Rect, Renderer};
-use crate::services::wake;
 use crate::{LayerWindow, Widget};
 
-use super::timing::{self, Timing};
 use super::surface::Surface;
+use super::timing::{self, Timing};
 
 impl Surface {
     // one frame: run the view, send its settings, draw it and show it
@@ -98,7 +98,7 @@ impl Surface {
     // runs the user's view, and remembers which services it read
     fn run_view(&mut self) -> LayerWindow {
         // anything read before belongs to another window
-        wake::take_read();
+        changes::take_read();
 
         crate::window::set_size(self.width as f32, self.height as f32);
 
@@ -106,7 +106,7 @@ impl Surface {
         let window = self.view.run();
 
         // a later change to one of these services draws this window again
-        self.reads = wake::take_read();
+        self.reads = changes::take_read();
 
         window
     }
@@ -126,7 +126,7 @@ impl Surface {
         root.draw(&mut renderer, area);
 
         // some widgets read services while drawing
-        self.reads.extend(wake::take_read());
+        self.reads.extend(changes::take_read());
 
         renderer
     }

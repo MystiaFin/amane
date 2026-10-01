@@ -1,6 +1,6 @@
 use wayland_client::protocol::wl_surface::WlSurface;
 
-use crate::services::wake;
+use crate::changes;
 
 use super::{WaylandState, surface::Surface};
 
@@ -32,7 +32,7 @@ impl WaylandState {
 
     // only windows that read a service that changed draw again
     pub fn request_changed_frames(&mut self) {
-        let Some(changed) = wake::take_changes() else {
+        let Some(changed) = changes::take_changes() else {
             self.request_frames();
 
             return;

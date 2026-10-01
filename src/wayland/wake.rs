@@ -1,6 +1,6 @@
 use smithay_client_toolkit::reexports::calloop::{LoopHandle, ping::make_ping};
 
-use crate::services::wake;
+use crate::changes;
 
 use super::WaylandState;
 
@@ -21,5 +21,5 @@ pub fn insert(handle: &LoopHandle<'static, WaylandState>) {
         })
         .expect("failed to insert wake ping");
 
-    wake::set(move || ping.ping());
+    changes::set(move || ping.ping());
 }

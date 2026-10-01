@@ -1,6 +1,7 @@
 mod allocator;
 mod animation;
 mod app;
+mod changes;
 mod dbus;
 mod files;
 mod full;
