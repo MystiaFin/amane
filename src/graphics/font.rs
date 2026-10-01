@@ -99,6 +99,35 @@ pub fn with_letter<'a>(font: &'a Face<'a>, letter: char) -> (&'a Face<'a>, Glyph
     (fallback, id)
 }
 
+// one letter at a text size: the face that has it, its glyph, and how it measures in pixels
+pub struct MeasuredLetter<'a> {
+    pub face: &'a Face<'a>,
+    pub id: GlyphId,
+
+    // font units to pixels; a fallback font can measure in other units than the text's own
+    pub units: f32,
+
+    // how far the letter moves the pen
+    pub advance: f32,
+}
+
+pub fn measure_letter<'a>(font: &'a Face<'a>, letter: char, size: f32) -> MeasuredLetter<'a> {
+    let (face, id) = with_letter(font, letter);
+
+    let advance = face
+        .glyph_hor_advance(id)
+        .expect("failed to read letter advance");
+
+    let units = size / f32::from(face.units_per_em());
+
+    MeasuredLetter {
+        face,
+        id,
+        units,
+        advance: f32::from(advance) * units,
+    }
+}
+
 fn fallback(letter: char) -> Option<&'static Face<'static>> {
     let mut fallbacks = FALLBACKS.lock().expect("failed to lock fallback fonts");
 

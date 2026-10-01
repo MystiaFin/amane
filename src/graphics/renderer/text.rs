@@ -56,22 +56,15 @@ impl Renderer {
         let mut pen = 0.0;
 
         for letter in content.chars() {
-            let (face, id) = font::with_letter(font, letter);
-
-            let advance = face
-                .glyph_hor_advance(id)
-                .expect("failed to read letter advance");
-
-            // a fallback font can measure in other units than the text's own
-            let face_units = pixel_size / f32::from(face.units_per_em());
+            let measured = font::measure_letter(font, letter, pixel_size);
 
             let letter_x = line_x + f32::round(pen);
 
-            pen += f32::from(advance) * face_units;
+            pen += measured.advance;
 
             self.commands.push(Command::Glyph {
-                face,
-                id: id.0,
+                face: measured.face,
+                id: measured.id.0,
                 size: pixel_size,
                 color,
                 x: letter_x,
@@ -89,23 +82,18 @@ impl Renderer {
         let mut pen_x = area.x;
 
         for letter in content.chars() {
-            let (face, id) = font::with_letter(font, letter);
-
-            let advance = face
-                .glyph_hor_advance(id)
-                .expect("failed to read letter advance");
-
-            // a fallback font can measure in other units than the text's own
-            let face_units = size / f32::from(face.units_per_em());
+            let measured = font::measure_letter(font, letter, size);
 
             let letter_x = pen_x;
 
-            pen_x += f32::from(advance) * face_units;
+            pen_x += measured.advance;
 
             // a space has no outline but still moves the pen
-            let Some(path) = outline(face, id) else {
+            let Some(path) = outline(measured.face, measured.id) else {
                 continue;
             };
+
+            let face_units = measured.units;
 
             // fonts point y upward, the screen points it downward
             let letter_transform =

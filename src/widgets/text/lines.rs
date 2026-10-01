@@ -14,16 +14,7 @@ pub fn measure(content: &str, font: &Face, size: f32) -> f32 {
     let mut total = 0.0;
 
     for letter in content.chars() {
-        let (face, id) = font::with_letter(font, letter);
-
-        let advance = face
-            .glyph_hor_advance(id)
-            .expect("failed to read letter advance");
-
-        // a fallback font can measure in other units than the text's own
-        let face_units = size / f32::from(face.units_per_em());
-
-        total += f32::from(advance) * face_units;
+        total += font::measure_letter(font, letter, size).advance;
     }
 
     total
@@ -145,22 +136,15 @@ pub fn ink(content: &str, font: &Face, size: f32) -> (f32, f32) {
     let mut right = f32::MIN;
 
     for letter in content.chars() {
-        let (face, id) = font::with_letter(font, letter);
-
-        // a fallback font can measure in other units than the text's own
-        let units = size / f32::from(face.units_per_em());
+        let measured = font::measure_letter(font, letter, size);
 
         // a space has no ink, only an advance
-        if let Some(bounds) = face.glyph_bounding_box(id) {
-            left = left.min(pen + f32::from(bounds.x_min) * units);
-            right = right.max(pen + f32::from(bounds.x_max) * units);
+        if let Some(bounds) = measured.face.glyph_bounding_box(measured.id) {
+            left = left.min(pen + f32::from(bounds.x_min) * measured.units);
+            right = right.max(pen + f32::from(bounds.x_max) * measured.units);
         }
 
-        let advance = face
-            .glyph_hor_advance(id)
-            .expect("failed to read letter advance");
-
-        pen += f32::from(advance) * units;
+        pen += measured.advance;
     }
 
     // nothing but spaces is as wide as its advance
