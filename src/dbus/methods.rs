@@ -4,10 +4,11 @@ use zbus::message::Type;
 
 use super::{Bus, Method, convert};
 
+// empty when the bus could not be reached
 pub struct Methods {
-    connection: &'static Connection,
+    connection: Option<&'static Connection>,
 
-    messages: MessageIterator,
+    messages: Option<MessageIterator>,
 }
 
 impl Bus {
@@ -25,8 +26,9 @@ impl Bus {
             .expect("failed to watch method calls: bad interface name")
             .build();
 
-        let messages = MessageIterator::for_match_rule(rule, self.connection, None)
-            .expect("failed to watch method calls");
+        let messages = self
+            .connection
+            .and_then(|connection| MessageIterator::for_match_rule(rule, connection, None).ok());
 
         Methods {
             connection: self.connection,
@@ -40,15 +42,20 @@ impl Iterator for Methods {
 
     fn next(&mut self) -> Option<Method> {
         loop {
+            // nothing to wait on without a bus
+            let (Some(connection), Some(messages)) = (self.connection, self.messages.as_mut()) else {
+                return None;
+            };
+
             // a message that fails to read is skipped, the next one may be fine
-            let Ok(message) = self.messages.next()? else {
+            let Ok(message) = messages.next()? else {
                 continue;
             };
 
             let name = message.header().member().map(|name| name.to_string());
 
             let method = Method {
-                connection: self.connection,
+                connection,
 
                 name: name.unwrap_or_default(),
                 arguments: convert::arguments(&message),

@@ -13,13 +13,17 @@ impl Bus {
         method: &str,
         arguments: &[Argument],
     ) -> Value {
+        let Some(connection) = self.connection else {
+            return Value::Nothing;
+        };
+
         let reply = if arguments.is_empty() {
-            self.connection
+            connection
                 .call_method(Some(destination), path, Some(interface), method, &())
         } else {
             let body = convert::body(arguments);
 
-            self.connection
+            connection
                 .call_method(Some(destination), path, Some(interface), method, &body)
         };
 

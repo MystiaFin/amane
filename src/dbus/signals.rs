@@ -6,8 +6,9 @@ use crate::Signal;
 
 use super::{Bus, convert};
 
+// empty when the bus could not be reached
 pub struct Signals {
-    messages: MessageIterator,
+    messages: Option<MessageIterator>,
 }
 
 impl Bus {
@@ -21,8 +22,9 @@ impl Bus {
             .expect("failed to watch signals: bad signal name")
             .build();
 
-        let messages = MessageIterator::for_match_rule(rule, self.connection, None)
-            .expect("failed to watch signals");
+        let messages = self
+            .connection
+            .and_then(|connection| MessageIterator::for_match_rule(rule, connection, None).ok());
 
         Signals { messages }
     }
@@ -34,7 +36,7 @@ impl Iterator for Signals {
     fn next(&mut self) -> Option<Signal> {
         loop {
             // a message that fails to read is skipped, the next one may be fine
-            let Ok(message) = self.messages.next()? else {
+            let Ok(message) = self.messages.as_mut()?.next()? else {
                 continue;
             };
 
