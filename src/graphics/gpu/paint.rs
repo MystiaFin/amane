@@ -41,178 +41,176 @@ impl Gpu {
         borrowed: &mut Vec<ImageData>,
     ) {
         for command in commands {
-            match command {
-                Command::Blur {
-                    path,
-                    transform,
-                    amount,
-                } => {
+            match route(&command) {
+                Route::Canvas => {
                     self.flush(scene, canvas, borrowed);
 
-                    let blurred = self.blur(canvas, scene, &path, transform, amount);
-
-                    borrowed.extend(blurred);
+                    self.change_canvas(command, canvas, scene, borrowed);
                 }
 
-                Command::Cut {
-                    path,
-                    transform,
-                    strength,
-                } => {
+                Route::OwnCanvas => {
                     self.flush(scene, canvas, borrowed);
 
-                    self.cut(canvas, &path, transform, strength);
+                    self.draw_on_own_canvas(command, canvas, clips);
                 }
 
-                Command::Shader {
-                    shader,
-                    values,
-                    rect,
-                    path,
-                    transform,
-                } => {
-                    self.flush(scene, canvas, borrowed);
-
-                    self.shade(canvas, &shader, &values, rect, path.as_ref(), transform);
-                }
-
-                /*
-                 * a faded group is drawn on its own canvas and laid down faded as one,
-                 * so where its parts overlap they don't show through each other
-                 */
-                Command::Group { commands, opacity } => {
-                    self.flush(scene, canvas, borrowed);
-
-                    let layer = self.take_canvas(canvas.width(), canvas.height());
-
-                    self.run_clipped(commands, &layer, clips);
-
-                    self.lay(&layer, canvas, opacity, false);
-
-                    self.give_back(layer);
-                }
-
-                // a blur inside a clip has to see only the clip's own drawing, so it gets a canvas
-                Command::Clip {
-                    path,
-                    transform,
-                    commands,
-                    ..
-                } if needs_own_canvas(&commands) => {
-                    self.flush(scene, canvas, borrowed);
-
-                    let layer = self.take_canvas(canvas.width(), canvas.height());
-
-                    self.run_clipped(commands, &layer, clips);
-
-                    self.trim(&layer, &path, transform);
-
-                    self.lay(&layer, canvas, 1.0, false);
-
-                    self.give_back(layer);
-                }
-
-                Command::Clip {
-                    path,
-                    rect,
-                    radius,
-                    transform,
-                    commands,
-                } => {
-                    let Some(inner) = device_clip(rect, radius, transform) else {
-                        // a rotated clip is left to vello, with everything inside it
-                        let command = Command::Clip {
-                            path,
-                            rect,
-                            radius,
-                            transform,
-                            commands,
-                        };
-
-                        self.add_to_vello(scene, command, canvas, clips);
-
-                        continue;
+                Route::QuadClip(clip) => {
+                    let Command::Clip { commands, .. } = command else {
+                        unreachable!("only clips are routed as quad clips");
                     };
 
-                    self.gather(commands, canvas, clips.within(inner), scene, borrowed);
+                    self.gather(commands, canvas, clips.within(clip), scene, borrowed);
                 }
 
-                Command::Rectangle {
-                    rect,
-                    radius,
-                    transform,
-                    color,
-                } if transform.even_scale().is_some() => {
+                Route::Quads => {
                     self.paint_pending_vello(scene, canvas, borrowed);
 
-                    let scale = transform.even_scale().unwrap_or(1.0);
-
-                    let rect = device_rect(rect, transform);
-
-                    self.quads.rectangle(rect, radius * scale, color, clips);
+                    self.add_to_quads(command, clips);
                 }
 
-                Command::Border {
-                    rect,
-                    radius,
-                    thickness,
-                    transform,
-                    color,
-                } if transform.even_scale().is_some() => {
-                    self.paint_pending_vello(scene, canvas, borrowed);
-
-                    let scale = transform.even_scale().unwrap_or(1.0);
-
-                    let rect = device_rect(rect, transform);
-
-                    self.quads
-                        .border(rect, radius * scale, thickness * scale, color, clips);
-                }
-
-                Command::Glyph {
-                    face,
-                    id,
-                    size,
-                    color,
-                    x,
-                    y,
-                } => {
-                    self.paint_pending_vello(scene, canvas, borrowed);
-
-                    self.quads
-                        .letter(&self.queue, face, id, size, color, x, y, clips);
-                }
-
-                Command::Image {
-                    image,
-                    transform,
-                    rect,
-                    radius,
-                    clip_transform,
-                    ..
-                } if straight(transform) && clip_transform.even_scale().is_some() => {
-                    self.paint_pending_vello(scene, canvas, borrowed);
-
-                    self.note_shown(&image);
-
-                    // the image's own pixels, stretched by its transform onto the canvas
-                    let size = Rect::new(0.0, 0.0, image.width() as f32, image.height() as f32);
-
-                    let placement = device_rect(size, transform);
-
-                    let shape = device_clip(rect, radius, clip_transform);
-
-                    let clips = match shape {
-                        Some(shape) => clips.within(shape),
-                        None => clips,
-                    };
-
-                    self.quads
-                        .picture(&self.device, &self.queue, &image, placement, clips);
-                }
-
-                command => self.add_to_vello(scene, command, canvas, clips),
+                Route::Vello => self.add_to_vello(scene, command, canvas, clips),
             }
+        }
+    }
+
+    // runs a blur, cut or shader on what the canvas holds so far
+    fn change_canvas(
+        &mut self,
+        command: Command,
+        canvas: &Texture,
+        scene: &mut Scene,
+        borrowed: &mut Vec<ImageData>,
+    ) {
+        match command {
+            Command::Blur {
+                path,
+                transform,
+                amount,
+            } => {
+                let blurred = self.blur(canvas, scene, &path, transform, amount);
+
+                borrowed.extend(blurred);
+            }
+
+            Command::Cut {
+                path,
+                transform,
+                strength,
+            } => self.cut(canvas, &path, transform, strength),
+
+            Command::Shader {
+                shader,
+                values,
+                rect,
+                path,
+                transform,
+            } => self.shade(canvas, &shader, &values, rect, path.as_ref(), transform),
+
+            _ => unreachable!("only blurs, cuts and shaders change the canvas"),
+        }
+    }
+
+    /*
+     * a faded group is drawn on its own canvas and laid down faded as one, so
+     * where its parts overlap they don't show through each other; a clip holding
+     * a blur, cut or shader is drawn apart too, so those only see the clip's drawing
+     */
+    fn draw_on_own_canvas(&mut self, command: Command, canvas: &Texture, clips: Clips) {
+        let (commands, opacity, outline) = match command {
+            Command::Group { commands, opacity } => (commands, opacity, None),
+
+            Command::Clip {
+                path,
+                transform,
+                commands,
+                ..
+            } => (commands, 1.0, Some((path, transform))),
+
+            _ => unreachable!("only groups and clips are drawn on their own canvas"),
+        };
+
+        let own = self.take_canvas(canvas.width(), canvas.height());
+
+        self.run_clipped(commands, &own, clips);
+
+        if let Some((path, transform)) = outline {
+            self.trim(&own, &path, transform);
+        }
+
+        self.lay(&own, canvas, opacity, false);
+
+        self.give_back(own);
+    }
+
+    // route only sends commands here that move and scale without turning
+    fn add_to_quads(&mut self, command: Command, clips: Clips) {
+        match command {
+            Command::Rectangle {
+                rect,
+                radius,
+                transform,
+                color,
+            } => {
+                let scale = transform.even_scale().unwrap_or(1.0);
+
+                let rect = device_rect(rect, transform);
+
+                self.quads.rectangle(rect, radius * scale, color, clips);
+            }
+
+            Command::Border {
+                rect,
+                radius,
+                thickness,
+                transform,
+                color,
+            } => {
+                let scale = transform.even_scale().unwrap_or(1.0);
+
+                let rect = device_rect(rect, transform);
+
+                self.quads
+                    .border(rect, radius * scale, thickness * scale, color, clips);
+            }
+
+            Command::Glyph {
+                face,
+                id,
+                size,
+                color,
+                x,
+                y,
+            } => self
+                .quads
+                .letter(&self.queue, face, id, size, color, x, y, clips),
+
+            Command::Image {
+                image,
+                transform,
+                rect,
+                radius,
+                clip_transform,
+                ..
+            } => {
+                self.note_shown(&image);
+
+                // the image's own pixels, stretched by its transform onto the canvas
+                let size = Rect::new(0.0, 0.0, image.width() as f32, image.height() as f32);
+
+                let placement = device_rect(size, transform);
+
+                let shape = device_clip(rect, radius, clip_transform);
+
+                let clips = match shape {
+                    Some(shape) => clips.within(shape),
+                    None => clips,
+                };
+
+                self.quads
+                    .picture(&self.device, &self.queue, &image, placement, clips);
+            }
+
+            _ => unreachable!("only rectangles, borders, letters and images go to the quads"),
         }
     }
 
@@ -270,6 +268,74 @@ impl Gpu {
         self.quads.draw(&self.device, &self.queue, canvas);
 
         self.paint(scene, canvas, borrowed);
+    }
+}
+
+// where a command is drawn, decided before anything is drawn
+enum Route {
+    // blurs, cuts and shaders work on what the canvas already holds
+    Canvas,
+
+    // a faded group, or a clip holding a blur, cut or shader
+    OwnCanvas,
+
+    // a clip the quads apply themselves, its commands routed like any others
+    QuadClip(Clip),
+
+    // rectangles, borders, letters and images that move and scale without turning
+    Quads,
+
+    // paths, gradients, shadows, and anything turned or stretched
+    Vello,
+}
+
+fn route(command: &Command) -> Route {
+    match command {
+        Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => Route::Canvas,
+
+        Command::Group { .. } => Route::OwnCanvas,
+
+        Command::Clip { commands, .. } if needs_own_canvas(commands) => Route::OwnCanvas,
+
+        Command::Clip {
+            rect,
+            radius,
+            transform,
+            ..
+        } => match device_clip(*rect, *radius, *transform) {
+            Some(clip) => Route::QuadClip(clip),
+
+            // a rotated clip is left to vello, with everything inside it
+            None => Route::Vello,
+        },
+
+        Command::Rectangle { transform, .. } | Command::Border { transform, .. } => {
+            if transform.even_scale().is_some() {
+                Route::Quads
+            } else {
+                Route::Vello
+            }
+        }
+
+        Command::Glyph { .. } => Route::Quads,
+
+        Command::Image {
+            transform,
+            clip_transform,
+            ..
+        } => {
+            if straight(*transform) && clip_transform.even_scale().is_some() {
+                Route::Quads
+            } else {
+                Route::Vello
+            }
+        }
+
+        Command::Fill { .. }
+        | Command::Gradient { .. }
+        | Command::Stroke { .. }
+        | Command::Shadow { .. }
+        | Command::InnerShadow { .. } => Route::Vello,
     }
 }
 
