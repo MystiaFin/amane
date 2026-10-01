@@ -16,6 +16,7 @@ mod niri;
 mod placement;
 mod process;
 mod services;
+mod style;
 mod timing;
 mod wayland;
 mod widgets;
@@ -45,9 +46,10 @@ pub use services::{
     DesktopApp, Link, Lock, Media, MediaPlayer, Memory, Network, Notification, Notifications,
     Palette, Service, Urgency, Workspace, Workspaces,
 };
+pub use style::{Fill, Image, Mask, Radius, Shadow};
 pub use widgets::{
-    Arc, Canvas, Circle, Column, Fill, Image, Line, Mask, Path, Radius, Rectangle, Row, ScrollArea,
-    Shadow, Shape, Stack, Text, TextInput, Widget,
+    Arc, Canvas, Circle, Column, Line, Path, Rectangle, Row, ScrollArea, Shape, Stack, Text,
+    TextInput, Widget,
 };
 
 pub use placement::Justify::{SpaceAround, SpaceBetween, SpaceEvenly};

@@ -1,5 +1,5 @@
 use crate::graphics::{Rect, Renderer};
-use crate::widgets::shadow::Kind;
+use crate::style::Kind;
 
 use super::Rectangle;
 
