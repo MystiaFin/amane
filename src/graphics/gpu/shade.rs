@@ -8,7 +8,7 @@ use vello::wgpu::{
     RenderPassColorAttachment, RenderPassDescriptor, StoreOp, Texture,
 };
 
-use crate::graphics::{Path as Outline, Rect, Transform, VALUE_ROWS};
+use crate::graphics::{self, Rect, Transform, VALUE_ROWS};
 
 use super::shader::Shader;
 use super::{Gpu, texture};
@@ -29,7 +29,7 @@ impl Gpu {
         shader: &Path,
         values: &[[f32; 4]],
         rect: Rect,
-        outline: Option<&Outline>,
+        outline: Option<&graphics::Path>,
         transform: Transform,
     ) {
         let Some(outline) = outline else {
