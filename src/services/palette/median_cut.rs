@@ -82,7 +82,7 @@ pub fn quantize(pixels: Vec<[u8; 3]>, count: usize) -> Vec<Color> {
     buckets.iter().map(Bucket::average).collect()
 }
 
-// None when every bucket is a single flat color, so splitting would change nothing
+// none when every bucket is a single flat color, so splitting would change nothing
 fn widest_bucket(buckets: &[Bucket]) -> Option<usize> {
     let mut widest = None;
     let mut widest_range = 0;

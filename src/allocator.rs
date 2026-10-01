@@ -40,7 +40,7 @@ pub fn limit() {
  * a pool only shrinks from its end, so the gaps decoding, d-bus and niri's
  * events leave in the middle stay with the process; trimming gives them back
  */
-// ponytail: a fixed timer, trim after a window closes if this shows up in frame times
+// a fixed timer; if it ever shows up in frame times, trim after a window closes instead
 fn trim() {
     loop {
         thread::sleep(TRIM);
