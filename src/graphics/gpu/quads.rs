@@ -509,20 +509,8 @@ fn sampler_entry() -> BindGroupLayoutEntry {
  * always smaller, so this is close enough for them
  */
 fn narrow(outer: Clip, inner: Clip) -> Clip {
-    let left = f32::max(outer.rect.x, inner.rect.x);
-    let top = f32::max(outer.rect.y, inner.rect.y);
-
-    let outer_right = outer.rect.x + outer.rect.width;
-    let outer_bottom = outer.rect.y + outer.rect.height;
-
-    let right = f32::min(outer_right, inner.rect.x + inner.rect.width);
-    let bottom = f32::min(outer_bottom, inner.rect.y + inner.rect.height);
-
-    let width = f32::max(right - left, 0.0);
-    let height = f32::max(bottom - top, 0.0);
-
     Clip {
-        rect: Rect::new(left, top, width, height),
+        rect: outer.rect.intersect(inner.rect),
         radius: inner.radius,
     }
 }
