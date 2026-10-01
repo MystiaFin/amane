@@ -25,10 +25,6 @@ pub fn set_default(family: &str) {
     *default_family = String::from(family);
 }
 
-pub fn load(family: Option<&str>) -> &'static Face<'static> {
-    load_weighted(family, Weight::Regular)
-}
-
 pub fn load_weighted(family: Option<&str>, weight: Weight) -> &'static Face<'static> {
     let family = match family {
         Some(family) => String::from(family),
