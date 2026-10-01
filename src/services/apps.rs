@@ -6,6 +6,7 @@ mod parse;
 mod walk;
 
 use std::collections::HashSet;
+use std::thread;
 use std::time::Duration;
 
 use crate::Service;
@@ -20,28 +21,32 @@ pub struct Apps {
 
 // polled, so programs installed while the shell runs show up
 impl Service for Apps {
+    // empty at first: the scan walks every icon theme, which takes seconds
     fn new() -> Self {
-        let mut apps = Self::default();
-
-        apps.update();
-
-        apps
+        Self::default()
     }
 
     fn interval() -> Duration {
         Duration::from_secs(30)
     }
 
-    fn update(&mut self) -> bool {
-        let list = scan();
+    // scanned outside the lock, so a view reading the list never waits on the disk
+    fn listen() {
+        loop {
+            let list = scan();
 
-        if list == self.list {
-            return false;
+            let mut apps = Self::write();
+
+            if apps.list == list {
+                apps.quiet();
+            } else {
+                apps.list = list;
+            }
+
+            drop(apps);
+
+            thread::sleep(Self::interval());
         }
-
-        self.list = list;
-
-        true
     }
 }
 
