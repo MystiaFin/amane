@@ -38,6 +38,8 @@ pub fn prepare() -> PathBuf {
  * dev builds optimise amane and its dependencies, drawing unoptimised
  * is too slow for smooth animation; only the user's own crate stays
  * unoptimised, so a save still rebuilds quickly after the first build.
+ * dependencies carry no debug info and the user's crate only line tables,
+ * which keeps the binary small and the link on every save short.
  * the empty workspace keeps cargo from joining a workspace in a parent folder
  */
 fn manifest(main: &str, library: &str) -> String {
@@ -54,8 +56,12 @@ path = '{main}'
 [dependencies]
 amane = {{ path = '{library}' }}
 
+[profile.dev]
+debug = \"line-tables-only\"
+
 [profile.dev.package.\"*\"]
 opt-level = 3
+debug = false
 
 [workspace]
 "
