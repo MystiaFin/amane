@@ -16,6 +16,8 @@ pub struct Notification {
 
     pub(crate) icon: String,
 
+    pub(crate) image: String,
+
     pub(crate) urgency: Urgency,
 
     // the "default" action is kept apart, it has no button of its own
@@ -52,6 +54,11 @@ impl Notification {
     // an icon name like "firefox", a file path, or empty
     pub fn icon(&self) -> &str {
         &self.icon
+    }
+
+    // a picture for this one notification, like a sender's avatar: a file path, a file url, or empty
+    pub fn image(&self) -> &str {
+        &self.image
     }
 
     pub fn urgency(&self) -> Urgency {

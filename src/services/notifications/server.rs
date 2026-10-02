@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use crate::{Argument, Bus, Method, Notification, Notifications, Service, Urgency, Value};
 
-use super::{Action, Reason};
+use super::{Action, Reason, image};
 
 const NAME: &str = "org.freedesktop.Notifications";
 
@@ -69,6 +69,7 @@ fn notify(method: &Method) {
         summary: String::from(summary.text()),
         body: String::from(body.text()),
         icon: String::from(icon.text()),
+        image: image::read(hints),
 
         urgency: Urgency::from_level(hints.get("urgency").number()),
 
@@ -124,9 +125,12 @@ fn close(method: &Method) {
     method.reply(&[]);
 }
 
-// images are the one extra amane does not handle yet
 fn send_capabilities(method: &Method) {
-    let capabilities = vec![String::from("actions"), String::from("body")];
+    let capabilities = vec![
+        String::from("actions"),
+        String::from("body"),
+        String::from("icon-static"),
+    ];
 
     method.reply(&[Argument::from(capabilities)]);
 }
