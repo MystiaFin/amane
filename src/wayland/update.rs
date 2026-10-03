@@ -1,4 +1,8 @@
-use super::{layer::{self, Settings}, surface::{Content, Role, Surface}};
+use wayland_client::{Connection, Dispatch, QueueHandle, protocol::wl_region::{self, WlRegion}};
+
+use crate::LayerWindow;
+
+use super::{WaylandState, layer::{self, Settings}, surface::{Content, Role, Surface}};
 
 impl Surface {
     // settings changed by input or services reach the compositor before anything is drawn
@@ -47,6 +51,35 @@ impl Surface {
         self.role.commit();
     }
 
+    // only a changed region is sent, it takes effect with the next commit like the rest
+    pub fn update_input_region(&mut self, window: &LayerWindow) {
+        if window.input_region == self.input_region {
+            return;
+        }
+
+        self.input_region = window.input_region.clone();
+
+        let surface = self.role.wl_surface();
+
+        // no region set means the whole window takes the pointer again
+        let Some(areas) = &self.input_region else {
+            surface.set_input_region(None);
+
+            return;
+        };
+
+        let region = self.compositor.create_region(&self.qh, ());
+
+        for area in areas {
+            region.add(area.x, area.y, area.width, area.height);
+        }
+
+        surface.set_input_region(Some(&region));
+
+        // the surface keeps its own copy, so the region can go right away
+        region.destroy();
+    }
+
     fn hide(&mut self) {
         // taking the buffer away unmaps the window and gives back its reserved space
         self.role.wl_surface().attach(None, 0, 0);
@@ -59,5 +92,18 @@ impl Surface {
 
         // a frame callback asked for before hiding may never come
         self.frame_requested = false;
+    }
+}
+
+// a region never sends events, but wayland-client still needs somewhere to send them
+impl Dispatch<WlRegion, ()> for WaylandState {
+    fn event(
+        _: &mut Self,
+        _: &WlRegion,
+        _: wl_region::Event,
+        _: &(),
+        _: &Connection,
+        _: &QueueHandle<Self>,
+    ) {
     }
 }

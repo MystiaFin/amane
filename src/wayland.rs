@@ -8,7 +8,6 @@ mod normal;
 mod open;
 mod output;
 mod pointer;
-mod region;
 mod scale;
 mod seat;
 mod socket;
