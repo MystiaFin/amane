@@ -36,7 +36,7 @@ use wayland_client::{
     protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
 };
 
-use crate::ipc::Handlers;
+use crate::ipc::IpcHandlers;
 use crate::{Cursor, LayerWindow, Monitor, Window};
 
 use surface::{Surface, View};
@@ -99,7 +99,7 @@ impl WaylandApp {
         normal_views: Vec<(&'static str, fn() -> Window)>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
-        handlers: Handlers,
+        handlers: IpcHandlers,
     ) -> Self {
         let connection = connect();
 

@@ -12,7 +12,7 @@ pub struct IpcCall {
 type Handler = fn(&[String]) -> String;
 
 #[derive(Default)]
-pub struct Handlers {
+pub struct IpcHandlers {
     pub by_name: HashMap<String, Handler>,
 }
 
@@ -51,7 +51,7 @@ impl IpcCall {
     }
 }
 
-impl Handlers {
+impl IpcHandlers {
     pub fn insert(&mut self, name: &str, handler: Handler) {
         self.by_name.insert(String::from(name), handler);
     }

@@ -7,11 +7,11 @@ use smithay_client_toolkit::reexports::calloop::{
     Interest, LoopHandle, Mode, PostAction, generic::Generic,
 };
 
-use crate::ipc::{Handlers, IpcCall, ipc_socket};
+use crate::ipc::{IpcCall, IpcHandlers, ipc_socket};
 
 use super::WaylandState;
 
-pub fn insert(handle: &LoopHandle<'static, WaylandState>, handlers: Handlers) {
+pub fn insert(handle: &LoopHandle<'static, WaylandState>, handlers: IpcHandlers) {
     let source = Generic::new(listen(), Interest::READ, Mode::Level);
 
     handle
@@ -49,7 +49,7 @@ fn listen() -> UnixListener {
     listener
 }
 
-fn answer(mut stream: UnixStream, handlers: &Handlers) {
+fn answer(mut stream: UnixStream, handlers: &IpcHandlers) {
     // a client that never finishes sending must not freeze the shell
     let timeout = Some(Duration::from_secs(1));
 
