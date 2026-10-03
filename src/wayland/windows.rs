@@ -6,7 +6,7 @@ use crate::graphics::Gpu;
 use crate::input::Pointer;
 use crate::{changes, frame};
 
-use super::{WaylandState, layer::{self, Settings}, surface::{Content, Role, Surface, View}};
+use super::{WaylandState, layer::{self, Settings}, surface::{Content, OpenWindow, Role, View}};
 
 impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {
@@ -56,7 +56,7 @@ impl WaylandState {
 
         let fractional = self.make_fractional(role.wl_surface());
 
-        let window = Surface {
+        let window = OpenWindow {
             view,
 
             output,
@@ -90,7 +90,7 @@ impl WaylandState {
     }
 
     // wayland events name the surface they are about, this finds its window
-    pub fn window(&mut self, surface: &WlSurface) -> Option<&mut Surface> {
+    pub fn window(&mut self, surface: &WlSurface) -> Option<&mut OpenWindow> {
         for window in &mut self.windows {
             if window.role.wl_surface() == surface {
                 return Some(window);

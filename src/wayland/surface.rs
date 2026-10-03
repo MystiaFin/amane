@@ -18,7 +18,7 @@ use crate::{InputArea, LayerWindow, Monitor, Widget, Window};
 use super::{WaylandState, layer::{self, Settings}, scale::Fractional};
 
 // one surface on screen, with everything it needs to draw and take input
-pub struct Surface {
+pub struct OpenWindow {
     pub view: View,
 
     // only windows made per monitor are tied to one, the rest let the compositor choose
@@ -95,7 +95,7 @@ pub enum Content {
     Normal(Window),
 }
 
-impl Surface {
+impl OpenWindow {
     // a size of 0 leaves the choice to the window, which then keeps the size it asked for
     pub fn resize(&mut self, width: u32, height: u32) {
         let (asked_width, asked_height) = self.asked_size();

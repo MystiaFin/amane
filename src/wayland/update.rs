@@ -2,9 +2,9 @@ use wayland_client::{Connection, Dispatch, QueueHandle, protocol::wl_region::{se
 
 use crate::LayerWindow;
 
-use super::{WaylandState, layer::{self, Settings}, surface::{Content, Role, Surface}};
+use super::{WaylandState, layer::{self, Settings}, surface::{Content, OpenWindow, Role}};
 
-impl Surface {
+impl OpenWindow {
     // settings changed by input or services reach the compositor before anything is drawn
     pub fn update_surface(&mut self, content: &Content) {
         // a normal window's title and size are only read when it opens

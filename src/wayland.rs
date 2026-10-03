@@ -39,11 +39,11 @@ use wayland_client::{
 use crate::ipc::IpcHandlers;
 use crate::{Cursor, LayerWindow, Monitor, Window};
 
-use surface::{Surface, View};
+use surface::{OpenWindow, View};
 
 struct WaylandState {
     // every window has its own layer surface and gpu, and is dropped before the connection
-    windows: Vec<Surface>,
+    windows: Vec<OpenWindow>,
 
     // each of these gets a window on every monitor, including ones plugged in later
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,

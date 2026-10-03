@@ -6,9 +6,9 @@ use crate::frame;
 use crate::graphics::Renderer;
 use crate::timing::{self, Timing};
 
-use super::surface::Surface;
+use super::surface::OpenWindow;
 
-impl Surface {
+impl OpenWindow {
     // one frame: run the view, send its settings, draw it and show it
     pub fn redraw(&mut self) {
         let started = Instant::now();
