@@ -1,7 +1,6 @@
 mod bus;
 mod convert;
 mod method;
-mod methods;
 mod signal;
 mod signals;
 mod value;
