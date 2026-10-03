@@ -9,7 +9,7 @@ use crate::input::Target;
 use crate::style::Kind;
 use crate::{Fill, Image, Size, Widget};
 
-use super::{Rectangle, child, input, transform};
+use super::{Rectangle, child, targets, transform};
 
 thread_local! {
     // read once per shader file, a shader's source doesn't change while the shell runs
@@ -32,7 +32,7 @@ impl Widget for Rectangle {
     }
 
     fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
-        input::collect_targets(self, area, targets);
+        targets::collect_targets(self, area, targets);
     }
 }
 

@@ -1,6 +1,6 @@
 mod child;
 mod draw;
-mod input;
+mod targets;
 mod transform;
 
 use std::path::PathBuf;

@@ -1,4 +1,4 @@
-mod input;
+mod targets;
 mod offsets;
 
 use crate::Size;
@@ -75,6 +75,6 @@ impl Widget for ScrollArea {
     }
 
     fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
-        input::collect_targets(self, area, targets);
+        targets::collect_targets(self, area, targets);
     }
 }

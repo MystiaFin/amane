@@ -1,6 +1,6 @@
 mod field;
 mod fields;
-mod input;
+mod targets;
 
 use std::rc::Rc;
 
@@ -171,6 +171,6 @@ impl Widget for TextInput {
     }
 
     fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
-        input::collect_targets(self, area, targets);
+        targets::collect_targets(self, area, targets);
     }
 }
