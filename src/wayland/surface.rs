@@ -2,16 +2,20 @@ use std::any::TypeId;
 use std::collections::HashSet;
 use std::time::Instant;
 
+use smithay_client_toolkit::{
+    session_lock::SessionLockSurface,
+    shell::{WaylandSurface, wlr_layer::LayerSurface, xdg::window::Window as XdgWindow},
+};
 use wayland_client::{
     QueueHandle,
-    protocol::{wl_compositor::WlCompositor, wl_output::WlOutput},
+    protocol::{wl_compositor::WlCompositor, wl_output::WlOutput, wl_surface::WlSurface},
 };
 
 use crate::graphics::Gpu;
-use crate::InputArea;
 use crate::input::{KeyHandler, Pointer};
+use crate::{InputArea, LayerWindow, Monitor, Widget, Window};
 
-use super::{WaylandState, layer, role::Role, scale::Fractional, view::View};
+use super::{WaylandState, layer, scale::Fractional, settings::Settings};
 
 // one surface on screen, with everything it needs to draw and take input
 pub struct Surface {
@@ -54,6 +58,43 @@ pub struct Surface {
     pub qh: QueueHandle<WaylandState>,
 }
 
+// what a window is to the compositor: a layer like a bar, one screen of the session lock, or a normal window
+pub enum Role {
+    Layer {
+        surface: LayerSurface,
+
+        // what the compositor was last told, so only a real change is sent again
+        settings: Settings,
+    },
+
+    Lock(SessionLockSurface),
+
+    Normal {
+        window: XdgWindow,
+
+        // the size it opened at, kept for as long as the compositor leaves the size to it
+        size: (u32, u32),
+    },
+}
+
+// what a window runs on every redraw to find out what it shows
+pub enum View {
+    Plain(fn() -> LayerWindow),
+
+    // the monitor is replaced when the compositor reports a change to it
+    Monitor(fn(&Monitor) -> LayerWindow, Monitor),
+
+    // the name tells it apart from other normal windows
+    Normal(&'static str, fn() -> Window),
+}
+
+// what a view gave back
+pub enum Content {
+    Layer(LayerWindow),
+
+    Normal(Window),
+}
+
 impl Surface {
     // a size of 0 leaves the choice to the window, which then keeps the size it asked for
     pub fn resize(&mut self, width: u32, height: u32) {
@@ -85,6 +126,56 @@ impl Surface {
 
             // the compositor always gives a lock screen its monitor's size
             Role::Lock(_) => (0, 0),
+        }
+    }
+}
+
+impl Role {
+    pub fn wl_surface(&self) -> &WlSurface {
+        match self {
+            Role::Layer { surface, .. } => surface.wl_surface(),
+            Role::Lock(lock_surface) => lock_surface.wl_surface(),
+            Role::Normal { window, .. } => window.wl_surface(),
+        }
+    }
+
+    pub fn commit(&self) {
+        self.wl_surface().commit();
+    }
+}
+
+impl View {
+    pub fn run(&self) -> Content {
+        match self {
+            View::Plain(view) => Content::Layer(view()),
+            View::Monitor(view, monitor) => Content::Layer(view(monitor)),
+            View::Normal(_, view) => Content::Normal(view()),
+        }
+    }
+
+    pub fn shows(&self, name: &str) -> bool {
+        let View::Normal(shown, _) = self else {
+            return false;
+        };
+
+        *shown == name
+    }
+}
+
+impl Content {
+    // the name AMANE_FRAMES logs the window under
+    pub fn name(&self) -> &'static str {
+        match self {
+            Content::Layer(window) => window.namespace,
+            Content::Normal(_) => "normal",
+        }
+    }
+
+    // the widgets and the key handler, drawn and used the same way by every kind of window
+    pub fn into_parts(self) -> (Option<Box<dyn Widget>>, Option<KeyHandler>) {
+        match self {
+            Content::Layer(window) => (window.root, window.on_key),
+            Content::Normal(window) => (window.root, window.on_key),
         }
     }
 }

@@ -1,7 +1,7 @@
 use smithay_client_toolkit::output::{OutputHandler, OutputState};
 use wayland_client::{Connection, QueueHandle, protocol::wl_output::WlOutput};
 
-use super::{WaylandState, monitor, view::View};
+use super::{WaylandState, monitor, surface::View};
 
 impl OutputHandler for WaylandState {
     fn output_state(&mut self) -> &mut OutputState {

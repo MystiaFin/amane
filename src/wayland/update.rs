@@ -1,5 +1,4 @@
-use super::view::Content;
-use super::{layer, role::Role, settings::Settings, surface::Surface};
+use super::{layer, settings::Settings, surface::{Content, Role, Surface}};
 
 impl Surface {
     // settings changed by input or services reach the compositor before anything is drawn

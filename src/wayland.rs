@@ -10,14 +10,12 @@ mod open;
 mod output;
 mod pointer;
 mod region;
-mod role;
 mod scale;
 mod seat;
 mod settings;
 mod socket;
 mod surface;
 mod update;
-mod view;
 mod wake;
 mod windows;
 
@@ -46,8 +44,7 @@ use wayland_client::{
 use crate::ipc::Handlers;
 use crate::{Cursor, LayerWindow, Monitor, Window};
 
-use surface::Surface;
-use view::View;
+use surface::{Surface, View};
 
 struct WaylandState {
     // every window has its own layer surface and gpu, and is dropped before the connection

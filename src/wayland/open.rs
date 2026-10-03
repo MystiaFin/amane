@@ -6,7 +6,7 @@ use crate::frame;
 use crate::graphics::Gpu;
 use crate::input::Pointer;
 
-use super::{WaylandState, layer, role::Role, settings::Settings, surface::Surface, view::{Content, View}};
+use super::{WaylandState, layer, settings::Settings, surface::{Content, Role, Surface, View}};
 
 impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {

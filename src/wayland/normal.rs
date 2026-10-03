@@ -11,7 +11,7 @@ use wayland_client::{Connection, QueueHandle};
 use crate::window::{CLOSING, REQUESTED};
 use crate::Window;
 
-use super::{WaylandState, role::Role, view::View};
+use super::{WaylandState, surface::{Role, View}};
 
 impl WaylandState {
     pub fn open_normal(&mut self, name: &'static str, view: fn() -> Window) {
