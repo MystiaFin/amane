@@ -1,4 +1,16 @@
-# amane
+<p align="center">
+  <img src="amane.svg" alt="amane logo" width="128">
+</p>
+
+<h1 align="center">amane</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.1.0-de7979" alt="version 0.1.0">
+  <img src="https://img.shields.io/badge/status-experimental-7c1f1f" alt="status: experimental">
+  <img src="https://img.shields.io/badge/rust-2024_edition-16151d?logo=rust&logoColor=white" alt="rust 2024 edition">
+  <img src="https://img.shields.io/badge/wayland-wlr--layer--shell-16151d?logo=wayland&logoColor=white" alt="wayland wlr-layer-shell">
+  <img src="https://img.shields.io/badge/nix-flake-16151d?logo=nixos&logoColor=white" alt="nix flake">
+</p>
 
 Amane is a Rust library for building Wayland desktop shells, like bars, panels and launchers. You write your shell in plain Rust, and the `amane` CLI builds and runs it for you.
 
