@@ -1,6 +1,4 @@
-mod button;
 mod compositor;
-mod cursor;
 mod frame;
 mod key;
 mod keyboard;
@@ -15,7 +13,6 @@ mod pointer;
 mod region;
 mod role;
 mod scale;
-mod scroll;
 mod seat;
 mod settings;
 mod socket;
