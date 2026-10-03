@@ -1,8 +1,6 @@
 mod child;
 mod draw;
 mod input;
-mod needs_height;
-mod needs_width;
 mod shadow;
 mod time;
 mod transform;
@@ -14,9 +12,6 @@ use crate::input::Handlers;
 use crate::{Align, Fill, Padding, Radius, Shadow, Size};
 
 use super::Widget;
-
-pub use needs_height::NeedsHeight;
-pub use needs_width::NeedsWidth;
 
 pub struct Rectangle {
     pub(crate) width: Size,
@@ -40,6 +35,12 @@ pub struct Rectangle {
     pub(crate) child_horizontal: Align,
     pub(crate) child_vertical: Align,
     pub(crate) handlers: Handlers,
+}
+
+pub struct NeedsWidth;
+
+pub struct NeedsHeight {
+    pub(crate) width: Size,
 }
 
 impl Rectangle {
@@ -140,5 +141,41 @@ impl Rectangle {
         self.clip = true;
 
         self
+    }
+}
+
+impl NeedsWidth {
+    pub fn width(self, width: impl Into<Size>) -> NeedsHeight {
+        NeedsHeight {
+            width: width.into(),
+        }
+    }
+}
+
+impl NeedsHeight {
+    pub fn height(self, height: impl Into<Size>) -> Rectangle {
+        Rectangle {
+            width: self.width,
+            height: height.into(),
+            radius: Radius::Fixed(0.0),
+            fill: Fill::Color(Color::TRANSPARENT),
+            border_thickness: 0.0,
+            border_color: Color::TRANSPARENT,
+            blur: 0.0,
+            opacity: 1.0,
+            shadow: None,
+            shader: None,
+            shader_values: Vec::new(),
+            child: None,
+            clip: false,
+            rotation: 0.0,
+            scale: 1.0,
+            translate_x: 0.0,
+            translate_y: 0.0,
+            padding: Padding::default(),
+            child_horizontal: Align::Start,
+            child_vertical: Align::Start,
+            handlers: Handlers::default(),
+        }
     }
 }
