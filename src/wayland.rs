@@ -1,11 +1,11 @@
 mod compositor;
-mod frame;
 mod keyboard;
 mod layer;
 mod lock;
 mod normal;
 mod output;
 mod pointer;
+mod redraw;
 mod scale;
 mod seat;
 mod socket;
