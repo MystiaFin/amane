@@ -1,13 +1,9 @@
-mod clip;
 pub mod focus;
-mod handlers;
 mod pointer;
 mod target;
 
-pub use clip::clip;
-pub use handlers::{Handlers, KeyHandler};
 pub use pointer::Pointer;
-pub use target::Target;
+pub use target::{Handlers, KeyHandler, Target, clip};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Button {
