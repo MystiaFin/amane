@@ -1,17 +1,10 @@
-mod action;
 mod image;
 mod notification;
-mod reason;
 mod server;
-mod urgency;
 
-pub use action::Action;
-pub use notification::Notification;
-pub use urgency::Urgency;
+pub use notification::{Action, Notification, Urgency};
 
 use crate::Service;
-
-use reason::Reason;
 
 pub struct Notifications {
     list: Vec<Notification>,
@@ -20,6 +13,15 @@ pub struct Notifications {
     next_id: u32,
 
     running: bool,
+}
+
+// the numbers the spec gives each way a notification can close
+#[derive(Clone, Copy)]
+pub enum Reason {
+    Dismissed = 2,
+
+    // the sender asked with CloseNotification
+    Closed = 3,
 }
 
 /*

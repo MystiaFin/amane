@@ -1,9 +1,5 @@
 use std::time::SystemTime;
 
-use crate::Urgency;
-
-use super::Action;
-
 #[derive(Debug, Clone)]
 pub struct Notification {
     pub(crate) id: u32,
@@ -29,6 +25,25 @@ pub struct Notification {
     pub(crate) resident: bool,
 
     pub(crate) received: SystemTime,
+}
+
+// a button a notification asks for, like "reply" or "open"
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Action {
+    pub(crate) key: String,
+
+    pub(crate) label: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Urgency {
+    Low,
+
+    // what a notification without the hint gets
+    #[default]
+    Normal,
+
+    Critical,
 }
 
 impl Notification {
@@ -78,5 +93,28 @@ impl Notification {
     // when it arrived, or when the sender last replaced it
     pub fn received(&self) -> SystemTime {
         self.received
+    }
+}
+
+impl Action {
+    // pass this to Notifications::invoke
+    pub fn key(&self) -> &str {
+        &self.key
+    }
+
+    // the text to show on the button
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+}
+
+impl Urgency {
+    // the spec sends urgency as a byte: 0 low, 1 normal, 2 critical
+    pub(crate) fn from_level(level: f64) -> Self {
+        match level as u8 {
+            0 => Self::Low,
+            2 => Self::Critical,
+            _ => Self::Normal,
+        }
     }
 }
