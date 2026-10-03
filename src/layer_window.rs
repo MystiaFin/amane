@@ -1,29 +1,7 @@
-mod horizontal;
-mod input_area;
-mod keyboard;
-mod layer;
-mod margin;
-mod needs_height;
-mod needs_width;
-mod vertical;
-mod window_size;
-mod zone;
-
 use std::rc::Rc;
 
 use crate::input::KeyHandler;
-use crate::{Key, Widget};
-
-pub use horizontal::Horizontal;
-pub use input_area::InputArea;
-pub use keyboard::Keyboard;
-pub use layer::Layer;
-pub use margin::Margin;
-pub use needs_height::NeedsHeight;
-pub use needs_width::NeedsWidth;
-pub use vertical::Vertical;
-pub use window_size::WindowSize;
-pub use zone::Zone;
+use crate::{Full, Key, Widget};
 
 pub struct LayerWindow {
     pub(crate) width: WindowSize,
@@ -47,6 +25,97 @@ pub struct LayerWindow {
     pub(crate) root: Option<Box<dyn Widget>>,
 
     pub(crate) on_key: Option<KeyHandler>,
+}
+
+pub struct NeedsWidth;
+
+pub struct NeedsHeight {
+    pub(crate) width: WindowSize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum WindowSize {
+    Full,
+    Fixed(f32),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Vertical {
+    Top,
+
+    #[default]
+    Middle,
+
+    Bottom,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Horizontal {
+    Left,
+
+    #[default]
+    Middle,
+
+    Right,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Margin {
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+    pub left: i32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Layer {
+    // under everything
+    Background,
+
+    // under normal windows
+    Bottom,
+
+    // above normal windows
+    Top,
+
+    // above everything
+    #[default]
+    Overlay,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Keyboard {
+    // never takes keyboard focus
+    #[default]
+    None,
+
+    // takes all keyboard input while open
+    Exclusive,
+
+    // takes focus when clicked
+    OnDemand,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Zone {
+    // keeps other windows out of the edge the window sits on
+    Reserve,
+
+    // reserves nothing, stays out of what others reserve
+    #[default]
+    Respect,
+
+    // reserves nothing, covers what others reserve
+    Ignore,
+}
+
+// a part of the window that takes pointer input, from its top left corner
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct InputArea {
+    pub x: i32,
+    pub y: i32,
+    pub width: i32,
+    pub height: i32,
 }
 
 impl LayerWindow {
@@ -128,5 +197,52 @@ impl LayerWindow {
         self.root = Some(Box::new(child));
 
         self
+    }
+}
+
+impl NeedsWidth {
+    pub fn width(self, width: impl Into<WindowSize>) -> NeedsHeight {
+        NeedsHeight {
+            width: width.into(),
+        }
+    }
+}
+
+impl NeedsHeight {
+    pub fn height(self, height: impl Into<WindowSize>) -> LayerWindow {
+        LayerWindow {
+            width: self.width,
+            height: height.into(),
+
+            vertical: Vertical::default(),
+            horizontal: Horizontal::default(),
+
+            margin: Margin::default(),
+            layer: Layer::default(),
+            keyboard: Keyboard::default(),
+            zone: Zone::default(),
+
+            namespace: "amane",
+
+            visible: true,
+
+            input_region: None,
+
+            root: None,
+
+            on_key: None,
+        }
+    }
+}
+
+impl From<f32> for WindowSize {
+    fn from(pixels: f32) -> Self {
+        Self::Fixed(pixels)
+    }
+}
+
+impl From<Full> for WindowSize {
+    fn from(_: Full) -> Self {
+        Self::Full
     }
 }
