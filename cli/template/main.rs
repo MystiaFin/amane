@@ -15,6 +15,6 @@ fn view() -> LayerWindow {
                 .width(Parent)
                 .height(Parent)
                 .fill(Color::BLUE)
-                .child(Text::new("hello from amane").size(20.0).color(Color::WHITE)),
+                .child(Text::new("hello world").size(20.0).color(Color::WHITE)),
         )
 }
