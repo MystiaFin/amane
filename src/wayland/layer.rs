@@ -1,15 +1,81 @@
 use smithay_client_toolkit::shell::{
     WaylandSurface,
-    wlr_layer::{self, Anchor, KeyboardInteractivity, LayerShell, LayerSurface},
+    wlr_layer::{
+        self, Anchor, KeyboardInteractivity, LayerShell, LayerShellHandler, LayerSurface,
+        LayerSurfaceConfigure,
+    },
 };
 use wayland_client::{
-    QueueHandle,
+    Connection, QueueHandle,
     protocol::{wl_output::WlOutput, wl_surface::WlSurface},
 };
 
-use crate::{Horizontal, Keyboard, Layer, Vertical, WindowSize, Zone};
+use crate::{Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone};
 
-use super::{WaylandState, settings::Settings};
+use super::WaylandState;
+
+// the parts of the window the compositor knows about, kept to see what the next view changes
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Settings {
+    pub width: WindowSize,
+    pub height: WindowSize,
+
+    pub vertical: Vertical,
+    pub horizontal: Horizontal,
+
+    pub margin: Margin,
+    pub layer: Layer,
+    pub keyboard: Keyboard,
+    pub zone: Zone,
+
+    pub namespace: &'static str,
+
+    pub visible: bool,
+}
+
+impl From<&LayerWindow> for Settings {
+    fn from(window: &LayerWindow) -> Self {
+        Self {
+            width: window.width,
+            height: window.height,
+
+            vertical: window.vertical,
+            horizontal: window.horizontal,
+
+            margin: window.margin,
+            layer: window.layer,
+            keyboard: window.keyboard,
+            zone: window.zone,
+
+            namespace: window.namespace,
+
+            visible: window.visible,
+        }
+    }
+}
+
+impl LayerShellHandler for WaylandState {
+    fn configure(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        layer_surface: &LayerSurface,
+        configure: LayerSurfaceConfigure,
+        _: u32,
+    ) {
+        let Some(window) = self.window(layer_surface.wl_surface()) else {
+            return;
+        };
+
+        let (width, height) = configure.new_size;
+
+        window.resize(width, height);
+    }
+
+    fn closed(&mut self, _: &Connection, _: &QueueHandle<Self>, layer_surface: &LayerSurface) {
+        self.close(layer_surface.wl_surface());
+    }
+}
 
 pub fn create(
     layer_shell: &LayerShell,

@@ -15,7 +15,7 @@ use crate::graphics::Gpu;
 use crate::input::{KeyHandler, Pointer};
 use crate::{InputArea, LayerWindow, Monitor, Widget, Window};
 
-use super::{WaylandState, layer, scale::Fractional, settings::Settings};
+use super::{WaylandState, layer::{self, Settings}, scale::Fractional};
 
 // one surface on screen, with everything it needs to draw and take input
 pub struct Surface {
