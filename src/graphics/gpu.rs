@@ -8,7 +8,7 @@ mod glyph;
 mod gradient;
 mod flush;
 mod forget;
-mod frame;
+mod present;
 mod image;
 mod group;
 mod paint;
