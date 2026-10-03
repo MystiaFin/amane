@@ -4,7 +4,6 @@ mod keyboard;
 mod layer;
 mod lock;
 mod normal;
-mod open;
 mod output;
 mod pointer;
 mod scale;
