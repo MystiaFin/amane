@@ -2,7 +2,6 @@ mod bus;
 mod convert;
 mod method;
 mod signal;
-mod signals;
 mod value;
 
 pub use bus::Bus;
