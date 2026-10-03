@@ -27,9 +27,9 @@ pub struct LayerWindow {
     pub(crate) on_key: Option<KeyHandler>,
 }
 
-pub struct NeedsWidth;
+pub struct LayerWindowNeedsWidth;
 
-pub struct NeedsHeight {
+pub struct LayerWindowNeedsHeight {
     pub(crate) width: WindowSize,
 }
 
@@ -120,8 +120,8 @@ pub struct InputArea {
 
 impl LayerWindow {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> NeedsWidth {
-        NeedsWidth
+    pub fn new() -> LayerWindowNeedsWidth {
+        LayerWindowNeedsWidth
     }
 
     pub fn anchor_vertical(mut self, vertical: Vertical) -> Self {
@@ -200,15 +200,15 @@ impl LayerWindow {
     }
 }
 
-impl NeedsWidth {
-    pub fn width(self, width: impl Into<WindowSize>) -> NeedsHeight {
-        NeedsHeight {
+impl LayerWindowNeedsWidth {
+    pub fn width(self, width: impl Into<WindowSize>) -> LayerWindowNeedsHeight {
+        LayerWindowNeedsHeight {
             width: width.into(),
         }
     }
 }
 
-impl NeedsHeight {
+impl LayerWindowNeedsHeight {
     pub fn height(self, height: impl Into<WindowSize>) -> LayerWindow {
         LayerWindow {
             width: self.width,

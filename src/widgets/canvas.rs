@@ -8,16 +8,16 @@ pub struct Canvas {
     pub(crate) shapes: Vec<Box<dyn Shape>>,
 }
 
-pub struct NeedsWidth;
+pub struct CanvasNeedsWidth;
 
-pub struct NeedsHeight {
+pub struct CanvasNeedsHeight {
     pub(crate) width: Size,
 }
 
 impl Canvas {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> NeedsWidth {
-        NeedsWidth
+    pub fn new() -> CanvasNeedsWidth {
+        CanvasNeedsWidth
     }
 
     // later shapes draw over earlier ones
@@ -28,15 +28,15 @@ impl Canvas {
     }
 }
 
-impl NeedsWidth {
-    pub fn width(self, width: impl Into<Size>) -> NeedsHeight {
-        NeedsHeight {
+impl CanvasNeedsWidth {
+    pub fn width(self, width: impl Into<Size>) -> CanvasNeedsHeight {
+        CanvasNeedsHeight {
             width: width.into(),
         }
     }
 }
 
-impl NeedsHeight {
+impl CanvasNeedsHeight {
     pub fn height(self, height: impl Into<Size>) -> Canvas {
         Canvas {
             width: self.width,

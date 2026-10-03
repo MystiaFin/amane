@@ -35,16 +35,16 @@ pub struct Rectangle {
     pub(crate) handlers: Handlers,
 }
 
-pub struct NeedsWidth;
+pub struct RectangleNeedsWidth;
 
-pub struct NeedsHeight {
+pub struct RectangleNeedsHeight {
     pub(crate) width: Size,
 }
 
 impl Rectangle {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> NeedsWidth {
-        NeedsWidth
+    pub fn new() -> RectangleNeedsWidth {
+        RectangleNeedsWidth
     }
 
     pub fn fill(mut self, fill: impl Into<Fill>) -> Self {
@@ -142,15 +142,15 @@ impl Rectangle {
     }
 }
 
-impl NeedsWidth {
-    pub fn width(self, width: impl Into<Size>) -> NeedsHeight {
-        NeedsHeight {
+impl RectangleNeedsWidth {
+    pub fn width(self, width: impl Into<Size>) -> RectangleNeedsHeight {
+        RectangleNeedsHeight {
             width: width.into(),
         }
     }
 }
 
-impl NeedsHeight {
+impl RectangleNeedsHeight {
     pub fn height(self, height: impl Into<Size>) -> Rectangle {
         Rectangle {
             width: self.width,
