@@ -22,7 +22,7 @@ mod shader;
 mod shadow;
 mod shape;
 mod shared;
-mod surface;
+mod target;
 mod texture;
 mod wait;
 
@@ -91,7 +91,7 @@ pub struct Gpu {
 impl Gpu {
     // the pointers are libwayland's display and surface, which have to outlive the gpu
     pub fn new(display: *mut c_void, surface: *mut c_void) -> Self {
-        let surface = surface::create(&shared::instance(), display, surface);
+        let surface = target::create(&shared::instance(), display, surface);
 
         let Shared {
             adapter,
@@ -101,7 +101,7 @@ impl Gpu {
             atlas_drops,
         } = shared::get(&surface);
 
-        let config = surface::configure(&surface, &adapter);
+        let config = target::configure(&surface, &adapter);
 
         // the canvas and the surface hold premultiplied colors
         let over = Some(BlendState::PREMULTIPLIED_ALPHA_BLENDING);
