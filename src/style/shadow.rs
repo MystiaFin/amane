@@ -1,9 +1,5 @@
-mod kind;
-
 use crate::Color;
 use crate::graphics::Rect;
-
-pub use kind::Kind;
 
 pub struct Shadow {
     pub(crate) color: Color,
@@ -14,6 +10,16 @@ pub struct Shadow {
     pub(crate) y: f32,
 
     pub(crate) kind: Kind,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Kind {
+    // cast behind the rectangle, onto whatever is under it
+    #[default]
+    Drop,
+
+    // along the inside edge, as if the rectangle were pressed in
+    Inner,
 }
 
 impl Shadow {

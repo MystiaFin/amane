@@ -1,6 +1,4 @@
-use crate::{Color, Gradient};
-
-use super::{Image, Mask};
+use crate::{Color, Gradient, Image};
 
 pub enum Fill {
     Color(Color),
@@ -12,6 +10,9 @@ pub enum Fill {
     // paints nothing and cuts its shape out of the rectangle holding it
     Mask,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Mask;
 
 impl From<Color> for Fill {
     fn from(color: Color) -> Self {
