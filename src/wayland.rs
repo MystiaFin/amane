@@ -3,7 +3,6 @@ mod frame;
 mod keyboard;
 mod layer;
 mod lock;
-mod monitor;
 mod normal;
 mod open;
 mod output;

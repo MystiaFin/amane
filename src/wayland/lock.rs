@@ -5,7 +5,7 @@ use wayland_client::{Connection, QueueHandle, protocol::wl_output::WlOutput};
 
 use crate::{Lock, Service};
 
-use super::{WaylandState, monitor, surface::{Role, View}};
+use super::{WaylandState, output, surface::{Role, View}};
 
 impl WaylandState {
     // every monitor gets its own lock screen, the compositor shows nothing else while locked
@@ -31,7 +31,7 @@ impl WaylandState {
             return;
         };
 
-        let view = View::Monitor(view, monitor::describe(&info));
+        let view = View::Monitor(view, output::describe(&info));
 
         let surface = self.compositor.create_surface(&self.qh);
 

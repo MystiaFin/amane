@@ -1,7 +1,9 @@
-use smithay_client_toolkit::output::{OutputHandler, OutputState};
+use smithay_client_toolkit::output::{OutputHandler, OutputInfo, OutputState};
 use wayland_client::{Connection, QueueHandle, protocol::wl_output::WlOutput};
 
-use super::{WaylandState, monitor, surface::View};
+use crate::Monitor;
+
+use super::{WaylandState, surface::View};
 
 impl OutputHandler for WaylandState {
     fn output_state(&mut self) -> &mut OutputState {
@@ -14,7 +16,7 @@ impl OutputHandler for WaylandState {
             return;
         };
 
-        let monitor = monitor::describe(&info);
+        let monitor = describe(&info);
 
         let views = self.per_monitor.clone();
 
@@ -33,7 +35,7 @@ impl OutputHandler for WaylandState {
             return;
         };
 
-        let monitor = monitor::describe(&info);
+        let monitor = describe(&info);
 
         for window in &mut self.windows {
             if window.output.as_ref() != Some(&output) {
@@ -52,5 +54,25 @@ impl OutputHandler for WaylandState {
     fn output_destroyed(&mut self, _: &Connection, _: &QueueHandle<Self>, output: WlOutput) {
         self.windows
             .retain(|window| window.output.as_ref() != Some(&output));
+    }
+}
+
+pub fn describe(info: &OutputInfo) -> Monitor {
+    let name = info.name.clone().unwrap_or_default();
+
+    let current = info.modes.iter().find(|mode| mode.current);
+
+    // the logical size already has scaling and rotation applied, the mode does not
+    let (width, height) = match (info.logical_size, current) {
+        (Some(size), _) => size,
+        (None, Some(mode)) => mode.dimensions,
+        (None, None) => (0, 0),
+    };
+
+    Monitor {
+        name,
+
+        width: width as u32,
+        height: height as u32,
     }
 }
