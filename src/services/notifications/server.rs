@@ -2,7 +2,7 @@ use std::time::SystemTime;
 
 use crate::{Argument, Bus, Method, Notification, Notifications, Service, Urgency, Value};
 
-use super::{Action, Reason, image};
+use super::{Action, Reason, image_hint};
 
 const NAME: &str = "org.freedesktop.Notifications";
 
@@ -69,7 +69,7 @@ fn notify(method: &Method) {
         summary: String::from(summary.text()),
         body: String::from(body.text()),
         icon: String::from(icon.text()),
-        image: image::read(hints),
+        image: image_hint::read(hints),
 
         urgency: Urgency::from_level(hints.get("urgency").number()),
 

@@ -1,4 +1,4 @@
-mod image;
+mod image_hint;
 mod notification;
 mod server;
 
@@ -118,7 +118,7 @@ impl Notifications {
         if let Some(old) = replaced {
             notification.id = replaces_id;
 
-            image::remove(&old.image);
+            image_hint::remove(&old.image);
 
             *old = notification;
 
@@ -147,7 +147,7 @@ impl Notifications {
 
         let closed = self.list.remove(index);
 
-        image::remove(&closed.image);
+        image_hint::remove(&closed.image);
 
         server::announce_closed(id, reason);
     }
