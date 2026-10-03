@@ -14,7 +14,7 @@ mod weight;
 
 pub use cap::Cap;
 pub use color::Color;
-pub use geometry::Rect;
+pub use geometry::Area;
 pub use gpu::Gpu;
 pub use gradient::Gradient;
 pub use outline::Outline;

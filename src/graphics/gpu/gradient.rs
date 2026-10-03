@@ -2,20 +2,20 @@ use vello::Scene;
 use vello::kurbo::Point;
 use vello::peniko::{self, Fill};
 
-use crate::graphics::{BezierPath, Color, Gradient, Rect, Transform};
+use crate::graphics::{BezierPath, Color, Gradient, Area, Transform};
 
 use super::convert::{affine, bezier, paint};
 
 pub(super) fn fill(
     scene: &mut Scene,
     path: &BezierPath,
-    rect: Rect,
+    area: Area,
     transform: Transform,
     gradient: &Gradient,
 ) {
     let (shape, stops) = match gradient {
-        Gradient::Linear { angle, stops } => (linear(rect, *angle), stops),
-        Gradient::Radial { stops } => (radial(rect), stops),
+        Gradient::Linear { angle, stops } => (linear(area, *angle), stops),
+        Gradient::Radial { stops } => (radial(area), stops),
     };
 
     let brush = shape.with_stops(colors(stops).as_slice());
@@ -30,13 +30,13 @@ pub(super) fn fill(
 }
 
 // a line through the center, long enough that the first and last stops touch the corners
-fn linear(rect: Rect, angle: f32) -> peniko::Gradient {
+fn linear(area: Area, angle: f32) -> peniko::Gradient {
     let (sin, cos) = angle.to_radians().sin_cos();
 
-    let half_length = (rect.width * sin.abs() + rect.height * cos.abs()) / 2.0;
+    let half_length = (area.width * sin.abs() + area.height * cos.abs()) / 2.0;
 
-    let center_x = rect.x + rect.width / 2.0;
-    let center_y = rect.y + rect.height / 2.0;
+    let center_x = area.x + area.width / 2.0;
+    let center_y = area.y + area.height / 2.0;
 
     // y grows downward, so 0 degrees pointing up means going toward smaller y
     let step_x = sin * half_length;
@@ -48,10 +48,10 @@ fn linear(rect: Rect, angle: f32) -> peniko::Gradient {
     peniko::Gradient::new_linear(start, end)
 }
 
-fn radial(rect: Rect) -> peniko::Gradient {
-    let center = point(rect.x + rect.width / 2.0, rect.y + rect.height / 2.0);
+fn radial(area: Area) -> peniko::Gradient {
+    let center = point(area.x + area.width / 2.0, area.y + area.height / 2.0);
 
-    let radius = rect.width.hypot(rect.height) / 2.0;
+    let radius = area.width.hypot(area.height) / 2.0;
 
     peniko::Gradient::new_radial(center, radius)
 }

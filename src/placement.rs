@@ -1,4 +1,4 @@
-use crate::graphics::Rect;
+use crate::graphics::Area;
 
 // bare names for align and justify, so a view can say .justify(Center)
 
@@ -156,11 +156,11 @@ impl From<f32> for Size {
 
 impl Padding {
     // the area left once the padding is taken off every side
-    pub(crate) fn shrink(self, area: Rect) -> Rect {
+    pub(crate) fn shrink(self, area: Area) -> Area {
         let width = f32::max(area.width - self.left - self.right, 0.0);
         let height = f32::max(area.height - self.top - self.bottom, 0.0);
 
-        Rect::new(area.x + self.left, area.y + self.top, width, height)
+        Area::new(area.x + self.left, area.y + self.top, width, height)
     }
 }
 

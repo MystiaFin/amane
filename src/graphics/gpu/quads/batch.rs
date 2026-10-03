@@ -4,28 +4,28 @@ use ttf_parser::Face;
 
 use crate::graphics::gpu::picture;
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Color, Rect};
+use crate::graphics::{Color, Area};
 
 use super::clip::NO_CLIP;
 use super::pipeline::picture_group;
 use super::{Clips, LETTER, PICTURE, QUAD_SIZE, Quads, Run, SHAPE};
 
 impl Quads {
-    // rect and radius in canvas pixels
-    pub fn rectangle(&mut self, rect: Rect, radius: f32, color: Color, clips: Clips) {
-        self.push(rect, [radius, 0.0], color, clips, SHAPE, [0.0; 4], None);
+    // area and radius in canvas pixels
+    pub fn rectangle(&mut self, area: Area, radius: f32, color: Color, clips: Clips) {
+        self.push(area, [radius, 0.0], color, clips, SHAPE, [0.0; 4], None);
     }
 
     pub fn border(
         &mut self,
-        rect: Rect,
+        area: Area,
         radius: f32,
         thickness: f32,
         color: Color,
         clips: Clips,
     ) {
         self.push(
-            rect,
+            area,
             [radius, thickness],
             color,
             clips,
@@ -52,7 +52,7 @@ impl Quads {
             return;
         };
 
-        let rect = Rect::new(
+        let area = Area::new(
             x + letter.left,
             y + letter.top,
             letter.width as f32,
@@ -66,20 +66,20 @@ impl Quads {
             (letter.y + letter.height) as f32,
         ];
 
-        self.push(rect, [0.0; 2], color, clips, LETTER, texels, None);
+        self.push(area, [0.0; 2], color, clips, LETTER, texels, None);
     }
 
     pub fn forget(&mut self, picture: usize) {
         self.pictures.remove(&picture);
     }
 
-    // the whole image stretched over rect, which the clip usually trims
+    // the whole image stretched over area, which the clip usually trims
     pub fn picture(
         &mut self,
         device: &Device,
         queue: &Queue,
         image: &Bitmap,
-        rect: Rect,
+        area: Area,
         clips: Clips,
     ) {
         let key = std::ptr::from_ref(image) as usize;
@@ -95,7 +95,7 @@ impl Quads {
         let corners = [0.0, 0.0, 1.0, 1.0];
 
         self.push(
-            rect,
+            area,
             [0.0; 2],
             Color::WHITE,
             clips,
@@ -108,7 +108,7 @@ impl Quads {
     #[allow(clippy::too_many_arguments)]
     fn push(
         &mut self,
-        rect: Rect,
+        area: Area,
         [radius, thickness]: [f32; 2],
         color: Color,
         clips: Clips,
@@ -124,16 +124,16 @@ impl Quads {
         let index = (self.waiting.len() / QUAD_SIZE) as u32;
 
         // the fields of Quad in quads.wgsl, in the same order
-        let rect_row = [rect.x, rect.y, rect.width, rect.height];
-        let clip_row = [outer.rect.x, outer.rect.y, outer.rect.width, outer.rect.height];
+        let area_row = [area.x, area.y, area.width, area.height];
+        let clip_row = [outer.area.x, outer.area.y, outer.area.width, outer.area.height];
         let color_row = [channel(color.r), channel(color.g), channel(color.b), channel(color.a)];
         let shape_row = [radius, thickness, outer.radius, kind];
         let source_row = source;
-        let inner_clip_row = [inner.rect.x, inner.rect.y, inner.rect.width, inner.rect.height];
+        let inner_clip_row = [inner.area.x, inner.area.y, inner.area.width, inner.area.height];
         let inner_radius_row = [inner.radius, 0.0, 0.0, 0.0];
 
         let rows = [
-            rect_row,
+            area_row,
             clip_row,
             color_row,
             shape_row,

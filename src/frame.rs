@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use crate::Widget;
 use crate::animation::moving;
 use crate::changes;
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::input::Target;
 
 // one window's frame: what the gpu draws, and where the widgets take the pointer
@@ -65,11 +65,11 @@ pub fn build(root: &dyn Widget, width: u32, height: u32, scale: f32) -> Frame {
 }
 
 // the root at its own size, from the window's top left corner
-fn root_area(root: &dyn Widget, width: u32, height: u32) -> Rect {
+fn root_area(root: &dyn Widget, width: u32, height: u32) -> Area {
     let root_width = root.width().resolve(width as f32);
     let root_height = root.height().resolve(height as f32);
 
-    Rect::new(0.0, 0.0, root_width, root_height)
+    Area::new(0.0, 0.0, root_width, root_height)
 }
 
 #[cfg(test)]
@@ -78,7 +78,7 @@ mod tests {
     use crate::{Center, Column, End, Justify, Parent, Rectangle, Row, Stack, children};
 
     // where each rectangle landed, in the order the tree lists them
-    fn areas(root: &dyn Widget, width: u32, height: u32) -> Vec<Rect> {
+    fn areas(root: &dyn Widget, width: u32, height: u32) -> Vec<Area> {
         let frame = build(root, width, height, 1.0);
 
         let mut areas = Vec::new();
@@ -104,8 +104,8 @@ mod tests {
 
         let placed = areas(&row, 400, 50);
 
-        assert_eq!(placed[0], Rect::new(0.0, 0.0, 100.0, 20.0));
-        assert_eq!(placed[1], Rect::new(100.0, 0.0, 300.0, 20.0));
+        assert_eq!(placed[0], Area::new(0.0, 0.0, 100.0, 20.0));
+        assert_eq!(placed[1], Area::new(100.0, 0.0, 300.0, 20.0));
     }
 
     #[test]
@@ -119,8 +119,8 @@ mod tests {
         let placed = areas(&centered, 30, 100);
 
         // 80 free pixels, half of them above the first child; End pushes them right
-        assert_eq!(placed[0], Rect::new(20.0, 40.0, 10.0, 10.0));
-        assert_eq!(placed[1], Rect::new(20.0, 50.0, 10.0, 10.0));
+        assert_eq!(placed[0], Area::new(20.0, 40.0, 10.0, 10.0));
+        assert_eq!(placed[1], Area::new(20.0, 50.0, 10.0, 10.0));
 
         let spread = Row::new(children![block(10.0, 10.0), block(10.0, 10.0), block(10.0, 10.0)])
             .width(Parent)
@@ -138,8 +138,8 @@ mod tests {
 
         let placed = areas(&stack, 200, 200);
 
-        assert_eq!(placed[0], Rect::new(0.0, 0.0, 50.0, 50.0));
-        assert_eq!(placed[1], Rect::new(0.0, 0.0, 20.0, 30.0));
+        assert_eq!(placed[0], Area::new(0.0, 0.0, 50.0, 50.0));
+        assert_eq!(placed[1], Area::new(0.0, 0.0, 20.0, 30.0));
     }
 
     #[test]
@@ -151,10 +151,10 @@ mod tests {
 
         let placed = areas(&card, 100, 60);
 
-        assert_eq!(placed[0], Rect::new(0.0, 0.0, 100.0, 60.0));
+        assert_eq!(placed[0], Area::new(0.0, 0.0, 100.0, 60.0));
 
         // 80 by 40 inside the padding: centered across, at the bottom down
-        assert_eq!(placed[1], Rect::new(40.0, 30.0, 20.0, 20.0));
+        assert_eq!(placed[1], Area::new(40.0, 30.0, 20.0, 20.0));
     }
 
     // like a rectangle whose shader reads time
@@ -169,7 +169,7 @@ mod tests {
             Parent
         }
 
-        fn draw(&self, _: &mut Renderer, _: Rect) {
+        fn draw(&self, _: &mut Renderer, _: Area) {
             moving::set();
         }
     }

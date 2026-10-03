@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use ttf_parser::Face;
 
-use crate::graphics::{BezierPath, Cap, Color, Gradient, Rect, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Gradient, Area, Transform};
 
 pub enum Command {
     // one letter as a picture, at a whole device pixel; x and y are where its baseline starts
@@ -19,7 +19,7 @@ pub enum Command {
 
     // a rounded rectangle, kept as one so the gpu can draw it without tracing its outline
     Rectangle {
-        rect: Rect,
+        area: Area,
         radius: f32,
         transform: Transform,
         color: Color,
@@ -27,7 +27,7 @@ pub enum Command {
 
     // a line along the inside edge of a rounded rectangle
     Border {
-        rect: Rect,
+        area: Area,
         radius: f32,
         thickness: f32,
         transform: Transform,
@@ -40,10 +40,10 @@ pub enum Command {
         color: Color,
     },
 
-    // the rect says where the gradient starts and ends
+    // the area says where the gradient starts and ends
     Gradient {
         path: BezierPath,
-        rect: Rect,
+        area: Area,
         transform: Transform,
         gradient: Gradient,
     },
@@ -61,14 +61,14 @@ pub enum Command {
     Image {
         image: Arc<Bitmap>,
         transform: Transform,
-        rect: Rect,
+        area: Area,
         radius: f32,
         clip_transform: Transform,
     },
 
     // a soft copy of the rounded rectangle, blur is in logical pixels
     Shadow {
-        rect: Rect,
+        area: Area,
         radius: f32,
         transform: Transform,
         color: Color,
@@ -78,18 +78,18 @@ pub enum Command {
     // the color inside the clip path, fading out toward the rounded hole
     InnerShadow {
         clip: BezierPath,
-        hole: Rect,
+        hole: Area,
         radius: f32,
         transform: Transform,
         color: Color,
         blur: f32,
     },
 
-    // a custom shader run over the rect, trimmed to the path when it has one; values are passed to it
+    // a custom shader run over the area, trimmed to the path when it has one; values are passed to it
     Shader {
         shader: PathBuf,
         values: Vec<[f32; 4]>,
-        rect: Rect,
+        area: Area,
         path: Option<BezierPath>,
         transform: Transform,
     },
@@ -116,7 +116,7 @@ pub enum Command {
 
     // commands that only show inside the rounded rectangle
     Clip {
-        rect: Rect,
+        area: Area,
         radius: f32,
         transform: Transform,
         commands: Vec<Command>,

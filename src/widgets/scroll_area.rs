@@ -2,7 +2,7 @@ mod targets;
 mod offsets;
 
 use crate::Size;
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::input::Target;
 
 use super::Widget;
@@ -40,20 +40,20 @@ impl ScrollArea {
     }
 
     // how far the child can move up before its bottom edge meets the area's
-    fn farthest(&self, area: Rect) -> f32 {
+    fn farthest(&self, area: Area) -> f32 {
         let content = self.child.height().resolve(area.height);
 
         f32::max(content - area.height, 0.0)
     }
 
     // the child at its full size, moved up by the offset
-    fn child_area(&self, area: Rect) -> Rect {
+    fn child_area(&self, area: Area) -> Area {
         let offset = offsets::get(self.id).clamp(0.0, self.farthest(area));
 
         let width = self.child.width().resolve(area.width);
         let height = self.child.height().resolve(area.height);
 
-        Rect::new(area.x, area.y - offset, width, height)
+        Area::new(area.x, area.y - offset, width, height)
     }
 }
 
@@ -66,7 +66,7 @@ impl Widget for ScrollArea {
         self.height
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         let mut inside = renderer.group();
 
         self.child.draw(&mut inside, self.child_area(area));
@@ -74,7 +74,7 @@ impl Widget for ScrollArea {
         renderer.clip(inside, area, 0.0);
     }
 
-    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+    fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {
         targets::collect_targets(self, area, targets);
     }
 }

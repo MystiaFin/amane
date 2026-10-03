@@ -2,7 +2,7 @@ mod lines;
 
 use ttf_parser::Face;
 
-use crate::graphics::{Rect, Renderer, font};
+use crate::graphics::{Area, Renderer, font};
 use crate::{Color, Size, Weight};
 
 use super::Widget;
@@ -126,14 +126,14 @@ impl Widget for Text {
         Size::Fixed(lines::stack_height(self.face(), self.size, count))
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         let font = self.face();
 
         // the ink starts at the area's left edge, not the pen
         let area = if self.tight {
             let (left, _) = lines::ink(&self.content, font, self.size);
 
-            Rect::new(area.x - left, area.y, area.width, area.height)
+            Area::new(area.x - left, area.y, area.width, area.height)
         } else {
             area
         };
@@ -146,7 +146,7 @@ impl Widget for Text {
         let mut top = area.y;
 
         for line in arranged {
-            let line_area = Rect::new(area.x, top, area.width, line_height);
+            let line_area = Area::new(area.x, top, area.width, line_height);
 
             renderer.text(&line, font, self.size, self.color, line_area);
 

@@ -1,4 +1,4 @@
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::input::Target;
 use crate::{Size, Widget};
 
@@ -38,11 +38,11 @@ impl Stack {
         self
     }
 
-    fn child_area(child: &dyn Widget, area: Rect) -> Rect {
+    fn child_area(child: &dyn Widget, area: Area) -> Area {
         let width = child.width().resolve(area.width);
         let height = child.height().resolve(area.height);
 
-        Rect::new(area.x, area.y, width, height)
+        Area::new(area.x, area.y, width, height)
     }
 }
 
@@ -61,14 +61,14 @@ impl Widget for Stack {
         self.height.unwrap_or(tallest)
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         for child in &self.children {
             child.draw(renderer, Self::child_area(child.as_ref(), area));
         }
     }
 
     // later children add their targets later, so the one on top wins
-    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+    fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {
         for child in &self.children {
             child.collect_targets(Self::child_area(child.as_ref(), area), targets);
         }

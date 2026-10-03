@@ -1,5 +1,5 @@
 use crate::Color;
-use crate::graphics::Rect;
+use crate::graphics::Area;
 
 pub struct Shadow {
     pub(crate) color: Color,
@@ -75,7 +75,7 @@ impl Shadow {
         )
     }
 
-    pub(crate) fn place(&self, area: Rect) -> Rect {
-        Rect::new(area.x + self.x, area.y + self.y, area.width, area.height)
+    pub(crate) fn place(&self, area: Area) -> Area {
+        Area::new(area.x + self.x, area.y + self.y, area.width, area.height)
     }
 }

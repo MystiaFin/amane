@@ -4,7 +4,7 @@ mod targets;
 
 use std::rc::Rc;
 
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::input::{Target, focus};
 use crate::{Color, Size, Text};
 
@@ -125,13 +125,13 @@ impl TextInput {
         Text::new(content).size(self.size).color(color)
     }
 
-    fn draw_cursor(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw_cursor(&self, renderer: &mut Renderer, area: Area) {
         let field = fields::get(self.id);
 
         let before = self.label(self.shown(&field.before_cursor()), self.color);
         let offset = before.width().resolve(area.width);
 
-        let cursor = Rect::new(area.x + offset, area.y, CURSOR_WIDTH, area.height);
+        let cursor = Area::new(area.x + offset, area.y, CURSOR_WIDTH, area.height);
 
         renderer.rectangle(cursor, self.color, 0.0);
     }
@@ -146,7 +146,7 @@ impl Widget for TextInput {
         self.label("", self.color).height()
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         let text = fields::get(self.id).text;
 
         // the placeholder is the text color at half strength
@@ -170,7 +170,7 @@ impl Widget for TextInput {
         renderer.clip(inside, area, 0.0);
     }
 
-    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+    fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {
         targets::collect_targets(self, area, targets);
     }
 }

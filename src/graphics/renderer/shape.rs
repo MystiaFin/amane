@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::{BezierPath, Cap, Color, Gradient, Rect, Renderer, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Gradient, Area, Renderer, Transform};
 
 use super::Command;
 
 impl Renderer {
-    pub fn rectangle(&mut self, rect: Rect, color: Color, radius: f32) {
+    pub fn rectangle(&mut self, area: Area, color: Color, radius: f32) {
         /*
          * an invisible fill still counts as drawing, and one before a shader
          * makes the gpu run a whole extra drawing pass each frame
@@ -15,30 +15,30 @@ impl Renderer {
             return;
         }
 
-        if rect.width <= 0.0 || rect.height <= 0.0 {
+        if area.width <= 0.0 || area.height <= 0.0 {
             return;
         }
 
         self.commands.push(Command::Rectangle {
-            rect,
+            area,
             radius,
             transform: self.transform,
             color,
         });
     }
 
-    pub fn border(&mut self, rect: Rect, radius: f32, thickness: f32, color: Color) {
+    pub fn border(&mut self, area: Area, radius: f32, thickness: f32, color: Color) {
         // a zero width line would still draw as a hairline
         if thickness == 0.0 || color.a == 0 {
             return;
         }
 
-        if rect.width <= 0.0 || rect.height <= 0.0 {
+        if area.width <= 0.0 || area.height <= 0.0 {
             return;
         }
 
         self.commands.push(Command::Border {
-            rect,
+            area,
             radius,
             thickness,
             transform: self.transform,
@@ -47,22 +47,22 @@ impl Renderer {
     }
 
     // the gradient spreads across the rectangle, not the whole window
-    pub fn gradient(&mut self, rect: Rect, gradient: &Gradient, radius: f32) {
-        let Some(path) = rect.trace(radius) else {
+    pub fn gradient(&mut self, area: Area, gradient: &Gradient, radius: f32) {
+        let Some(path) = area.trace(radius) else {
             return;
         };
 
         self.commands.push(Command::Gradient {
             path,
-            rect,
+            area,
             transform: self.transform,
             gradient: gradient.clone(),
         });
     }
 
-    pub fn image(&mut self, rect: Rect, radius: f32, image: Arc<Bitmap>, placement: Rect) {
+    pub fn image(&mut self, area: Area, radius: f32, image: Arc<Bitmap>, placement: Area) {
         // an empty rectangle shows none of the image
-        if rect.width <= 0.0 || rect.height <= 0.0 {
+        if area.width <= 0.0 || area.height <= 0.0 {
             return;
         }
 
@@ -84,14 +84,14 @@ impl Renderer {
         self.commands.push(Command::Image {
             image,
             transform,
-            rect,
+            area,
             radius,
             clip_transform: self.transform,
         });
     }
 
     // the path is in the area's own coordinates, with 0,0 at its top left corner
-    pub fn fill_path(&mut self, path: &BezierPath, area: Rect, color: Color) {
+    pub fn fill_path(&mut self, path: &BezierPath, area: Area, color: Color) {
         self.commands.push(Command::Fill {
             path: path.clone(),
             transform: self.inside(area),
@@ -102,7 +102,7 @@ impl Renderer {
     pub fn stroke_path(
         &mut self,
         path: &BezierPath,
-        area: Rect,
+        area: Area,
         thickness: f32,
         color: Color,
         cap: Cap,
@@ -117,7 +117,7 @@ impl Renderer {
     }
 
     // moves the path to where the area sits before scaling it like everything else
-    fn inside(&self, area: Rect) -> Transform {
+    fn inside(&self, area: Area) -> Transform {
         let offset = Transform::from_row(1.0, 0.0, 0.0, 1.0, area.x, area.y);
 
         offset.post_concat(self.transform)

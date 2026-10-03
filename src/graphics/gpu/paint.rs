@@ -4,7 +4,7 @@ use vello::peniko::{Fill, ImageData, Mix};
 use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
-use crate::graphics::{Rect, Transform};
+use crate::graphics::{Area, Transform};
 
 use super::convert::bezier;
 use super::quads::{Clip, Clips};
@@ -101,10 +101,10 @@ impl Gpu {
             Command::Shader {
                 shader,
                 values,
-                rect,
+                area,
                 path,
                 transform,
-            } => self.shade(canvas, &shader, &values, rect, path.as_ref(), transform),
+            } => self.shade(canvas, &shader, &values, area, path.as_ref(), transform),
 
             _ => unreachable!("only blurs, cuts and shaders change the canvas"),
         }
@@ -120,11 +120,11 @@ impl Gpu {
             Command::Group { commands, opacity } => (commands, opacity, None),
 
             Command::Clip {
-                rect,
+                area,
                 radius,
                 transform,
                 commands,
-            } => (commands, 1.0, Some((rect, radius, transform))),
+            } => (commands, 1.0, Some((area, radius, transform))),
 
             _ => unreachable!("only groups and clips are drawn on their own canvas"),
         };
@@ -133,8 +133,8 @@ impl Gpu {
 
         self.run_clipped(commands, &own, clips);
 
-        if let Some((rect, radius, transform)) = clipped_to
-            && let Some(path) = rect.trace(radius)
+        if let Some((area, radius, transform)) = clipped_to
+            && let Some(path) = area.trace(radius)
         {
             self.trim(&own, &path, transform);
         }
@@ -148,20 +148,20 @@ impl Gpu {
     fn add_to_quads(&mut self, command: Command, clips: Clips) {
         match command {
             Command::Rectangle {
-                rect,
+                area,
                 radius,
                 transform,
                 color,
             } => {
                 let scale = transform.even_scale().unwrap_or(1.0);
 
-                let rect = device_rect(rect, transform);
+                let area = device_area(area, transform);
 
-                self.quads.rectangle(rect, radius * scale, color, clips);
+                self.quads.rectangle(area, radius * scale, color, clips);
             }
 
             Command::Border {
-                rect,
+                area,
                 radius,
                 thickness,
                 transform,
@@ -169,10 +169,10 @@ impl Gpu {
             } => {
                 let scale = transform.even_scale().unwrap_or(1.0);
 
-                let rect = device_rect(rect, transform);
+                let area = device_area(area, transform);
 
                 self.quads
-                    .border(rect, radius * scale, thickness * scale, color, clips);
+                    .border(area, radius * scale, thickness * scale, color, clips);
             }
 
             Command::Glyph {
@@ -189,7 +189,7 @@ impl Gpu {
             Command::Image {
                 image,
                 transform,
-                rect,
+                area,
                 radius,
                 clip_transform,
                 ..
@@ -197,11 +197,11 @@ impl Gpu {
                 self.note_shown(&image);
 
                 // the image's own pixels, stretched by its transform onto the canvas
-                let size = Rect::new(0.0, 0.0, image.width() as f32, image.height() as f32);
+                let size = Area::new(0.0, 0.0, image.width() as f32, image.height() as f32);
 
-                let placement = device_rect(size, transform);
+                let placement = device_area(size, transform);
 
-                let shape = device_clip(rect, radius, clip_transform);
+                let shape = device_clip(area, radius, clip_transform);
 
                 let clips = match shape {
                     Some(shape) => clips.within(shape),
@@ -242,7 +242,7 @@ impl Gpu {
 
         for clip in [clips.outer, clips.inner].into_iter().flatten() {
             // an empty clip shows nothing of what is inside it
-            let Some(path) = clip.rect.trace(clip.radius) else {
+            let Some(path) = clip.area.trace(clip.radius) else {
                 return;
             };
 
@@ -300,11 +300,11 @@ fn route(command: &Command) -> Route {
         Command::Clip { commands, .. } if needs_own_canvas(commands) => Route::OwnCanvas,
 
         Command::Clip {
-            rect,
+            area,
             radius,
             transform,
             ..
-        } => match device_clip(*rect, *radius, *transform) {
+        } => match device_clip(*area, *radius, *transform) {
             Some(clip) => Route::QuadClip(clip),
 
             // a rotated clip is left to vello, with everything inside it
@@ -358,20 +358,20 @@ fn straight(transform: Transform) -> bool {
     !turned && !flipped
 }
 
-fn device_rect(rect: Rect, transform: Transform) -> Rect {
-    Rect::new(
-        rect.x * transform.sx + transform.tx,
-        rect.y * transform.sy + transform.ty,
-        rect.width * transform.sx,
-        rect.height * transform.sy,
+fn device_area(area: Area, transform: Transform) -> Area {
+    Area::new(
+        area.x * transform.sx + transform.tx,
+        area.y * transform.sy + transform.ty,
+        area.width * transform.sx,
+        area.height * transform.sy,
     )
 }
 
-fn device_clip(rect: Rect, radius: f32, transform: Transform) -> Option<Clip> {
+fn device_clip(area: Area, radius: f32, transform: Transform) -> Option<Clip> {
     let scale = transform.even_scale()?;
 
     Some(Clip {
-        rect: device_rect(rect, transform),
+        area: device_area(area, transform),
         radius: radius * scale,
     })
 }

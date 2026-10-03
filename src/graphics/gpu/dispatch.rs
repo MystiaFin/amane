@@ -10,19 +10,19 @@ impl Gpu {
     pub(super) fn add(&mut self, scene: &mut Scene, command: Command, canvas: &Texture) {
         match command {
             Command::Rectangle {
-                rect,
+                area,
                 radius,
                 transform,
                 color,
-            } => shape::rectangle(scene, rect, radius, transform, color),
+            } => shape::rectangle(scene, area, radius, transform, color),
 
             Command::Border {
-                rect,
+                area,
                 radius,
                 thickness,
                 transform,
                 color,
-            } => shape::border(scene, rect, radius, thickness, transform, color),
+            } => shape::border(scene, area, radius, thickness, transform, color),
 
             Command::Glyph {
                 face,
@@ -41,10 +41,10 @@ impl Gpu {
 
             Command::Gradient {
                 path,
-                rect,
+                area,
                 transform,
                 gradient,
-            } => gradient::fill(scene, &path, rect, transform, &gradient),
+            } => gradient::fill(scene, &path, area, transform, &gradient),
 
             Command::Stroke {
                 path,
@@ -57,18 +57,18 @@ impl Gpu {
             Command::Image {
                 image,
                 transform,
-                rect,
+                area,
                 radius,
                 clip_transform,
-            } => self.draw_image(scene, image, transform, rect, radius, clip_transform),
+            } => self.draw_image(scene, image, transform, area, radius, clip_transform),
 
             Command::Shadow {
-                rect,
+                area,
                 radius,
                 transform,
                 color,
                 blur,
-            } => shadow::drop_shadow(scene, rect, radius, transform, color, blur),
+            } => shadow::drop_shadow(scene, area, radius, transform, color, blur),
 
             Command::InnerShadow {
                 clip,
@@ -82,11 +82,11 @@ impl Gpu {
             Command::Group { commands, opacity } => self.group(scene, commands, opacity, canvas),
 
             Command::Clip {
-                rect,
+                area,
                 radius,
                 transform,
                 commands,
-            } => self.clip(scene, rect, radius, transform, commands, canvas),
+            } => self.clip(scene, area, radius, transform, commands, canvas),
 
             // blurs, cuts and shaders split the drawing, so run handles them before they get here
             Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => {}

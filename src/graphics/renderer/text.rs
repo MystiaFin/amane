@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use ttf_parser::{Face, GlyphId};
 
-use crate::graphics::{BezierPath, Color, Outline, Rect, Renderer, Transform, font};
+use crate::graphics::{BezierPath, Color, Outline, Area, Renderer, Transform, font};
 
 use super::Command;
 
@@ -27,7 +27,7 @@ impl Renderer {
         font: &'static Face<'static>,
         size: f32,
         color: Color,
-        area: Rect,
+        area: Area,
     ) {
         match self.transform.even_scale() {
             Some(scale) => self.text_pictures(content, font, size * scale, color, area),
@@ -45,7 +45,7 @@ impl Renderer {
         font: &'static Face<'static>,
         pixel_size: f32,
         color: Color,
-        area: Rect,
+        area: Area,
     ) {
         let units = pixel_size / f32::from(font.units_per_em());
 
@@ -74,7 +74,7 @@ impl Renderer {
         }
     }
 
-    fn text_outlines(&mut self, content: &str, font: &Face, size: f32, color: Color, area: Rect) {
+    fn text_outlines(&mut self, content: &str, font: &Face, size: f32, color: Color, area: Area) {
         // fonts measure in their own units, this turns them into pixels
         let units = size / f32::from(font.units_per_em());
 

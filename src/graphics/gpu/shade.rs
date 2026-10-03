@@ -8,7 +8,7 @@ use vello::wgpu::{
     RenderPassColorAttachment, RenderPassDescriptor, StoreOp, Texture,
 };
 
-use crate::graphics::{self, Rect, Transform, VALUE_ROWS};
+use crate::graphics::{self, Area, Transform, VALUE_ROWS};
 
 use super::shader::Shader;
 use super::{Gpu, texture};
@@ -28,19 +28,19 @@ impl Gpu {
         canvas: &Texture,
         shader: &Path,
         values: &[[f32; 4]],
-        rect: Rect,
+        area: Area,
         outline: Option<&graphics::BezierPath>,
         transform: Transform,
     ) {
         let Some(outline) = outline else {
-            self.draw_shader(canvas, shader, values, rect, transform);
+            self.draw_shader(canvas, shader, values, area, transform);
 
             return;
         };
 
         let layer = self.take_canvas(canvas.width(), canvas.height());
 
-        self.draw_shader(&layer, shader, values, rect, transform);
+        self.draw_shader(&layer, shader, values, area, transform);
 
         self.trim(&layer, outline, transform);
 
@@ -54,7 +54,7 @@ impl Gpu {
         layer: &Texture,
         shader: &Path,
         values: &[[f32; 4]],
-        rect: Rect,
+        area: Area,
         transform: Transform,
     ) {
         // compiled the first time a path is drawn, then kept
@@ -68,11 +68,11 @@ impl Gpu {
 
         let time = START.elapsed().as_secs_f32();
 
-        let size = self.uniform([rect.width, rect.height, 0.0, 0.0]);
+        let size = self.uniform([area.width, area.height, 0.0, 0.0]);
         let time = self.uniform([time, 0.0, 0.0, 0.0]);
 
         let placement = self.uniform_rows([
-            [rect.x, rect.y, rect.width, rect.height],
+            [area.x, area.y, area.width, area.height],
             [transform.sx, transform.kx, transform.tx, 0.0],
             [transform.ky, transform.sy, transform.ty, 0.0],
             [layer.width() as f32, layer.height() as f32, 0.0, 0.0],

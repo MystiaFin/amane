@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::graphics::{Rect, image};
+use crate::graphics::{Area, image};
 
 pub struct Image {
     pub(crate) path: PathBuf,
@@ -86,7 +86,7 @@ impl Image {
 }
 
 impl Fit {
-    pub fn place(self, area: Rect, image_width: f32, image_height: f32) -> Rect {
+    pub fn place(self, area: Area, image_width: f32, image_height: f32) -> Area {
         let horizontal_scale = area.width / image_width;
         let vertical_scale = area.height / image_height;
 
@@ -102,6 +102,6 @@ impl Fit {
         let x = area.x + (area.width - width) / 2.0;
         let y = area.y + (area.height - height) / 2.0;
 
-        Rect::new(x, y, width, height)
+        Area::new(x, y, width, height)
     }
 }

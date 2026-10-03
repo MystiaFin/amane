@@ -2,13 +2,13 @@ use vello::Scene;
 use vello::kurbo;
 use vello::peniko::{self, Compose, Fill, Mix};
 
-use crate::graphics::{BezierPath, Color, Rect, Transform};
+use crate::graphics::{BezierPath, Color, Area, Transform};
 
 use super::convert::{affine, bezier, paint};
 
 pub(super) fn drop_shadow(
     scene: &mut Scene,
-    rect: Rect,
+    area: Area,
     radius: f32,
     transform: Transform,
     color: Color,
@@ -16,7 +16,7 @@ pub(super) fn drop_shadow(
 ) {
     scene.draw_blurred_rounded_rect(
         affine(transform),
-        rounded(rect),
+        rounded(area),
         paint(color),
         f64::from(radius),
         deviation(blur),
@@ -26,7 +26,7 @@ pub(super) fn drop_shadow(
 pub(super) fn inner_shadow(
     scene: &mut Scene,
     clip: &BezierPath,
-    hole: Rect,
+    hole: Area,
     radius: f32,
     transform: Transform,
     color: Color,
@@ -57,13 +57,13 @@ pub(super) fn inner_shadow(
     scene.pop_layer();
 }
 
-fn rounded(rect: Rect) -> kurbo::Rect {
-    let right = rect.x + rect.width;
-    let bottom = rect.y + rect.height;
+fn rounded(area: Area) -> kurbo::Rect {
+    let right = area.x + area.width;
+    let bottom = area.y + area.height;
 
     kurbo::Rect::new(
-        f64::from(rect.x),
-        f64::from(rect.y),
+        f64::from(area.x),
+        f64::from(area.y),
         f64::from(right),
         f64::from(bottom),
     )

@@ -1,4 +1,4 @@
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::input::Target;
 use crate::{Align, Justify, Size};
 
@@ -56,11 +56,11 @@ impl Widget for Column {
         self.layout.height()
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         self.layout.draw(renderer, area);
     }
 
-    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+    fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {
         self.layout.collect_targets(area, targets);
     }
 }

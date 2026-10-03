@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
 use crate::Scroll;
-use crate::graphics::Rect;
+use crate::graphics::Area;
 use crate::input::{Handlers, PIXELS_PER_LINE, Target, clip};
 
 use super::{ScrollArea, offsets};
 
-pub fn collect_targets(scroll_area: &ScrollArea, area: Rect, targets: &mut Vec<Target>) {
+pub fn collect_targets(scroll_area: &ScrollArea, area: Area, targets: &mut Vec<Target>) {
     let id = scroll_area.id;
     let farthest = scroll_area.farthest(area);
 

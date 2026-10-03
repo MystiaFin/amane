@@ -1,4 +1,4 @@
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::{Color, Shape, Size, Widget};
 
 // draws its shapes in its own coordinates, with 0,0 at its top left corner
@@ -55,14 +55,14 @@ impl Widget for Canvas {
         self.height
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         for shape in &self.shapes {
             paint(shape.as_ref(), renderer, area);
         }
     }
 }
 
-fn paint(shape: &dyn Shape, renderer: &mut Renderer, area: Rect) {
+fn paint(shape: &dyn Shape, renderer: &mut Renderer, area: Area) {
     let Some(path) = shape.trace(area.width, area.height) else {
         return;
     };

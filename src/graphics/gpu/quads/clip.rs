@@ -1,15 +1,15 @@
-use crate::graphics::Rect;
+use crate::graphics::Area;
 
 // nothing clips: far bigger than any canvas
 pub const NO_CLIP: Clip = Clip {
-    rect: Rect::new(-1.0e6, -1.0e6, 2.0e6, 2.0e6),
+    area: Area::new(-1.0e6, -1.0e6, 2.0e6, 2.0e6),
     radius: 0.0,
 };
 
 // a rounded rectangle on the canvas that quads only show inside
 #[derive(Clone, Copy)]
 pub struct Clip {
-    pub rect: Rect,
+    pub area: Area,
     pub radius: f32,
 }
 
@@ -49,7 +49,7 @@ impl Clips {
  */
 fn narrow(outer: Clip, inner: Clip) -> Clip {
     Clip {
-        rect: outer.rect.intersect(inner.rect),
+        area: outer.area.intersect(inner.area),
         radius: inner.radius,
     }
 }

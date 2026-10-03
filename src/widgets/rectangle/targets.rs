@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::graphics::Rect;
+use crate::graphics::Area;
 use crate::input::{Cursor, Target, clip};
 use crate::{Button, Point, Rectangle, Scroll};
 
@@ -51,7 +51,7 @@ impl Rectangle {
     }
 }
 
-pub fn collect_targets(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Target>) {
+pub fn collect_targets(rectangle: &Rectangle, area: Area, targets: &mut Vec<Target>) {
     let first = targets.len();
 
     collect_in_place(rectangle, area, targets);
@@ -61,7 +61,7 @@ pub fn collect_targets(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Targ
     // a rectangle scaled to nothing takes no input
     let Some(inverse) = local.invert() else {
         for target in &mut targets[first..] {
-            target.area = Rect::new(0.0, 0.0, 0.0, 0.0);
+            target.area = Area::new(0.0, 0.0, 0.0, 0.0);
         }
 
         return;
@@ -74,7 +74,7 @@ pub fn collect_targets(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Targ
 }
 
 // the hit areas as if the rectangle were not rotated, scaled or moved
-fn collect_in_place(rectangle: &Rectangle, area: Rect, targets: &mut Vec<Target>) {
+fn collect_in_place(rectangle: &Rectangle, area: Area, targets: &mut Vec<Target>) {
     let target = Target::new(area, rectangle.handlers.clone());
 
     // added before the child, so the child wins where both react to the same thing

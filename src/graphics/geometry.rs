@@ -1,14 +1,14 @@
 use super::{BezierPath, PathBuilder};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Rect {
+pub struct Area {
     pub x: f32,
     pub y: f32,
     pub width: f32,
     pub height: f32,
 }
 
-impl Rect {
+impl Area {
     pub const fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
         Self {
             x,
@@ -29,7 +29,7 @@ impl Rect {
     }
 
     // the part both rectangles cover, empty when they don't meet
-    pub fn intersect(self, other: Rect) -> Rect {
+    pub fn intersect(self, other: Area) -> Area {
         let left = f32::max(self.x, other.x);
         let top = f32::max(self.y, other.y);
         let right = f32::min(self.x + self.width, other.x + other.width);
@@ -38,7 +38,7 @@ impl Rect {
         let width = f32::max(right - left, 0.0);
         let height = f32::max(bottom - top, 0.0);
 
-        Rect::new(left, top, width, height)
+        Area::new(left, top, width, height)
     }
 
     pub fn trace(self, radius: f32) -> Option<BezierPath> {

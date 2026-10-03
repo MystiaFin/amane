@@ -1,6 +1,6 @@
 pub mod measure;
 
-use crate::graphics::{Rect, Renderer};
+use crate::graphics::{Area, Renderer};
 use crate::input::Target;
 use crate::{Align, Justify, Size};
 
@@ -74,7 +74,7 @@ impl Layout {
     }
 
     // the area's length along the direction, then its length across it
-    fn span(&self, area: Rect) -> (f32, f32) {
+    fn span(&self, area: Area) -> (f32, f32) {
         match self.direction {
             Direction::Row => (area.width, area.height),
             Direction::Column => (area.height, area.width),
@@ -82,7 +82,7 @@ impl Layout {
     }
 
     // the space each Parent-sized child gets: what the fixed children leave, split evenly
-    fn share(&self, area: Rect) -> f32 {
+    fn share(&self, area: Area) -> f32 {
         let mut used = measure::gaps(&self.children, self.gap);
         let mut filling = 0;
 
@@ -103,7 +103,7 @@ impl Layout {
     }
 
     // where each child goes, one after another along the direction
-    fn place(&self, area: Rect) -> Vec<Rect> {
+    fn place(&self, area: Area) -> Vec<Area> {
         let share = self.share(area);
         let (available, room) = self.span(area);
 
@@ -137,7 +137,7 @@ impl Layout {
                 Direction::Column => (area.x + offset, area.y + current, thickness, length),
             };
 
-            child_areas.push(Rect::new(x, y, width, height));
+            child_areas.push(Area::new(x, y, width, height));
 
             current += length + gap;
         }
@@ -155,7 +155,7 @@ impl Widget for Layout {
         self.height.unwrap_or(self.measured_height)
     }
 
-    fn draw(&self, renderer: &mut Renderer, area: Rect) {
+    fn draw(&self, renderer: &mut Renderer, area: Area) {
         let child_areas = self.place(area);
 
         for (child, child_area) in self.children.iter().zip(child_areas) {
@@ -163,7 +163,7 @@ impl Widget for Layout {
         }
     }
 
-    fn collect_targets(&self, area: Rect, targets: &mut Vec<Target>) {
+    fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {
         let child_areas = self.place(area);
 
         for (child, child_area) in self.children.iter().zip(child_areas) {

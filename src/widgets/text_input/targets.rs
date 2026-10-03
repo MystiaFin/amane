@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
-use crate::graphics::Rect;
+use crate::graphics::Area;
 use crate::input::{Cursor, Handlers, KeyHandler, Target, focus};
 use crate::{Button, Key};
 
 use super::{TextHandler, TextInput, fields};
 
-pub fn collect_targets(text_input: &TextInput, area: Rect, targets: &mut Vec<Target>) {
+pub fn collect_targets(text_input: &TextInput, area: Area, targets: &mut Vec<Target>) {
     let id = text_input.id;
     let on_key = key_handler(text_input);
 

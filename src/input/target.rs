@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::graphics::{Rect, Transform};
+use crate::graphics::{Area, Transform};
 use crate::{Button, Cursor, Key, Point, Scroll};
 
 /*
@@ -27,7 +27,7 @@ pub struct Handlers {
 
 // where a widget was drawn, and what it does when the pointer uses that spot
 pub struct Target {
-    pub area: Rect,
+    pub area: Area,
     pub handlers: Handlers,
 
     // turns a window position into the area's own space, undoing rotated, scaled or moved parents
@@ -35,7 +35,7 @@ pub struct Target {
 }
 
 impl Target {
-    pub fn new(area: Rect, handlers: Handlers) -> Self {
+    pub fn new(area: Area, handlers: Handlers) -> Self {
         Self {
             area,
             handlers,
@@ -64,7 +64,7 @@ impl Target {
  * a target that is clipped only reacts where it still shows,
  * the ones fully clipped out stay in the list so positions don't shift
  */
-pub fn clip(targets: &mut [Target], area: Rect) {
+pub fn clip(targets: &mut [Target], area: Area) {
     for target in targets {
         target.area = target.area.intersect(area);
     }

@@ -4,7 +4,7 @@ use vello::peniko::{Fill, Mix};
 use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
-use crate::graphics::{BezierPath, Color, Rect, Transform};
+use crate::graphics::{BezierPath, Color, Area, Transform};
 
 use super::Gpu;
 use super::convert::{affine, bezier, paint};
@@ -14,13 +14,13 @@ impl Gpu {
     pub(super) fn clip(
         &mut self,
         scene: &mut Scene,
-        rect: Rect,
+        area: Area,
         radius: f32,
         transform: Transform,
         commands: Vec<Command>,
         canvas: &Texture,
     ) {
-        let Some(path) = rect.trace(radius) else {
+        let Some(path) = area.trace(radius) else {
             return;
         };
 

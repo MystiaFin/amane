@@ -1,5 +1,5 @@
 use crate::Rectangle;
-use crate::graphics::{Rect, Transform};
+use crate::graphics::{Area, Transform};
 
 impl Rectangle {
     // clockwise, around the rectangle's center
@@ -26,7 +26,7 @@ impl Rectangle {
 }
 
 // scales, then rotates, then moves, all around the center of the area
-pub fn local(rectangle: &Rectangle, area: Rect) -> Transform {
+pub fn local(rectangle: &Rectangle, area: Area) -> Transform {
     let center_x = area.x + area.width / 2.0;
     let center_y = area.y + area.height / 2.0;
 
