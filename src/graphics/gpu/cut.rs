@@ -3,7 +3,7 @@ use vello::wgpu::{
     BlendComponent, BlendFactor, BlendOperation, BlendState, Device, Texture, TextureFormat,
 };
 
-use crate::graphics::{Color, Path, Transform};
+use crate::graphics::{BezierPath, Color, Transform};
 
 use super::pass::Pass;
 use super::{Gpu, shape, texture};
@@ -13,7 +13,7 @@ impl Gpu {
     pub(super) fn cut(
         &mut self,
         canvas: &Texture,
-        path: &Path,
+        path: &BezierPath,
         transform: Transform,
         strength: f32,
     ) {

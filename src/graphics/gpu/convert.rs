@@ -2,9 +2,9 @@ use vello::kurbo::{Affine, BezPath};
 use vello::peniko;
 
 use crate::graphics::path::Segment;
-use crate::graphics::{Color, Path, Transform};
+use crate::graphics::{BezierPath, Color, Transform};
 
-pub(super) fn bezier(path: &Path) -> BezPath {
+pub(super) fn bezier(path: &BezierPath) -> BezPath {
     let mut bezier = BezPath::new();
 
     for segment in &path.segments {

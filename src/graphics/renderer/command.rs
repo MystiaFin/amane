@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use ttf_parser::Face;
 
-use crate::graphics::{Cap, Color, Gradient, Path, Rect, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Gradient, Rect, Transform};
 
 pub enum Command {
     // one letter as a picture, at a whole device pixel; x and y are where its baseline starts
@@ -35,14 +35,14 @@ pub enum Command {
     },
 
     Fill {
-        path: Path,
+        path: BezierPath,
         transform: Transform,
         color: Color,
     },
 
     // the rect says where the gradient starts and ends
     Gradient {
-        path: Path,
+        path: BezierPath,
         rect: Rect,
         transform: Transform,
         gradient: Gradient,
@@ -50,7 +50,7 @@ pub enum Command {
 
     // a line along the path, centered on it
     Stroke {
-        path: Path,
+        path: BezierPath,
         transform: Transform,
         thickness: f32,
         color: Color,
@@ -77,7 +77,7 @@ pub enum Command {
 
     // the color inside the clip path, fading out toward the rounded hole
     InnerShadow {
-        clip: Path,
+        clip: BezierPath,
         hole: Rect,
         radius: f32,
         transform: Transform,
@@ -90,20 +90,20 @@ pub enum Command {
         shader: PathBuf,
         values: Vec<[f32; 4]>,
         rect: Rect,
-        path: Option<Path>,
+        path: Option<BezierPath>,
         transform: Transform,
     },
 
     // blurs what the commands before it drew inside the path, amount is in logical pixels
     Blur {
-        path: Path,
+        path: BezierPath,
         transform: Transform,
         amount: f32,
     },
 
     // erases the inside of the path from what the commands before it drew, strength 1 erases fully
     Cut {
-        path: Path,
+        path: BezierPath,
         transform: Transform,
         strength: f32,
     },

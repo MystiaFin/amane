@@ -38,7 +38,7 @@ impl Default for Line {
 }
 
 impl Shape for Line {
-    fn trace(&self, _: f32, _: f32) -> Option<graphics::Path> {
+    fn trace(&self, _: f32, _: f32) -> Option<graphics::BezierPath> {
         let (start_x, start_y) = self.start;
         let (end_x, end_y) = self.end;
 

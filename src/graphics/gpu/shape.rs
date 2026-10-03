@@ -2,11 +2,11 @@ use vello::Scene;
 use vello::kurbo::{self, Join, Stroke};
 use vello::peniko::Fill;
 
-use crate::graphics::{Cap, Color, Path, Rect, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Rect, Transform};
 
 use super::convert::{affine, bezier, paint};
 
-pub(super) fn fill(scene: &mut Scene, path: &Path, transform: Transform, color: Color) {
+pub(super) fn fill(scene: &mut Scene, path: &BezierPath, transform: Transform, color: Color) {
     scene.fill(
         Fill::NonZero,
         affine(transform),
@@ -18,7 +18,7 @@ pub(super) fn fill(scene: &mut Scene, path: &Path, transform: Transform, color: 
 
 pub(super) fn stroke(
     scene: &mut Scene,
-    path: &Path,
+    path: &BezierPath,
     transform: Transform,
     thickness: f32,
     color: Color,

@@ -81,7 +81,7 @@ impl Default for Path {
 }
 
 impl Shape for Path {
-    fn trace(&self, _: f32, _: f32) -> Option<graphics::Path> {
+    fn trace(&self, _: f32, _: f32) -> Option<graphics::BezierPath> {
         self.steps.clone().finish()
     }
 

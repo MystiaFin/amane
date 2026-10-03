@@ -1,6 +1,6 @@
 use ttf_parser::OutlineBuilder;
 
-use super::{Path, PathBuilder};
+use super::{BezierPath, PathBuilder};
 
 pub struct Outline {
     path: PathBuilder,
@@ -13,7 +13,7 @@ impl Outline {
         }
     }
 
-    pub fn finish(self) -> Option<Path> {
+    pub fn finish(self) -> Option<BezierPath> {
         self.path.finish()
     }
 }

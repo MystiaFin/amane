@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Cap, Color, Gradient, Path, Rect, Renderer, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Gradient, Rect, Renderer, Transform};
 
 use super::Command;
 
@@ -91,7 +91,7 @@ impl Renderer {
     }
 
     // the path is in the area's own coordinates, with 0,0 at its top left corner
-    pub fn fill_path(&mut self, path: &Path, area: Rect, color: Color) {
+    pub fn fill_path(&mut self, path: &BezierPath, area: Rect, color: Color) {
         self.commands.push(Command::Fill {
             path: path.clone(),
             transform: self.inside(area),
@@ -99,7 +99,14 @@ impl Renderer {
         });
     }
 
-    pub fn stroke_path(&mut self, path: &Path, area: Rect, thickness: f32, color: Color, cap: Cap) {
+    pub fn stroke_path(
+        &mut self,
+        path: &BezierPath,
+        area: Rect,
+        thickness: f32,
+        color: Color,
+        cap: Cap,
+    ) {
         self.commands.push(Command::Stroke {
             path: path.clone(),
             transform: self.inside(area),

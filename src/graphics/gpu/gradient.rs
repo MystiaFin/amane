@@ -2,13 +2,13 @@ use vello::Scene;
 use vello::kurbo::Point;
 use vello::peniko::{self, Fill};
 
-use crate::graphics::{Color, Gradient, Path, Rect, Transform};
+use crate::graphics::{BezierPath, Color, Gradient, Rect, Transform};
 
 use super::convert::{affine, bezier, paint};
 
 pub(super) fn fill(
     scene: &mut Scene,
-    path: &Path,
+    path: &BezierPath,
     rect: Rect,
     transform: Transform,
     gradient: &Gradient,

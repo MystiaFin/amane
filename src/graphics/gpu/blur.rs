@@ -3,7 +3,7 @@ use vello::kurbo::{Affine, Point, Shape};
 use vello::peniko::{Fill, ImageAlphaType, ImageBrush, ImageData, ImageQuality};
 use vello::wgpu::{Extent3d, Origin3d, TexelCopyTextureInfo, Texture, TextureAspect};
 
-use crate::graphics::{Path, Transform};
+use crate::graphics::{BezierPath, Transform};
 
 use super::convert::{affine, bezier};
 use super::{Gpu, texture};
@@ -17,7 +17,7 @@ impl Gpu {
         &mut self,
         canvas: &Texture,
         scene: &mut Scene,
-        path: &Path,
+        path: &BezierPath,
         transform: Transform,
         amount: f32,
     ) -> Option<ImageData> {

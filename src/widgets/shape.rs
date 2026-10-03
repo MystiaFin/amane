@@ -24,7 +24,7 @@ pub struct Style {
 // something a canvas draws, every shape gets the same builder methods for how it looks
 pub trait Shape {
     // the outline in the canvas's own coordinates, for a canvas of this size
-    fn trace(&self, width: f32, height: f32) -> Option<graphics::Path>;
+    fn trace(&self, width: f32, height: f32) -> Option<graphics::BezierPath>;
 
     fn style(&self) -> &Style;
 

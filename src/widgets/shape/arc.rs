@@ -60,7 +60,7 @@ impl Default for Arc {
 }
 
 impl Shape for Arc {
-    fn trace(&self, width: f32, height: f32) -> Option<graphics::Path> {
+    fn trace(&self, width: f32, height: f32) -> Option<graphics::BezierPath> {
         // an empty sweep would still draw the line's end caps as a dot
         if self.sweep == 0.0 {
             return None;

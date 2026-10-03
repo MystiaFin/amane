@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use ttf_parser::{Face, GlyphId};
 
-use crate::graphics::{Color, Outline, Path, Rect, Renderer, Transform, font};
+use crate::graphics::{BezierPath, Color, Outline, Rect, Renderer, Transform, font};
 
 use super::Command;
 
@@ -12,7 +12,8 @@ thread_local! {
      * each letter's outline, read from the font once; fonts stay loaded
      * for the whole run, so where a face lives in memory names it
      */
-    static OUTLINES: RefCell<HashMap<(usize, u16), Option<Path>>> = RefCell::new(HashMap::new());
+    static OUTLINES: RefCell<HashMap<(usize, u16), Option<BezierPath>>> =
+        RefCell::new(HashMap::new());
 }
 
 impl Renderer {
@@ -109,7 +110,7 @@ impl Renderer {
     }
 }
 
-fn outline(font: &Face, id: GlyphId) -> Option<Path> {
+fn outline(font: &Face, id: GlyphId) -> Option<BezierPath> {
     let key = (std::ptr::from_ref(font) as usize, id.0);
 
     OUTLINES.with_borrow_mut(|outlines| {
@@ -121,7 +122,7 @@ fn outline(font: &Face, id: GlyphId) -> Option<Path> {
     })
 }
 
-fn read_outline(font: &Face, id: GlyphId) -> Option<Path> {
+fn read_outline(font: &Face, id: GlyphId) -> Option<BezierPath> {
     let mut outline = Outline::new();
 
     font.outline_glyph(id, &mut outline)?;

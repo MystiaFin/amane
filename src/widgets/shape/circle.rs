@@ -39,7 +39,7 @@ impl Default for Circle {
 }
 
 impl Shape for Circle {
-    fn trace(&self, width: f32, height: f32) -> Option<graphics::Path> {
+    fn trace(&self, width: f32, height: f32) -> Option<graphics::BezierPath> {
         let (center_x, center_y, radius) =
             round::place(self.center, self.radius, &self.style, width, height);
 

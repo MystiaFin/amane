@@ -29,7 +29,7 @@ impl Gpu {
         shader: &Path,
         values: &[[f32; 4]],
         rect: Rect,
-        outline: Option<&graphics::Path>,
+        outline: Option<&graphics::BezierPath>,
         transform: Transform,
     ) {
         let Some(outline) = outline else {

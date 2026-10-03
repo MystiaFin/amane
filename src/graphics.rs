@@ -18,7 +18,7 @@ pub use geometry::Rect;
 pub use gpu::Gpu;
 pub use gradient::Gradient;
 pub use outline::Outline;
-pub use path::{Path, PathBuilder};
+pub use path::{BezierPath, PathBuilder};
 pub use renderer::{Renderer, VALUE_ROWS};
 pub use transform::Transform;
 pub use weight::Weight;

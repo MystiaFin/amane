@@ -13,7 +13,7 @@ pub enum Segment {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Path {
+pub struct BezierPath {
     pub segments: Vec<Segment>,
 }
 
@@ -48,12 +48,12 @@ impl PathBuilder {
     }
 
     // a path with no steps draws nothing, so there is no path to hand back
-    pub fn finish(self) -> Option<Path> {
+    pub fn finish(self) -> Option<BezierPath> {
         if self.segments.is_empty() {
             return None;
         }
 
-        Some(Path {
+        Some(BezierPath {
             segments: self.segments,
         })
     }

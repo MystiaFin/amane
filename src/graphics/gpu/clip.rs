@@ -4,7 +4,7 @@ use vello::peniko::{Fill, Mix};
 use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
-use crate::graphics::{Color, Path, Rect, Transform};
+use crate::graphics::{BezierPath, Color, Rect, Transform};
 
 use super::Gpu;
 use super::convert::{affine, bezier, paint};
@@ -40,7 +40,7 @@ impl Gpu {
     }
 
     // erases everything on the canvas that lies outside the path
-    pub(super) fn trim(&mut self, canvas: &Texture, path: &Path, transform: Transform) {
+    pub(super) fn trim(&mut self, canvas: &Texture, path: &BezierPath, transform: Transform) {
         let window = kurbo::Rect::new(
             0.0,
             0.0,

@@ -1,4 +1,4 @@
-use super::{Path, PathBuilder};
+use super::{BezierPath, PathBuilder};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Rect {
@@ -41,7 +41,7 @@ impl Rect {
         Rect::new(left, top, width, height)
     }
 
-    pub fn trace(self, radius: f32) -> Option<Path> {
+    pub fn trace(self, radius: f32) -> Option<BezierPath> {
         // a radius past half a side would make the corners overlap
         let shortest_half = f32::min(self.width, self.height) / 2.0;
         let radius = f32::min(radius, shortest_half);

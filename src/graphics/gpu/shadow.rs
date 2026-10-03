@@ -2,7 +2,7 @@ use vello::Scene;
 use vello::kurbo;
 use vello::peniko::{self, Compose, Fill, Mix};
 
-use crate::graphics::{Color, Path, Rect, Transform};
+use crate::graphics::{BezierPath, Color, Rect, Transform};
 
 use super::convert::{affine, bezier, paint};
 
@@ -25,7 +25,7 @@ pub(super) fn drop_shadow(
 
 pub(super) fn inner_shadow(
     scene: &mut Scene,
-    clip: &Path,
+    clip: &BezierPath,
     hole: Rect,
     radius: f32,
     transform: Transform,
