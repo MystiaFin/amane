@@ -1,6 +1,5 @@
 mod compositor;
 mod frame;
-mod key;
 mod keyboard;
 mod layer;
 mod layer_shell;
