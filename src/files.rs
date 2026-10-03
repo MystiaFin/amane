@@ -3,7 +3,7 @@ use std::path::Path;
 
 use inotify::{Inotify, WatchMask};
 
-pub struct Changes {
+pub struct FileChanges {
     inotify: Inotify,
 
     name: OsString,
@@ -15,7 +15,7 @@ pub struct Changes {
  * editors save by writing a new file and renaming it over the old one,
  * which ends a watch on the file itself, so the folder is watched instead
  */
-pub fn watch_file(path: &str) -> Changes {
+pub fn watch_file(path: &str) -> FileChanges {
     let path = Path::new(path);
 
     let name = path
@@ -36,7 +36,7 @@ pub fn watch_file(path: &str) -> Changes {
         .add(folder, mask)
         .expect("failed to watch file");
 
-    Changes {
+    FileChanges {
         inotify,
 
         name: name.to_os_string(),
@@ -46,7 +46,7 @@ pub fn watch_file(path: &str) -> Changes {
 }
 
 // waits for the next change, so call it from a service thread, not from view()
-impl Iterator for Changes {
+impl Iterator for FileChanges {
     type Item = ();
 
     fn next(&mut self) -> Option<()> {
