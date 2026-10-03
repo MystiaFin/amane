@@ -1,6 +1,5 @@
 mod button;
 mod compositor;
-mod connection;
 mod cursor;
 mod frame;
 mod key;
@@ -15,12 +14,10 @@ mod output;
 mod pointer;
 mod region;
 mod role;
-mod registry;
 mod scale;
 mod scroll;
 mod seat;
 mod settings;
-mod shm;
 mod socket;
 mod surface;
 mod update;
@@ -33,11 +30,12 @@ use smithay_client_toolkit::{
     delegate_dispatch2, delegate_registry,
     output::OutputState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
-    registry::RegistryState,
+    registry::{ProvidesRegistryState, RegistryState},
+    registry_handlers,
     seat::{SeatState, pointer::ThemedPointer},
     session_lock::{SessionLock, SessionLockState},
     shell::{wlr_layer::LayerShell, xdg::XdgShell},
-    shm::Shm,
+    shm::{Shm, ShmHandler},
 };
 use smithay_client_toolkit::reexports::protocols::wp::{
     fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1,
@@ -115,7 +113,7 @@ impl WaylandApp {
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: Handlers,
     ) -> Self {
-        let connection = connection::connect();
+        let connection = connect();
 
         let (globals, event_queue) =
             registry_queue_init(&connection).expect("failed to discover Wayland globals");
@@ -205,6 +203,25 @@ impl WaylandApp {
                 .expect("failed to dispatch events");
         }
     }
+}
+
+impl ProvidesRegistryState for WaylandState {
+    fn registry(&mut self) -> &mut RegistryState {
+        &mut self.registry
+    }
+
+    registry_handlers![OutputState, SeatState];
+}
+
+// the cursor theme fallback draws its icons into shared memory
+impl ShmHandler for WaylandState {
+    fn shm_state(&mut self) -> &mut Shm {
+        &mut self.shm
+    }
+}
+
+fn connect() -> Connection {
+    Connection::connect_to_env().expect("failed to connect to Wayland")
 }
 
 delegate_registry!(WaylandState);
