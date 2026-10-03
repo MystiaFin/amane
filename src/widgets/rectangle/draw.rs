@@ -1,9 +1,20 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+
 use crate::animation::moving;
 use crate::graphics::{Rect, Renderer, image};
 use crate::input::Target;
+use crate::style::Kind;
 use crate::{Fill, Image, Size, Widget};
 
-use super::{Rectangle, child, input, shadow, time, transform};
+use super::{Rectangle, child, input, transform};
+
+thread_local! {
+    // read once per shader file, a shader's source doesn't change while the shell runs
+    static READS_TIME: RefCell<HashMap<PathBuf, bool>> = RefCell::new(HashMap::new());
+}
 
 impl Widget for Rectangle {
     fn width(&self) -> Size {
@@ -45,7 +56,7 @@ fn draw_in_place(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect) {
 }
 
 fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
-    shadow::drop_shadow(rectangle, renderer, area, radius);
+    drop_shadow(rectangle, renderer, area, radius);
 
     match &rectangle.fill {
         Fill::Color(color) => renderer.rectangle(area, *color, radius),
@@ -60,12 +71,12 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32
         renderer.shader(area, shader, radius, &rectangle.shader_values);
 
         // the shader's time moves on, so the window keeps drawing new frames
-        if time::reads_time(shader) {
+        if reads_time(shader) {
             moving::set();
         }
     }
 
-    shadow::inner_shadow(rectangle, renderer, area, radius);
+    inner_shadow(rectangle, renderer, area, radius);
 
     renderer.border(
         area,
@@ -105,4 +116,56 @@ fn paint_image(fill: &Image, renderer: &mut Renderer, area: Rect, radius: f32) {
     let placement = fill.fit.place(area, image_width, image_height);
 
     renderer.image(area, radius, image, placement);
+}
+
+// drawn before the fill, so the fill covers the part under the rectangle
+pub fn drop_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
+    let Some(shadow) = &rectangle.shadow else {
+        return;
+    };
+
+    if shadow.kind != Kind::Drop {
+        return;
+    }
+
+    let shadow_area = shadow.place(area);
+
+    renderer.shadow(shadow_area, radius, shadow.tint(), shadow.blur);
+}
+
+// drawn over the fill but under the border and child
+pub fn inner_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Rect, radius: f32) {
+    let Some(shadow) = &rectangle.shadow else {
+        return;
+    };
+
+    if shadow.kind != Kind::Inner {
+        return;
+    }
+
+    let hole = shadow.place(area);
+
+    renderer.inner_shadow(area, hole, radius, shadow.tint(), shadow.blur);
+}
+
+/*
+ * only a shader that reads time changes between frames, so only that
+ * one keeps the window drawing; any `time` word counts, even in a comment
+ */
+pub fn reads_time(shader: &Path) -> bool {
+    READS_TIME.with_borrow_mut(|known| {
+        if let Some(&reads) = known.get(shader) {
+            return reads;
+        }
+
+        let source = fs::read_to_string(shader).unwrap_or_default();
+
+        let is_name_part = |character: char| character.is_alphanumeric() || character == '_';
+
+        let reads = source.split(|character| !is_name_part(character)).any(|word| word == "time");
+
+        known.insert(shader.to_path_buf(), reads);
+
+        reads
+    })
 }

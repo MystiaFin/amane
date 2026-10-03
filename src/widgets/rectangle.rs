@@ -1,8 +1,6 @@
 mod child;
 mod draw;
 mod input;
-mod shadow;
-mod time;
 mod transform;
 
 use std::path::PathBuf;
