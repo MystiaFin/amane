@@ -1,6 +1,6 @@
 # Workspaces
 
-`Workspaces` lists your compositor's workspaces and can switch between them. It supports **niri** and **Hyprland**. On other compositors, the list stays empty.
+`Workspaces` lists your compositor's workspaces and can switch between them. It supports **niri**, **Hyprland** and **Sway**. On other compositors, the list stays empty.
 
 It doesn't poll. It follows the compositor's event stream, so the bar updates the moment you switch.
 
@@ -52,7 +52,7 @@ fn button(workspace: &Workspace) -> Rectangle {
 | Function | Gives |
 |---|---|
 | `id()` | the compositor's id for it, which `Workspaces::focus` takes |
-| `index()` | its position on its monitor, starting at 1; on Hyprland, the workspace's number |
+| `index()` | its position on its monitor, starting at 1; on Hyprland and Sway, the workspace's number (0 for a Sway workspace with only a name) |
 | `name()` | its name, or `None` for workspaces you never named |
 | `output()` | the monitor it's on, like `"DP-1"`, or `None` |
 | `active()` | `true` when it's the one shown on its monitor, even when another monitor has focus |
