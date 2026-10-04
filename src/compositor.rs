@@ -1,3 +1,4 @@
+mod hyprland;
 mod niri;
 
 use std::env;
@@ -6,12 +7,17 @@ use crate::Workspace;
 
 enum Compositor {
     Niri,
+    Hyprland,
 }
 
 // each compositor sets its own variable for the programs it starts
 fn running() -> Option<Compositor> {
     if env::var_os("NIRI_SOCKET").is_some() {
         return Some(Compositor::Niri);
+    }
+
+    if env::var_os("HYPRLAND_INSTANCE_SIGNATURE").is_some() {
+        return Some(Compositor::Hyprland);
     }
 
     None
@@ -28,6 +34,7 @@ pub fn listen(on_change: impl FnMut(Vec<Workspace>)) {
 
     match compositor {
         Compositor::Niri => niri::listen(on_change),
+        Compositor::Hyprland => hyprland::listen(on_change),
     }
 }
 
@@ -38,5 +45,6 @@ pub fn focus_workspace(id: u64) {
 
     match compositor {
         Compositor::Niri => niri::focus_workspace(id),
+        Compositor::Hyprland => hyprland::focus_workspace(id),
     }
 }

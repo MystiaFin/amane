@@ -1,8 +1,8 @@
 # Workspaces
 
-`Workspaces` lists your compositor's workspaces and can switch between them. It currently supports **niri** only. On other compositors, the list stays empty.
+`Workspaces` lists your compositor's workspaces and can switch between them. It supports **niri** and **Hyprland**. On other compositors, the list stays empty.
 
-It doesn't poll. It follows niri's event stream, so the bar updates the moment you switch.
+It doesn't poll. It follows the compositor's event stream, so the bar updates the moment you switch.
 
 ## Workspace buttons
 
@@ -51,13 +51,13 @@ fn button(workspace: &Workspace) -> Rectangle {
 
 | Function | Gives |
 |---|---|
-| `id()` | niri's id for it, which `Workspaces::focus` takes |
-| `index()` | its position on its monitor, starting at 1 |
+| `id()` | the compositor's id for it, which `Workspaces::focus` takes |
+| `index()` | its position on its monitor, starting at 1; on Hyprland, the workspace's number |
 | `name()` | its name, or `None` for workspaces you never named |
 | `output()` | the monitor it's on, like `"DP-1"`, or `None` |
 | `active()` | `true` when it's the one shown on its monitor, even when another monitor has focus |
 | `focused()` | `true` for the one workspace that has focus overall |
-| `urgent()` | `true` when a window on it asks for attention |
+| `urgent()` | `true` when a window on it asks for attention; always `false` on Hyprland |
 | `windows()` | how many windows are on it |
 
 `Workspaces::focus(id)` switches to a workspace. It runs on a background thread and returns right away.
