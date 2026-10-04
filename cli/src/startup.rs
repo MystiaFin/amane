@@ -7,9 +7,9 @@ const TEMPLATE: &[(&str, &str)] = &[("main.rs", include_str!("../template/main.r
 
 // a full bar split over several files, for `amane startup --example`
 const EXAMPLE: &[(&str, &str)] = &[
-    ("main.rs", include_str!("../template/example/main.rs")),
-    ("bar.rs", include_str!("../template/example/bar.rs")),
-    ("bar/left.rs", include_str!("../template/example/bar/left.rs")),
+    ("main.rs", include_str!("../template/example/src/main.rs")),
+    ("bar.rs", include_str!("../template/example/src/bar.rs")),
+    ("bar/left.rs", include_str!("../template/example/src/bar/left.rs")),
 ];
 
 pub fn run(example: bool) -> ExitCode {
