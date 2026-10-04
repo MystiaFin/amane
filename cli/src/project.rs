@@ -86,7 +86,7 @@ fn hash_folder(root: &Path, folder: &Path, hasher: &mut DefaultHasher) {
 }
 
 /*
- * dev builds optimise amane and its dependencies, drawing unoptimised
+ * the dev build (the only one) optimises amane and its dependencies, drawing unoptimised
  * is too slow for smooth animation; only the user's own crate stays
  * unoptimised, so a save still rebuilds quickly after the first build.
  * dependencies carry no debug info and the user's crate only line tables,

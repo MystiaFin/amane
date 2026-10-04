@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::{Child, Command, ExitCode};
 
-use crate::cargo::{self, Profile};
+use crate::cargo;
 use crate::{paths, project, watch};
 
 pub fn run() -> ExitCode {
@@ -16,7 +16,7 @@ pub fn run() -> ExitCode {
         let before = watch::snapshot(&source);
 
         // a failed build keeps the old shell on screen while the error is fixed
-        if cargo::build(&project, Profile::Debug) {
+        if cargo::build(&project) {
             stop(shell.take());
 
             shell = start(&project);
@@ -29,7 +29,7 @@ pub fn run() -> ExitCode {
 }
 
 fn start(project: &Path) -> Option<Child> {
-    let binary = cargo::binary(project, Profile::Debug);
+    let binary = cargo::binary(project);
 
     let Ok(child) = Command::new(&binary).spawn() else {
         eprintln!("failed to start {}", binary.display());

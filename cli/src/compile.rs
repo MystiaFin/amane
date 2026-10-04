@@ -1,16 +1,16 @@
 use std::process::ExitCode;
 
-use crate::cargo::{self, Profile};
+use crate::cargo;
 use crate::project;
 
 pub fn run() -> ExitCode {
     let project = project::prepare();
 
-    if !cargo::build(&project, Profile::Release) {
+    if !cargo::build(&project) {
         return ExitCode::FAILURE;
     }
 
-    let binary = cargo::binary(&project, Profile::Release);
+    let binary = cargo::binary(&project);
 
     println!("built {}", binary.display());
 
