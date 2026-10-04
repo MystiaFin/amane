@@ -1,5 +1,8 @@
+use std::collections::hash_map::DefaultHasher;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 use crate::{library, paths};
 
@@ -17,7 +20,8 @@ pub fn prepare() -> PathBuf {
 
     fs::create_dir_all(&project_folder).expect("failed to create project folder");
 
-    let main = paths::config().join("src").join("main.rs");
+    let source = paths::config().join("src");
+    let main = source.join("main.rs");
 
     let main_path = main.display().to_string();
     let library_path = library_folder.display().to_string();
@@ -31,7 +35,54 @@ pub fn prepare() -> PathBuf {
 
     write_if_changed(&project_folder.join("Cargo.lock"), &lock);
 
+    rebuild_if_swapped(&source, &main, &project_folder);
+
     project_folder
+}
+
+/*
+ * cargo only rebuilds when a source is newer than the last build, so a config
+ * moved or restored with its old timestamps would keep running the previous one.
+ * hashing the contents catches that, and touching main.rs makes cargo notice
+ */
+fn rebuild_if_swapped(source: &Path, main: &Path, project: &Path) {
+    let mut hasher = DefaultHasher::new();
+
+    hash_folder(source, source, &mut hasher);
+
+    let hash = hasher.finish().to_string();
+    let stamp = project.join("source-hash");
+
+    if fs::read_to_string(&stamp).is_ok_and(|previous| previous == hash) {
+        return;
+    }
+
+    if let Ok(file) = fs::File::options().append(true).open(main) {
+        let _ = file.set_modified(SystemTime::now());
+    }
+
+    write_if_changed(&stamp, hash.as_bytes());
+}
+
+// sorted so the same files always give the same hash
+fn hash_folder(root: &Path, folder: &Path, hasher: &mut DefaultHasher) {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return;
+    };
+
+    let mut paths: Vec<PathBuf> = entries.flatten().map(|entry| entry.path()).collect();
+
+    paths.sort();
+
+    for path in paths {
+        path.strip_prefix(root).unwrap_or(&path).hash(hasher);
+
+        if path.is_dir() {
+            hash_folder(root, &path, hasher);
+        } else if let Ok(contents) = fs::read(&path) {
+            contents.hash(hasher);
+        }
+    }
 }
 
 /*
