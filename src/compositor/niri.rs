@@ -1,29 +1,16 @@
+use std::collections::HashMap;
 use std::env;
-use std::io::{BufRead, BufReader, Lines, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::os::unix::net::UnixStream;
 
 use serde_json::{Value, json};
 
-// a workspace as niri reports it
-pub struct NiriWorkspace {
-    pub id: u64,
-
-    // position on its monitor, starting at 1
-    pub index: u32,
-
-    // null for workspaces the user never named
-    pub name: Option<String>,
-    pub output: Option<String>,
-
-    pub active: bool,
-    pub focused: bool,
-    pub urgent: bool,
-}
+use crate::Workspace;
 
 // the niri events amane uses, everything else niri sends is skipped
 pub enum Event {
     // the full list, sent first and again whenever one is added or removed
-    Workspaces(Vec<NiriWorkspace>),
+    Workspaces(Vec<Workspace>),
 
     // focused is false when it only became the one shown on its monitor
     Activated { id: u64, focused: bool },
@@ -39,22 +26,13 @@ pub enum Event {
     WindowClosed { id: u64 },
 }
 
-pub struct Events {
-    lines: Lines<BufReader<UnixStream>>,
-}
+// niri's events only say what changed, so the rest is remembered here
+#[derive(Default)]
+struct State {
+    list: Vec<Workspace>,
 
-impl Iterator for Events {
-    type Item = Event;
-
-    fn next(&mut self) -> Option<Event> {
-        loop {
-            let line = self.lines.next()?.ok()?;
-
-            if let Some(event) = parse(&line) {
-                return Some(event);
-            }
-        }
-    }
+    // every window by its id, and the workspace it is on
+    windows: HashMap<u64, Option<u64>>,
 }
 
 /*
@@ -92,15 +70,27 @@ pub fn focus_workspace(id: u64) {
     let _ = BufReader::new(stream).read_line(&mut reply);
 }
 
-// streams niri's events until niri exits, so call it from a service thread; none without niri
-pub fn events() -> Option<Events> {
-    let stream = send("\"EventStream\"")?;
-
-    let events = Events {
-        lines: BufReader::new(stream).lines(),
+// follows niri's events until niri exits, handing over the full list after each one
+pub fn listen(mut on_change: impl FnMut(Vec<Workspace>)) {
+    let Some(stream) = send("\"EventStream\"") else {
+        return;
     };
 
-    Some(events)
+    let mut state = State::default();
+
+    for line in BufReader::new(stream).lines() {
+        let Ok(line) = line else {
+            return;
+        };
+
+        let Some(event) = parse(&line) else {
+            continue;
+        };
+
+        state.apply(event);
+
+        on_change(state.list.clone());
+    }
 }
 
 fn parse(line: &str) -> Option<Event> {
@@ -173,22 +163,92 @@ fn urgency_changed(body: &Value) -> Option<Event> {
     Some(Event::Urgent { id, urgent })
 }
 
-fn parse_workspace(value: &Value) -> Option<NiriWorkspace> {
+fn parse_workspace(value: &Value) -> Option<Workspace> {
     let index = value["idx"].as_u64()?;
 
-    let workspace = NiriWorkspace {
+    let workspace = Workspace {
         id: value["id"].as_u64()?,
         index: index as u32,
 
+        // null for workspaces the user never named
         name: value["name"].as_str().map(String::from),
         output: value["output"].as_str().map(String::from),
 
         active: value["is_active"].as_bool()?,
         focused: value["is_focused"].as_bool()?,
         urgent: value["is_urgent"].as_bool()?,
+
+        // counted from the window events, after every event
+        windows: 0,
     };
 
     Some(workspace)
+}
+
+impl State {
+    fn apply(&mut self, event: Event) {
+        match event {
+            Event::Workspaces(list) => self.list = list,
+            Event::Activated { id, focused } => self.activate(id, focused),
+            Event::Urgent { id, urgent } => self.mark_urgent(id, urgent),
+
+            Event::Windows(windows) => {
+                self.windows = windows.into_iter().collect();
+            }
+
+            Event::WindowChanged { id, workspace } => {
+                self.windows.insert(id, workspace);
+            }
+
+            Event::WindowClosed { id } => {
+                self.windows.remove(&id);
+            }
+        }
+
+        self.count_windows();
+    }
+
+    fn activate(&mut self, id: u64, focused: bool) {
+        let Some(activated) = self.list.iter().find(|workspace| workspace.id == id) else {
+            return;
+        };
+
+        let output = activated.output.clone();
+
+        // only one workspace is shown per monitor, and only one has focus overall
+        for workspace in &mut self.list {
+            if workspace.output == output {
+                workspace.active = workspace.id == id;
+            }
+
+            if focused {
+                workspace.focused = workspace.id == id;
+            }
+        }
+    }
+
+    fn mark_urgent(&mut self, id: u64, urgent: bool) {
+        for workspace in &mut self.list {
+            if workspace.id == id {
+                workspace.urgent = urgent;
+            }
+        }
+    }
+
+    // a new workspace list starts at 0 windows each, so the counts are made again after any event
+    fn count_windows(&mut self) {
+        for workspace in &mut self.list {
+            let mut count = 0;
+
+            for on in self.windows.values() {
+                if *on == Some(workspace.id) {
+                    count += 1;
+                }
+            }
+
+            workspace.windows = count;
+        }
+    }
 }
 
 #[cfg(test)]
