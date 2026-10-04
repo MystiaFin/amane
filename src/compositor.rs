@@ -45,7 +45,7 @@ pub fn listen(on_change: impl FnMut(Vec<Workspace>)) {
     }
 }
 
-pub fn focus_workspace(id: u64) {
+pub fn focus_workspace(id: i64) {
     let Some(compositor) = running() else {
         return;
     };

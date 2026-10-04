@@ -13,15 +13,15 @@ pub enum Event {
     Workspaces(Vec<Workspace>),
 
     // focused is false when it only became the one shown on its monitor
-    Activated { id: u64, focused: bool },
+    Activated { id: i64, focused: bool },
 
-    Urgent { id: u64, urgent: bool },
+    Urgent { id: i64, urgent: bool },
 
     // every window and the workspace it is on, if any; sent first
-    Windows(Vec<(u64, Option<u64>)>),
+    Windows(Vec<(u64, Option<i64>)>),
 
     // a window opened, or moved to another workspace
-    WindowChanged { id: u64, workspace: Option<u64> },
+    WindowChanged { id: u64, workspace: Option<i64> },
 
     WindowClosed { id: u64 },
 }
@@ -32,7 +32,7 @@ struct State {
     list: Vec<Workspace>,
 
     // every window by its id, and the workspace it is on
-    windows: HashMap<u64, Option<u64>>,
+    windows: HashMap<u64, Option<i64>>,
 }
 
 /*
@@ -51,7 +51,7 @@ pub fn send(request: &str) -> Option<UnixStream> {
     Some(stream)
 }
 
-pub fn focus_workspace(id: u64) {
+pub fn focus_workspace(id: i64) {
     let request = json!({
         "Action": {
             "FocusWorkspace": {
@@ -114,7 +114,7 @@ fn windows_changed(body: &Value) -> Option<Event> {
     let mut windows = Vec::new();
 
     for window in body["windows"].as_array()? {
-        windows.push((window["id"].as_u64()?, window["workspace_id"].as_u64()));
+        windows.push((window["id"].as_u64()?, window["workspace_id"].as_i64()));
     }
 
     Some(Event::Windows(windows))
@@ -126,7 +126,7 @@ fn window_changed(body: &Value) -> Option<Event> {
     let id = window["id"].as_u64()?;
 
     // null while the window is on no workspace
-    let workspace = window["workspace_id"].as_u64();
+    let workspace = window["workspace_id"].as_i64();
 
     Some(Event::WindowChanged { id, workspace })
 }
@@ -148,7 +148,7 @@ fn workspaces_changed(body: &Value) -> Option<Event> {
 }
 
 fn workspace_activated(body: &Value) -> Option<Event> {
-    let id = body["id"].as_u64()?;
+    let id = body["id"].as_i64()?;
 
     let focused = body["focused"].as_bool()?;
 
@@ -156,7 +156,7 @@ fn workspace_activated(body: &Value) -> Option<Event> {
 }
 
 fn urgency_changed(body: &Value) -> Option<Event> {
-    let id = body["id"].as_u64()?;
+    let id = body["id"].as_i64()?;
 
     let urgent = body["urgent"].as_bool()?;
 
@@ -167,7 +167,7 @@ fn parse_workspace(value: &Value) -> Option<Workspace> {
     let index = value["idx"].as_u64()?;
 
     let workspace = Workspace {
-        id: value["id"].as_u64()?,
+        id: value["id"].as_i64()?,
         index: index as u32,
 
         // null for workspaces the user never named
@@ -208,7 +208,7 @@ impl State {
         self.count_windows();
     }
 
-    fn activate(&mut self, id: u64, focused: bool) {
+    fn activate(&mut self, id: i64, focused: bool) {
         let Some(activated) = self.list.iter().find(|workspace| workspace.id == id) else {
             return;
         };
@@ -227,7 +227,7 @@ impl State {
         }
     }
 
-    fn mark_urgent(&mut self, id: u64, urgent: bool) {
+    fn mark_urgent(&mut self, id: i64, urgent: bool) {
         for workspace in &mut self.list {
             if workspace.id == id {
                 workspace.urgent = urgent;

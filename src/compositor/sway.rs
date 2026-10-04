@@ -56,7 +56,7 @@ fn request(kind: u32, payload: &str) -> Option<String> {
     receive(&mut stream)
 }
 
-pub fn focus_workspace(id: u64) {
+pub fn focus_workspace(id: i64) {
     let Some(name) = name_of(id) else {
         return;
     };
@@ -68,13 +68,13 @@ pub fn focus_workspace(id: u64) {
 }
 
 // commands take a workspace's name, not its id
-fn name_of(id: u64) -> Option<String> {
+fn name_of(id: i64) -> Option<String> {
     let reply = request(GET_WORKSPACES, "")?;
 
     let workspaces: Value = serde_json::from_str(&reply).ok()?;
 
     for workspace in workspaces.as_array()? {
-        if workspace["id"].as_u64() == Some(id) {
+        if workspace["id"].as_i64() == Some(id) {
             return workspace["name"].as_str().map(String::from);
         }
     }
@@ -123,7 +123,7 @@ fn parse(workspaces: &str, tree: &str) -> Option<Vec<Workspace>> {
 
     for output in tree["nodes"].as_array()? {
         for workspace in output["nodes"].as_array()? {
-            let id = workspace["id"].as_u64()?;
+            let id = workspace["id"].as_i64()?;
 
             counts.insert(id, count_windows(workspace));
         }
@@ -132,7 +132,7 @@ fn parse(workspaces: &str, tree: &str) -> Option<Vec<Workspace>> {
     let mut list = Vec::new();
 
     for workspace in workspaces.as_array()? {
-        let id = workspace["id"].as_u64()?;
+        let id = workspace["id"].as_i64()?;
         let number = workspace["num"].as_i64()?;
         let name = workspace["name"].as_str()?;
 

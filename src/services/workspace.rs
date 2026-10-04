@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Workspace {
-    pub(crate) id: u64,
+    pub(crate) id: i64,
 
     // position on its monitor, starting at 1
     pub(crate) index: u32,
@@ -19,7 +19,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    pub fn id(&self) -> u64 {
+    pub fn id(&self) -> i64 {
         self.id
     }
 

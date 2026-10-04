@@ -42,7 +42,7 @@ impl Workspaces {
         &self.list
     }
 
-    pub fn focus(id: u64) {
+    pub fn focus(id: i64) {
         worker::run(move || compositor::focus_workspace(id));
     }
 }
