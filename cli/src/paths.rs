@@ -3,6 +3,11 @@ use std::path::PathBuf;
 
 // where the user writes their shell
 pub fn config() -> PathBuf {
+    // lets an example shell live anywhere without swapping the real config out
+    if let Some(folder) = env::var_os("AMANE_CONFIG") {
+        return PathBuf::from(folder);
+    }
+
     base("XDG_CONFIG_HOME", ".config").join("amane")
 }
 
