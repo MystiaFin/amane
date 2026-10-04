@@ -190,3 +190,31 @@ fn parse_workspace(value: &Value) -> Option<NiriWorkspace> {
 
     Some(workspace)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // lines copied from niri's event stream, trimmed to the fields amane reads plus a few it skips
+    #[test]
+    fn reads_niri_event_lines() {
+        let line = r#"{"WorkspacesChanged":{"workspaces":[{"id":3,"idx":1,"name":null,"output":"eDP-1","is_urgent":false,"is_active":true,"is_focused":true,"active_window_id":null}]}}"#;
+
+        let Some(Event::Workspaces(list)) = parse(line) else {
+            panic!("failed to parse workspaces");
+        };
+
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].id, 3);
+        assert_eq!(list[0].index, 1);
+        assert_eq!(list[0].name, None);
+        assert!(list[0].focused);
+
+        let line = r#"{"WindowOpenedOrChanged":{"window":{"id":7,"title":"foot","app_id":"foot","workspace_id":null,"is_focused":false}}}"#;
+
+        assert!(matches!(parse(line), Some(Event::WindowChanged { id: 7, workspace: None })));
+
+        // events amane doesn't use are skipped
+        assert!(parse(r#"{"KeyboardLayoutsChanged":{"keyboard_layouts":{"names":[],"current_idx":0}}}"#).is_none());
+    }
+}
