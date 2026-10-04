@@ -18,12 +18,6 @@ Keep in mind, Amane is still early (0.1) and experimental, so things will break 
 
 The full guide is at [mystiafin.github.io/amane](https://mystiafin.github.io/amane/). It walks you from your first shell through layout, widgets, input and animation, plus the built-in services for audio, network, bluetooth, notifications and workspaces.
 
-The guide's source is in `docs/`. To read it offline, serve it with [mdBook](https://rust-lang.github.io/mdBook/):
-
-```sh
-mdbook serve docs --open
-```
-
 ## Installation
 
 Before installing, check that you have what a shell needs to run:
