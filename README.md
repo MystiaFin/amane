@@ -74,6 +74,12 @@ Creates `~/.config/amane/src/main.rs` with a small starter shell. If that file a
 amane startup
 ```
 
+For a full example bar instead, split over several files with workspace buttons for each monitor, add `--example`. It also stops if any of its files already exist.
+
+```sh
+amane startup --example
+```
+
 ### amane dev
 
 Builds your shell, starts it, and then rebuilds and restarts it every time you save. If a build fails, the old shell keeps running while you fix the error.

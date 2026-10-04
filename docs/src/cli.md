@@ -3,6 +3,7 @@
 | Command | What it does |
 |---|---|
 | `amane startup` | Creates `~/.config/amane/src/main.rs` from a template. Never overwrites an existing file. |
+| `amane startup --example` | Creates a full example bar in `~/.config/amane/src/`, split over several files, with workspace buttons for each monitor. Never overwrites an existing file. |
 | `amane dev` | Builds your shell, starts it, and rebuilds and restarts it on every save. |
 | `amane compile` | Builds the optimized shell without starting it. |
 | `amane run` | Builds the optimized shell if anything changed, then starts it. |

@@ -18,7 +18,9 @@ fn main() -> ExitCode {
     let words: Vec<&str> = arguments.iter().map(String::as_str).collect();
 
     match words.as_slice() {
-        ["startup"] => startup::run(),
+        ["startup"] => startup::run(false),
+
+        ["startup", "--example"] => startup::run(true),
 
         ["compile"] => compile::run(),
 
@@ -35,7 +37,8 @@ fn main() -> ExitCode {
 fn usage() -> ExitCode {
     eprintln!("usage:");
     eprintln!("  amane startup                        create ~/.config/amane/src/main.rs");
-    eprintln!("  amane dev                            rebuild and restart on every save");
+    eprintln!("  amane startup --example              create a full example bar instead");
+    eprintln!("  amane dev                           rebuild and restart on every save");
     eprintln!("  amane compile                        build the optimised shell");
     eprintln!("  amane run                            compile, then start the shell");
     eprintln!("  amane ipc call <name> [arguments...] call a handler in the running shell");
