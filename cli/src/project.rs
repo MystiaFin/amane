@@ -33,6 +33,8 @@ pub fn prepare() -> PathBuf {
     // the library's own lock file pins the versions amane was tested with
     let lock = fs::read(library_folder.join("Cargo.lock")).expect("failed to read library lock");
 
+    clean_if_dependencies_changed(&lock, &project_folder);
+
     write_if_changed(&project_folder.join("Cargo.lock"), &lock);
 
     rebuild_if_swapped(&source, &main, &project_folder);
@@ -50,18 +52,46 @@ fn rebuild_if_swapped(source: &Path, main: &Path, project: &Path) {
 
     hash_folder(source, source, &mut hasher);
 
-    let hash = hasher.finish().to_string();
-    let stamp = project.join("source-hash");
-
-    if fs::read_to_string(&stamp).is_ok_and(|previous| previous == hash) {
+    if !update_stamp(&project.join("source-hash"), hasher.finish()) {
         return;
     }
 
     if let Ok(file) = fs::File::options().append(true).open(main) {
         let _ = file.set_modified(SystemTime::now());
     }
+}
 
-    write_if_changed(&stamp, hash.as_bytes());
+/*
+ * cargo names every build output after a hash of its dependencies and settings,
+ * so a new lock leaves all the old outputs behind and target grows forever.
+ * source edits reuse the same names, so only a new lock needs a clean.
+ * cargo rewrites the project's Cargo.lock itself, so the library's lock is
+ * remembered as a hash instead of compared directly
+ */
+fn clean_if_dependencies_changed(lock: &[u8], project: &Path) {
+    let mut hasher = DefaultHasher::new();
+
+    lock.hash(&mut hasher);
+
+    if !update_stamp(&project.join("lock-hash"), hasher.finish()) {
+        return;
+    }
+
+    // target is missing before the first build, so a failure here is fine
+    let _ = fs::remove_dir_all(project.join("target"));
+}
+
+// remembers the hash in the stamp file, true when it differs from the last one
+fn update_stamp(stamp: &Path, hash: u64) -> bool {
+    let hash = hash.to_string();
+
+    if fs::read_to_string(stamp).is_ok_and(|previous| previous == hash) {
+        return false;
+    }
+
+    write_if_changed(stamp, hash.as_bytes());
+
+    true
 }
 
 // sorted so the same files always give the same hash
