@@ -51,7 +51,7 @@ fn button(workspace: &Workspace) -> Rectangle {
 
 | Function | Gives |
 |---|---|
-| `id()` | the compositor's id for it, which `Workspaces::focus` takes |
+| `id()` | the compositor's id for it, which `Workspaces::focus` takes; an `i64`, because named Hyprland workspaces have negative ids |
 | `index()` | its position on its monitor, starting at 1; on Hyprland and Sway, the workspace's number (0 for a workspace with only a name) |
 | `name()` | its name, or `None` for workspaces you never named |
 | `output()` | the monitor it's on, like `"DP-1"`, or `None` |

@@ -125,6 +125,13 @@ A Service is one global value per type (`src/services.rs`, `src/services/store.r
 - Control calls from input handlers, like setting the volume, run on one shared worker thread (`src/services/worker.rs`), so a slow bus never stalls drawing.
 - A poll that found nothing new marks its write as `quiet`, so it wakes no window.
 
+`Workspaces` doesn't know which compositor is running. `src/compositor.rs` picks a backend from the environment (`NIRI_SOCKET`, `HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`), and every backend hands over the full workspace list after each event:
+
+- **niri** only sends what changed, so its backend remembers the rest and rebuilds the list itself.
+- **Hyprland** and **Sway** are asked for the full list again after every event.
+
+The Service only sorts the list and stores it. Adding a compositor means one file in `src/compositor/` and one arm in each `match` in `compositor.rs`.
+
 ## Code map
 
 ```
@@ -168,7 +175,8 @@ src/
 ├── style/             Fill, Radius, Shadow, Image, Mask
 ├── dbus.rs, dbus/     a small zbus wrapper: Bus, Method, Signal, Value
 ├── ipc.rs             IpcHandlers and IpcCall
-├── niri.rs            niri's IPC socket, used by Workspaces
+├── compositor.rs      picks the workspace backend for the running compositor
+├── compositor/        niri, Hyprland and Sway IPC, used by Workspaces
 ├── process.rs         spawn, output, lines
 ├── files.rs           watch_file, through inotify
 ├── allocator.rs       glibc allocator limits for image decoding
@@ -208,6 +216,8 @@ These rules aren't checked by the compiler. Breaking one causes a crash, a freez
 
 **Testing**
 - `src/frame.rs` has layout tests. Each one builds a small tree and checks exactly where each widget lands. Add one when you change layout.
+- Each compositor backend has a parse test fed with trimmed replies from that compositor. Add one when you add a backend.
+- Only library tests exist, and they need no compositor. CI runs them on every push (`.github/workflows/test.yml`): `nix develop -c cargo test --lib`.
 
 **Module layout**
 - A module is `foo.rs` plus an optional `foo/` folder, never `mod.rs`.
