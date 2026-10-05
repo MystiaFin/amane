@@ -1,7 +1,7 @@
 use std::fs;
 use std::process::ExitCode;
 
-use crate::paths;
+use crate::{paths, project};
 
 const TEMPLATE: &[(&str, &str)] = &[("main.rs", include_str!("../template/main.rs"))];
 
@@ -39,6 +39,9 @@ pub fn run(example: bool) -> ExitCode {
 
         println!("created {}", path.display());
     }
+
+    // writes the editor's Cargo.toml before the first build
+    project::prepare();
 
     ExitCode::SUCCESS
 }

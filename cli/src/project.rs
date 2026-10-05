@@ -30,6 +30,9 @@ pub fn prepare() -> PathBuf {
 
     write_if_changed(&project_folder.join("Cargo.toml"), manifest.as_bytes());
 
+    // rust-analyzer only finds amane through a Cargo.toml next to the user's src
+    write_if_changed(&paths::config().join("Cargo.toml"), manifest.as_bytes());
+
     // the library's own lock file pins the versions amane was tested with
     let lock = fs::read(library_folder.join("Cargo.lock")).expect("failed to read library lock");
 

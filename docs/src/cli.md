@@ -2,7 +2,7 @@
 
 | Command | What it does |
 |---|---|
-| `amane startup` | Creates `~/.config/amane/src/main.rs` from a template. Never overwrites an existing file. |
+| `amane startup` | Creates `~/.config/amane/src/main.rs` from a template, plus a `Cargo.toml` for your editor. Never overwrites an existing shell file. |
 | `amane startup --example` | Creates a full example bar in `~/.config/amane/src/`, split over several files, with workspace buttons for each monitor. Never overwrites an existing file. |
 | `amane dev` | Builds your shell, starts it, and rebuilds and restarts it on every save. |
 | `amane compile` | Builds the optimized shell without starting it. |
@@ -12,6 +12,7 @@
 ## Where things live
 
 - **Your shell:** `~/.config/amane/src/`. `main.rs` is the entry point. You can add more files next to it and load them with `mod`, like in any Rust program.
+- **Editor support:** `~/.config/amane/Cargo.toml`. `amane startup` writes it and every build refreshes it, so rust-analyzer finds Amane and completes its types in any editor. Don't edit it. It holds paths for this machine only, so if you keep your shell in git, ignore `Cargo.toml`, `Cargo.lock` and `target/`.
 - **Build files:** `~/.cache/amane/`.
   - `library/` holds the copy of Amane unpacked from the command.
   - `project/` holds the Cargo project generated around your `main.rs`.
