@@ -1,0 +1,45 @@
+name: Feature request
+description: Ask for one new widget, service, or compositor feature
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One request per issue. Please read [CONTRIBUTING.md](https://github.com/MystiaFin/amane/blob/main/CONTRIBUTING.md) first, especially the part about compositor support.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of feature is this?
+      options:
+        - Widget
+        - Service (system data like audio, network, workspaces)
+        - Support for a compositor's own feature (like its workspaces)
+        - CLI
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What do you want?
+      description: Be specific. What should it show or do?
+      placeholder: A workspace indicator on Umbriel, showing every workspace and which one is focused.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: How would you use it in your shell?
+      placeholder: A row of workspace buttons in my bar, like the example bar has on niri.
+    validations:
+      required: true
+
+  - type: input
+    id: compositor
+    attributes:
+      label: Compositor
+      description: Only needed if this is about one compositor. Link its IPC docs if you can.
+      placeholder: Umbriel, https://...

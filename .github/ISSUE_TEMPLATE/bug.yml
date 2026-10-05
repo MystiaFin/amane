@@ -1,0 +1,36 @@
+name: Bug report
+description: Something doesn't work the way the docs say
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected, and what happened instead. Paste any error output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we reproduce it?
+      description: The smallest shell code that shows the bug, and the commands you ran.
+      render: rust
+    validations:
+      required: true
+
+  - type: input
+    id: compositor
+    attributes:
+      label: Compositor and version
+      placeholder: niri 25.08
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Amane version or commit
+      placeholder: 0.1.0 or 00b8a42
+    validations:
+      required: true
