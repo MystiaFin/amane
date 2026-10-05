@@ -1,0 +1,9 @@
+# lets rust-analyzer see amane while editing the example in this repository,
+# amane startup writes the user's own Cargo.toml instead of copying this one
+[package]
+name = "amane-example"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+amane = { path = "../../.." }

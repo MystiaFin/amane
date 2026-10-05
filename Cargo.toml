@@ -31,4 +31,4 @@ resvg = { version = "0.48.1", default-features = false }
 chrono = "0.4"
 
 [workspace]
-members = ["cli"]
+members = ["cli", "cli/template/example"]
