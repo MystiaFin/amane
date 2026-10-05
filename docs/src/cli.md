@@ -5,8 +5,9 @@
 | `amane startup` | Creates `~/.config/amane/src/main.rs` from a template, plus a `Cargo.toml` for your editor. Never overwrites an existing shell file. |
 | `amane startup --example` | Creates a full example bar in `~/.config/amane/src/`, split over several files, with workspace buttons for each monitor. Never overwrites an existing file. |
 | `amane dev` | Builds your shell, starts it, and rebuilds and restarts it on every save. |
-| `amane compile` | Builds the optimized shell without starting it. |
-| `amane run` | Builds the optimized shell if anything changed, then starts it. |
+| `amane compile` | Builds your shell and saves it as `~/.cache/amane/amane-shell`, without starting it. |
+| `amane run` | Starts the shell `amane compile` saved. Never builds. |
+| `amane clean` | Deletes the build output in `~/.cache/amane/project/`. Keeps the compiled shell, so `amane run` still works. |
 | `amane ipc call <name> [arguments...]` | Calls a handler in the running shell. See [IPC](ipc.md). |
 
 ## Where things live
@@ -17,10 +18,17 @@
   - `library/` holds the copy of Amane unpacked from the command.
   - `project/` holds the Cargo project generated around your `main.rs`.
   - `project/target/` holds the build output.
+  - `amane-shell` is the shell `amane compile` saved, the one `amane run` starts.
 
 Both paths follow `XDG_CONFIG_HOME` and `XDG_CACHE_HOME` when they're set.
 
 You never edit anything in the cache folder. Deleting it is safe. The next build makes it again, from scratch.
+
+`project/` is the big one, often close to 1 GB. It only makes rebuilds fast, and your shell never reads it. Run `amane clean` to delete it. The next `amane compile` or `amane dev` then builds everything again from scratch, which takes a few minutes. To build and shrink in one go:
+
+```sh
+amane compile && amane clean
+```
 
 ## Splitting your shell into files
 
@@ -47,15 +55,16 @@ fn main() {
 
 `amane dev` watches the whole `src/` folder, so saving any of these files triggers a rebuild.
 
-## Dev builds and release builds
+## How your shell is built
 
-| | `amane dev` | `amane run`, `amane compile` |
-|---|---|---|
-| Your code | not optimized, builds in seconds | optimized |
-| Amane and its dependencies | optimized | optimized |
-| Use it for | writing your shell | daily use |
+`amane dev` and `amane compile` share one build, so the build output is only kept on disk once.
 
-Amane is optimized even in dev builds, because unoptimized drawing is too slow for smooth animation. Only your own code is left unoptimized, which keeps rebuilds after a save quick.
+| | Optimized |
+|---|---|
+| Your code | no, so a save rebuilds in seconds |
+| Amane and its dependencies | yes |
+
+Amane is always optimized, because unoptimized drawing is too slow for smooth animation. Your own code only describes the shell and Amane does the heavy work, so leaving your code unoptimized keeps rebuilds quick without slowing the shell down.
 
 ## Dependencies
 

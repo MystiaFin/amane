@@ -40,7 +40,7 @@
 Run your shell with `AMANE_FRAMES=1` to print a line for every frame:
 
 ```sh
-AMANE_FRAMES=1 ~/.cache/amane/project/target/release/amane-shell
+AMANE_FRAMES=1 ~/.cache/amane/amane-shell
 ```
 
 Each line shows which window drew, the time since its last frame, and how long the view, the drawing, and the GPU took. It also prints which Service woke the windows. Look for:

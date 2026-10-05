@@ -95,19 +95,23 @@ Save, and the bar restarts with the new look.
 
 ## 5. Run it for real
 
-`amane dev` builds quickly, but the program it builds isn't fully optimized. When you're happy with your shell, use:
+`amane dev` stops your shell when you stop it. When you're happy with your shell, compile it once:
+
+```sh
+amane compile
+```
+
+Then start it with:
 
 ```sh
 amane run
 ```
 
-This builds an optimized shell and starts it. To start your shell when you log in, run `amane run` from your compositor's startup config. For niri:
+`amane run` never builds. It only starts the shell `amane compile` saved, so after editing your shell, run `amane compile` again. To start your shell when you log in, run `amane run` from your compositor's startup config. For niri:
 
 ```kdl
 spawn-at-startup "amane" "run"
 ```
-
-When nothing has changed since the last build, `amane run` starts right away.
 
 ## Next
 

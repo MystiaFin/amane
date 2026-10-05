@@ -1,23 +1,22 @@
 use std::os::unix::process::CommandExt;
 use std::process::{Command, ExitCode};
 
-use crate::cargo;
-use crate::project;
+use crate::paths;
 
+// only starts what `amane compile` made, building is always the user's choice
 pub fn run() -> ExitCode {
-    let project = project::prepare();
+    let shell = paths::shell();
 
-    // cargo finishes instantly when nothing changed since the last compile
-    if !cargo::build(&project) {
+    if !shell.exists() {
+        eprintln!("no compiled shell yet, run `amane compile` first");
+
         return ExitCode::FAILURE;
     }
 
-    let binary = cargo::binary(&project);
-
     // exec replaces this process, so it only returns when the shell could not start
-    let error = Command::new(&binary).exec();
+    let error = Command::new(&shell).exec();
 
-    eprintln!("failed to run {}: {error}", binary.display());
+    eprintln!("failed to run {}: {error}", shell.display());
 
     ExitCode::FAILURE
 }

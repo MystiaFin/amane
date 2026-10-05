@@ -1,5 +1,6 @@
 mod call;
 mod cargo;
+mod clean;
 mod compile;
 mod dev;
 mod library;
@@ -28,6 +29,8 @@ fn main() -> ExitCode {
 
         ["dev"] => dev::run(),
 
+        ["clean"] => clean::run(),
+
         ["ipc", "call", name, ..] => call::run(name, &arguments[3..]),
 
         _ => usage(),
@@ -40,7 +43,8 @@ fn usage() -> ExitCode {
     eprintln!("  amane startup --example              create a full example bar instead");
     eprintln!("  amane dev                           rebuild and restart on every save");
     eprintln!("  amane compile                        build the optimised shell");
-    eprintln!("  amane run                            compile, then start the shell");
+    eprintln!("  amane run                            start the compiled shell");
+    eprintln!("  amane clean                          remove the build cache, keep the compiled shell");
     eprintln!("  amane ipc call <name> [arguments...] call a handler in the running shell");
 
     ExitCode::FAILURE

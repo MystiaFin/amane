@@ -75,4 +75,4 @@ The library is copied into the `amane` command when the command is built. To get
 - NixOS: `nix profile upgrade amane`, or update the flake input and rebuild.
 - Other distributions: `git pull` in the clone, then run `cargo install --path cli` again.
 
-The next `amane run` or `amane dev` rebuilds your shell with the new library.
+The next `amane compile` or `amane dev` rebuilds your shell with the new library.

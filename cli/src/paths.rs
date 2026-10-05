@@ -16,6 +16,11 @@ pub fn cache() -> PathBuf {
     base("XDG_CACHE_HOME", ".cache").join("amane")
 }
 
+// the shell `amane compile` made, kept outside target so a clean doesn't remove it
+pub fn shell() -> PathBuf {
+    cache().join("amane-shell")
+}
+
 // the xdg variable wins when set, otherwise the usual folder inside home
 fn base(variable: &str, fallback: &str) -> PathBuf {
     if let Some(folder) = env::var_os(variable) {

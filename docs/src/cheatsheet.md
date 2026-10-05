@@ -268,7 +268,8 @@ use amane::*;
 |---|---|
 | `amane startup` | creates `~/.config/amane/src/main.rs` |
 | `amane dev` | rebuilds and restarts on every save |
-| `amane compile` | builds the optimized shell |
-| `amane run` | builds if needed, then starts it |
+| `amane compile` | builds the shell `amane run` starts |
+| `amane run` | starts the compiled shell, never builds |
+| `amane clean` | deletes the build output, keeps the compiled shell |
 | `amane ipc call <name> [args...]` | calls an IPC handler |
 | `AMANE_FRAMES=1` | prints a line per frame, for finding slow or endless redraws |

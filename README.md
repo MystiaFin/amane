@@ -28,7 +28,7 @@ Before installing, check that you have what a shell needs to run:
 
 #### 1. Install Rust
 
-You need a Rust toolchain with cargo. Cargo has to stay on your `PATH` after the install, because `amane dev`, `amane compile` and `amane run` call cargo to build your config.
+You need a Rust toolchain with cargo. Cargo has to stay on your `PATH` after the install, because `amane dev` and `amane compile` call cargo to build your config.
 
 #### 2. Run the install script
 
@@ -90,7 +90,7 @@ amane dev
 
 ### amane compile
 
-Builds the optimised shell, without starting it.
+Builds your shell and saves it as `~/.cache/amane/amane-shell`, without starting it.
 
 ```sh
 amane compile
@@ -98,10 +98,18 @@ amane compile
 
 ### amane run
 
-Compiles the optimised shell, then starts it. If nothing changed since the last compile, cargo finishes right away and the shell starts straight away.
+Starts the shell `amane compile` saved. It never builds, so after editing your shell, run `amane compile` first.
 
 ```sh
 amane run
+```
+
+### amane clean
+
+Deletes the build output, which is often close to 1 GB. The compiled shell stays, so `amane run` still works. The next `amane compile` or `amane dev` builds everything again from scratch.
+
+```sh
+amane clean
 ```
 
 ## Example
