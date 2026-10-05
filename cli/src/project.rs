@@ -124,6 +124,7 @@ fn hash_folder(root: &Path, folder: &Path, hasher: &mut DefaultHasher) {
  * unoptimised, so a save still rebuilds quickly after the first build.
  * dependencies carry no debug info and the user's crate only line tables,
  * which keeps the binary small and the link on every save short.
+ * dependencies skip incremental, they only rebuild when amane updates.
  * the empty workspace keeps cargo from joining a workspace in a parent folder
  */
 fn manifest(main: &str, library: &str) -> String {
@@ -146,6 +147,7 @@ debug = \"line-tables-only\"
 [profile.dev.package.\"*\"]
 opt-level = 3
 debug = false
+incremental = false
 
 [workspace]
 "
