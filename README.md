@@ -5,7 +5,7 @@
 <h1 align="center">amane</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-de7979" alt="version 0.1.0">
+  <img src="https://img.shields.io/badge/version-0.1.1-de7979" alt="version 0.1.1">
   <img src="https://img.shields.io/badge/status-experimental-7c1f1f" alt="status: experimental">
   <img src="https://img.shields.io/badge/rust-2024_edition-16151d?logo=rust&logoColor=white" alt="rust 2024 edition">
 </p>
