@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use crate::graphics::{Area, Transform};
@@ -12,6 +13,7 @@ pub type HoverHandler = Rc<dyn Fn(bool)>;
 pub type ScrollHandler = Rc<dyn Fn(Scroll)>;
 pub type KeyHandler = Rc<dyn Fn(Key)>;
 pub type PointHandler = Rc<dyn Fn(Point)>;
+pub type DropHandler = Rc<dyn Fn(Vec<PathBuf>)>;
 
 #[derive(Clone, Default)]
 pub struct Handlers {
@@ -20,6 +22,7 @@ pub struct Handlers {
     pub scroll: Option<ScrollHandler>,
     pub drag: Option<PointHandler>,
     pub motion: Option<PointHandler>,
+    pub drop: Option<DropHandler>,
 
     // not a handler, but it belongs to the same spot the pointer is over
     pub cursor: Option<Cursor>,

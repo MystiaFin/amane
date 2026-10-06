@@ -1,4 +1,5 @@
 mod compositor;
+mod dropped;
 mod keyboard;
 mod layer;
 mod lock;
@@ -16,6 +17,7 @@ mod windows;
 
 use smithay_client_toolkit::{
     compositor::CompositorState,
+    data_device_manager::{DataDeviceManagerState, data_device::DataDevice},
     delegate_dispatch2, delegate_registry,
     output::OutputState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
@@ -78,6 +80,10 @@ struct WaylandState {
     pointer_device: Option<ThemedPointer<()>>,
     keyboard_device: Option<WlKeyboard>,
 
+    // files dragged in from other programs, none when the compositor lacks it
+    data_device_manager: Option<DataDeviceManagerState>,
+    data_device: Option<DataDevice>,
+
     // what the pointer was last set to on one of the windows, none after it leaves
     cursor_shown: Option<Cursor>,
 
@@ -122,6 +128,8 @@ impl WaylandApp {
         let fractional_scale = globals.bind(&qh, 1..=1, ()).ok();
         let viewporter = globals.bind(&qh, 1..=1, ()).ok();
 
+        let data_device_manager = DataDeviceManagerState::bind(&globals, &qh).ok();
+
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
             windows: Vec::new(),
@@ -150,6 +158,9 @@ impl WaylandApp {
             pointer_device: None,
             cursor_shown: None,
             keyboard_device: None,
+
+            data_device_manager,
+            data_device: None,
 
             qh,
 

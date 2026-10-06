@@ -37,6 +37,11 @@ impl SeatHandler for WaylandState {
                     .expect("failed to get pointer");
 
                 self.pointer_device = Some(pointer);
+
+                // files are dropped where the pointer is, so it comes with the pointer
+                if let Some(manager) = &self.data_device_manager {
+                    self.data_device = Some(manager.get_data_device(qh, &seat));
+                }
             }
 
             Capability::Keyboard => {
@@ -64,6 +69,8 @@ impl SeatHandler for WaylandState {
                 if let Some(pointer) = self.pointer_device.take() {
                     pointer.pointer().release();
                 }
+
+                self.data_device = None;
             }
 
             Capability::Keyboard => {

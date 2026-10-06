@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{Button, Cursor, Scroll};
 
 use super::Target;
@@ -202,6 +204,26 @@ impl Pointer {
         };
 
         handler(scroll);
+
+        true
+    }
+
+    // drop
+
+    // returns whether a handler ran
+    pub fn drop_files(&mut self, x: f32, y: f32, files: Vec<PathBuf>) -> bool {
+        self.x = x;
+        self.y = y;
+
+        let Some(index) = self.find_topmost(|target| target.handlers.drop.is_some()) else {
+            return false;
+        };
+
+        let Some(drop) = &self.targets[index].handlers.drop else {
+            return false;
+        };
+
+        drop(files);
 
         true
     }

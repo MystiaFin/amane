@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use crate::graphics::Area;
@@ -39,6 +40,13 @@ impl Rectangle {
     // how the pointer looks while it is over the rectangle
     pub fn cursor(mut self, cursor: Cursor) -> Self {
         self.handlers.cursor = Some(cursor);
+
+        self
+    }
+
+    // runs with the files dragged in from another program and let go over the rectangle
+    pub fn on_drop(mut self, handler: impl Fn(Vec<PathBuf>) + 'static) -> Self {
+        self.handlers.drop = Some(Rc::new(handler));
 
         self
     }
