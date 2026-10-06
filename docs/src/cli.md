@@ -7,7 +7,8 @@
 | `amane dev` | Builds your shell, starts it, and rebuilds and restarts it on every save. |
 | `amane compile` | Builds your shell and saves it as `~/.cache/amane/amane-shell`, without starting it. |
 | `amane run` | Starts the shell `amane compile` saved. Never builds. |
-| `amane clean` | Deletes the build output in `~/.cache/amane/project/`. Keeps the compiled shell, so `amane run` still works. |
+| `amane clean` | Deletes the build output in `~/.cache/amane/project/`. Keeps the compiled shell, so `amane run` still works. Asks before deleting. |
+| `amane clean --yes` | Same as `amane clean`, without asking first. |
 | `amane ipc call <name> [arguments...]` | Calls a handler in the running shell. See [IPC](ipc.md). |
 
 ## Where things live
@@ -24,10 +25,10 @@ Both paths follow `XDG_CONFIG_HOME` and `XDG_CACHE_HOME` when they're set.
 
 You never edit anything in the cache folder. Deleting it is safe. The next build makes it again, from scratch.
 
-`project/` is the big one, often close to 1 GB. It only makes rebuilds fast, and your shell never reads it. Run `amane clean` to delete it. The next `amane compile` or `amane dev` then builds everything again from scratch, which takes a few minutes. To build and shrink in one go:
+`project/` is the big one, often close to 1 GB. It only makes rebuilds fast, and your shell never reads it. Run `amane clean` to delete it. It asks first, because the next `amane compile` or `amane dev` then builds everything again from scratch, which takes a few minutes. To build and shrink in one go without the question:
 
 ```sh
-amane compile && amane clean
+amane compile && amane clean --yes
 ```
 
 ## Splitting your shell into files

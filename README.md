@@ -106,10 +106,11 @@ amane run
 
 ### amane clean
 
-Deletes the build output, which is often close to 1 GB. The compiled shell stays, so `amane run` still works. The next `amane compile` or `amane dev` builds everything again from scratch.
+Deletes the build output, which is often close to 1 GB. The compiled shell stays, so `amane run` still works. The next `amane compile` or `amane dev` builds everything again from scratch, so it asks first. `--yes` skips the question.
 
 ```sh
 amane clean
+amane clean --yes
 ```
 
 ## Example

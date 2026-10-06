@@ -270,6 +270,7 @@ use amane::*;
 | `amane dev` | rebuilds and restarts on every save |
 | `amane compile` | builds the shell `amane run` starts |
 | `amane run` | starts the compiled shell, never builds |
-| `amane clean` | deletes the build output, keeps the compiled shell |
+| `amane clean` | deletes the build output, keeps the compiled shell, asks first |
+| `amane clean --yes` | the same, without asking |
 | `amane ipc call <name> [args...]` | calls an IPC handler |
 | `AMANE_FRAMES=1` | prints a line per frame, for finding slow or endless redraws |
