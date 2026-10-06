@@ -41,10 +41,16 @@ impl Area {
         Area::new(left, top, width, height)
     }
 
-    pub fn trace(self, radius: f32) -> Option<BezierPath> {
+    pub fn trace(self, radius: Corners) -> Option<BezierPath> {
         // a radius past half a side would make the corners overlap
         let shortest_half = f32::min(self.width, self.height) / 2.0;
-        let radius = f32::min(radius, shortest_half);
+
+        let Corners {
+            top_left,
+            top_right,
+            bottom_right,
+            bottom_left,
+        } = radius.map(|corner| f32::min(corner, shortest_half));
 
         let left = self.x;
         let top = self.y;
@@ -52,42 +58,89 @@ impl Area {
         let bottom = self.y + self.height;
 
         // 0.5523 is how far a curve's handles reach to bend it into a quarter circle
-        let handle = radius * (1.0 - 0.5523);
+        let handle = |corner: f32| corner * (1.0 - 0.5523);
 
         let mut path = PathBuilder::new();
 
-        path.move_to(left + radius, top);
-        path.line_to(right - radius, top);
+        path.move_to(left + top_left, top);
+        path.line_to(right - top_right, top);
         path.cubic_to(
-            right - handle,
+            right - handle(top_right),
             top,
             right,
-            top + handle,
+            top + handle(top_right),
             right,
-            top + radius,
+            top + top_right,
         );
-        path.line_to(right, bottom - radius);
+        path.line_to(right, bottom - bottom_right);
         path.cubic_to(
             right,
-            bottom - handle,
-            right - handle,
+            bottom - handle(bottom_right),
+            right - handle(bottom_right),
             bottom,
-            right - radius,
+            right - bottom_right,
             bottom,
         );
-        path.line_to(left + radius, bottom);
+        path.line_to(left + bottom_left, bottom);
         path.cubic_to(
-            left + handle,
+            left + handle(bottom_left),
             bottom,
             left,
-            bottom - handle,
+            bottom - handle(bottom_left),
             left,
-            bottom - radius,
+            bottom - bottom_left,
         );
-        path.line_to(left, top + radius);
-        path.cubic_to(left, top + handle, left + handle, top, left + radius, top);
+        path.line_to(left, top + top_left);
+        path.cubic_to(
+            left,
+            top + handle(top_left),
+            left + handle(top_left),
+            top,
+            left + top_left,
+            top,
+        );
         path.close();
 
         path.finish()
+    }
+}
+
+// how far each corner of a rectangle curves
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Corners {
+    pub top_left: f32,
+    pub top_right: f32,
+    pub bottom_right: f32,
+    pub bottom_left: f32,
+}
+
+impl Corners {
+    pub fn map(self, change: impl Fn(f32) -> f32) -> Self {
+        Self {
+            top_left: change(self.top_left),
+            top_right: change(self.top_right),
+            bottom_right: change(self.bottom_right),
+            bottom_left: change(self.bottom_left),
+        }
+    }
+
+    pub fn largest(self) -> f32 {
+        self.to_array().into_iter().fold(0.0, f32::max)
+    }
+
+    // clockwise from the top left, the order quads.wgsl reads them in
+    pub fn to_array(self) -> [f32; 4] {
+        [self.top_left, self.top_right, self.bottom_right, self.bottom_left]
+    }
+}
+
+impl From<f32> for Corners {
+    fn from(radius: f32) -> Self {
+        Self {
+            top_left: radius,
+            top_right: radius,
+            bottom_right: radius,
+            bottom_left: radius,
+        }
     }
 }

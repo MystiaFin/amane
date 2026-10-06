@@ -4,7 +4,7 @@ use vello::Scene;
 use vello::peniko::{Blob, Fill, ImageAlphaType, ImageBrush, ImageData, ImageFormat, ImageQuality};
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Area, Transform};
+use crate::graphics::{Area, Corners, Transform};
 
 use super::Gpu;
 use super::convert::{affine, bezier};
@@ -16,7 +16,7 @@ impl Gpu {
         image: Arc<Bitmap>,
         transform: Transform,
         area: Area,
-        radius: f32,
+        radius: Corners,
         clip_transform: Transform,
     ) {
         let Some(clip) = area.trace(radius) else {

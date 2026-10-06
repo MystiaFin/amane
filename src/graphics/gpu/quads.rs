@@ -12,7 +12,7 @@ use super::atlas::Atlas;
 pub use clip::{Clip, Clips};
 
 // how many numbers one quad takes: Quad in quads.wgsl has seven rows of four
-const QUAD_SIZE: usize = 7 * 4;
+const QUAD_SIZE: usize = 9 * 4;
 
 // what kind of quad it is, as quads.wgsl tells them apart
 const SHAPE: f32 = 0.0;

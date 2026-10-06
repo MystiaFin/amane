@@ -1,16 +1,21 @@
-use crate::graphics::Area;
+use crate::graphics::{Area, Corners};
 
 // nothing clips: far bigger than any canvas
 pub const NO_CLIP: Clip = Clip {
     area: Area::new(-1.0e6, -1.0e6, 2.0e6, 2.0e6),
-    radius: 0.0,
+    radius: Corners {
+        top_left: 0.0,
+        top_right: 0.0,
+        bottom_right: 0.0,
+        bottom_left: 0.0,
+    },
 };
 
 // a rounded rectangle on the canvas that quads only show inside
 #[derive(Clone, Copy)]
 pub struct Clip {
     pub area: Area,
-    pub radius: f32,
+    pub radius: Corners,
 }
 
 // at most two rounded clips reach a quad, the outer one and the one inside it

@@ -71,7 +71,7 @@ impl Widget for ScrollArea {
 
         self.child.draw(&mut inside, self.child_area(area));
 
-        renderer.clip(inside, area, 0.0);
+        renderer.clip(inside, area, 0.0.into());
     }
 
     fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {

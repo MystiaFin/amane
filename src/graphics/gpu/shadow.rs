@@ -2,23 +2,24 @@ use vello::Scene;
 use vello::kurbo;
 use vello::peniko::{self, Compose, Fill, Mix};
 
-use crate::graphics::{BezierPath, Color, Area, Transform};
+use crate::graphics::{BezierPath, Color, Area, Corners, Transform};
 
 use super::convert::{affine, bezier, paint};
 
 pub(super) fn drop_shadow(
     scene: &mut Scene,
     area: Area,
-    radius: f32,
+    radius: Corners,
     transform: Transform,
     color: Color,
     blur: f32,
 ) {
+    // ponytail: vello blurs one radius, so shadows round every corner like the largest; trace a blurred path if mixed corners show
     scene.draw_blurred_rounded_rect(
         affine(transform),
         rounded(area),
         paint(color),
-        f64::from(radius),
+        f64::from(radius.largest()),
         deviation(blur),
     );
 }
@@ -27,7 +28,7 @@ pub(super) fn inner_shadow(
     scene: &mut Scene,
     clip: &BezierPath,
     hole: Area,
-    radius: f32,
+    radius: Corners,
     transform: Transform,
     color: Color,
     blur: f32,
@@ -48,7 +49,7 @@ pub(super) fn inner_shadow(
         transform,
         rounded(hole),
         peniko::Color::BLACK,
-        f64::from(radius),
+        f64::from(radius.largest()),
         deviation(blur),
     );
 

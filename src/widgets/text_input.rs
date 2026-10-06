@@ -133,7 +133,7 @@ impl TextInput {
 
         let cursor = Area::new(area.x + offset, area.y, CURSOR_WIDTH, area.height);
 
-        renderer.rectangle(cursor, self.color, 0.0);
+        renderer.rectangle(cursor, self.color, 0.0.into());
     }
 }
 
@@ -167,7 +167,7 @@ impl Widget for TextInput {
             self.draw_cursor(&mut inside, area);
         }
 
-        renderer.clip(inside, area, 0.0);
+        renderer.clip(inside, area, 0.0.into());
     }
 
     fn collect_targets(&self, area: Area, targets: &mut Vec<Target>) {

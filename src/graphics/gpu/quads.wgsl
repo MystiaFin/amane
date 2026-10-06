@@ -10,7 +10,7 @@ struct Quad {
     // not premultiplied, 0 to 1
     color: vec4<f32>,
 
-    // corner radius, border thickness (0 fills it), clip corner radius, and the kind:
+    // border thickness (0 fills it), two unused, and the kind:
     // 0 a shape, 1 a letter, 2 an image
     shape: vec4<f32>,
 
@@ -20,7 +20,9 @@ struct Quad {
 
     inner_clip: vec4<f32>,
 
-    // the inner clip's corner radius
+    // corner radii of the quad, its clip and its inner clip, clockwise from the top left
+    radius: vec4<f32>,
+    clip_radius: vec4<f32>,
     inner_radius: vec4<f32>,
 }
 
@@ -74,14 +76,21 @@ fn vertex(@builtin(vertex_index) vertex: u32, @builtin(instance_index) index: u3
     return out;
 }
 
-// how far point is outside the rounded rectangle, negative inside
-fn rounded_rectangle(point: vec2<f32>, rect: vec4<f32>, radius: f32) -> f32 {
+// how far point is outside the rounded rectangle, negative inside;
+// radius holds the corners clockwise from the top left
+fn rounded_rectangle(point: vec2<f32>, rect: vec4<f32>, radius: vec4<f32>) -> f32 {
     let half = rect.zw * 0.5;
     let center = rect.xy + half;
 
-    let safe_radius = clamp(radius, 0.0, min(half.x, half.y));
+    let from_center = point - center;
 
-    let offset = abs(point - center) - half + safe_radius;
+    // the corner of the quarter the point is in, y grows downward
+    let side = select(radius.xw, radius.yz, from_center.x > 0.0);
+    let corner = select(side.x, side.y, from_center.y > 0.0);
+
+    let safe_radius = clamp(corner, 0.0, min(half.x, half.y));
+
+    let offset = abs(from_center) - half + safe_radius;
 
     let inside = min(max(offset.x, offset.y), 0.0);
     let outside = length(max(offset, vec2<f32>(0.0)));
@@ -101,8 +110,8 @@ fn fragment(corner: Corner) -> @location(0) vec4<f32> {
     // sampled for every quad, since sampling has to happen outside of branches
     let image = textureSample(picture, picture_sampler, corner.source);
 
-    let outer_clip = coverage(rounded_rectangle(corner.point, quad.clip, quad.shape.z));
-    let inner_clip = coverage(rounded_rectangle(corner.point, quad.inner_clip, quad.inner_radius.x));
+    let outer_clip = coverage(rounded_rectangle(corner.point, quad.clip, quad.clip_radius));
+    let inner_clip = coverage(rounded_rectangle(corner.point, quad.inner_clip, quad.inner_radius));
 
     let clip = outer_clip * inner_clip;
 
@@ -116,14 +125,14 @@ fn fragment(corner: Corner) -> @location(0) vec4<f32> {
     if quad.shape.w == 1.0 {
         amount = textureLoad(atlas, vec2<i32>(floor(corner.source)), 0).r;
     } else {
-        amount = coverage(rounded_rectangle(corner.point, quad.rect, quad.shape.x));
+        amount = coverage(rounded_rectangle(corner.point, quad.rect, quad.radius));
 
-        let thickness = quad.shape.y;
+        let thickness = quad.shape.x;
 
         // a border is the shape minus the same shape pulled in by the thickness
         if thickness > 0.0 {
             let inner = vec4<f32>(quad.rect.xy + thickness, quad.rect.zw - thickness * 2.0);
-            let inner_radius = max(quad.shape.x - thickness, 0.0);
+            let inner_radius = max(quad.radius - thickness, vec4<f32>(0.0));
 
             var hole = 0.0;
 

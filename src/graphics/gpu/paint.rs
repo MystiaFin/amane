@@ -4,7 +4,7 @@ use vello::peniko::{Fill, ImageData, Mix};
 use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
-use crate::graphics::{Area, Transform};
+use crate::graphics::{Area, Corners, Transform};
 
 use super::convert::bezier;
 use super::quads::{Clip, Clips};
@@ -157,7 +157,7 @@ impl Gpu {
 
                 let area = device_area(area, transform);
 
-                self.quads.rectangle(area, radius * scale, color, clips);
+                self.quads.rectangle(area, radius.map(|corner| corner * scale), color, clips);
             }
 
             Command::Border {
@@ -172,7 +172,7 @@ impl Gpu {
                 let area = device_area(area, transform);
 
                 self.quads
-                    .border(area, radius * scale, thickness * scale, color, clips);
+                    .border(area, radius.map(|corner| corner * scale), thickness * scale, color, clips);
             }
 
             Command::Glyph {
@@ -367,11 +367,11 @@ fn device_area(area: Area, transform: Transform) -> Area {
     )
 }
 
-fn device_clip(area: Area, radius: f32, transform: Transform) -> Option<Clip> {
+fn device_clip(area: Area, radius: Corners, transform: Transform) -> Option<Clip> {
     let scale = transform.even_scale()?;
 
     Some(Clip {
         area: device_area(area, transform),
-        radius: radius * scale,
+        radius: radius.map(|corner| corner * scale),
     })
 }

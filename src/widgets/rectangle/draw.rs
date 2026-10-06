@@ -4,10 +4,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::animation::moving;
-use crate::graphics::{Area, Renderer, image};
+use crate::graphics::{Area, Corners, Renderer, image};
 use crate::input::Target;
 use crate::style::Kind;
-use crate::{Fill, Image, Size, Widget};
+use crate::{Fill, Image, Radius, Size, Widget};
 
 use super::{Rectangle, child, targets, transform};
 
@@ -38,7 +38,18 @@ impl Widget for Rectangle {
 
 // the drawing as if the rectangle were not rotated, scaled or moved
 fn draw_in_place(rectangle: &Rectangle, renderer: &mut Renderer, area: Area) {
-    let radius = rectangle.radius.resolve(area.width, area.height);
+    let resolve = |radius: Radius| radius.resolve(area.width, area.height);
+
+    let radius = match rectangle.corners {
+        Some([top_left, top_right, bottom_right, bottom_left]) => Corners {
+            top_left: resolve(top_left),
+            top_right: resolve(top_right),
+            bottom_right: resolve(bottom_right),
+            bottom_left: resolve(bottom_left),
+        },
+
+        None => Corners::from(resolve(rectangle.radius.unwrap_or(Radius::Fixed(0.0)))),
+    };
 
     renderer.blur(area, radius, rectangle.blur);
 
@@ -55,7 +66,7 @@ fn draw_in_place(rectangle: &Rectangle, renderer: &mut Renderer, area: Area) {
     renderer.blend(group, rectangle.opacity);
 }
 
-fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: f32) {
+fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: Corners) {
     drop_shadow(rectangle, renderer, area, radius);
 
     match &rectangle.fill {
@@ -104,7 +115,7 @@ fn paint(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: f32
     renderer.clip(inside, area, radius);
 }
 
-fn paint_image(fill: &Image, renderer: &mut Renderer, area: Area, radius: f32) {
+fn paint_image(fill: &Image, renderer: &mut Renderer, area: Area, radius: Corners) {
     // still decoding, or unreadable
     let Some(image) = image::load(&fill.path, fill.thumbnail, fill.blur) else {
         return;
@@ -119,7 +130,7 @@ fn paint_image(fill: &Image, renderer: &mut Renderer, area: Area, radius: f32) {
 }
 
 // drawn before the fill, so the fill covers the part under the rectangle
-pub fn drop_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: f32) {
+pub fn drop_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: Corners) {
     let Some(shadow) = &rectangle.shadow else {
         return;
     };
@@ -134,7 +145,7 @@ pub fn drop_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, r
 }
 
 // drawn over the fill but under the border and child
-pub fn inner_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: f32) {
+pub fn inner_shadow(rectangle: &Rectangle, renderer: &mut Renderer, area: Area, radius: Corners) {
     let Some(shadow) = &rectangle.shadow else {
         return;
     };

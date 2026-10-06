@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::{BezierPath, Cap, Color, Gradient, Area, Renderer, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Gradient, Area, Corners, Renderer, Transform};
 
 use super::Command;
 
 impl Renderer {
-    pub fn rectangle(&mut self, area: Area, color: Color, radius: f32) {
+    pub fn rectangle(&mut self, area: Area, color: Color, radius: Corners) {
         /*
          * an invisible fill still counts as drawing, and one before a shader
          * makes the gpu run a whole extra drawing pass each frame
@@ -27,7 +27,7 @@ impl Renderer {
         });
     }
 
-    pub fn border(&mut self, area: Area, radius: f32, thickness: f32, color: Color) {
+    pub fn border(&mut self, area: Area, radius: Corners, thickness: f32, color: Color) {
         // a zero width line would still draw as a hairline
         if thickness == 0.0 || color.a == 0 {
             return;
@@ -47,7 +47,7 @@ impl Renderer {
     }
 
     // the gradient spreads across the rectangle, not the whole window
-    pub fn gradient(&mut self, area: Area, gradient: &Gradient, radius: f32) {
+    pub fn gradient(&mut self, area: Area, gradient: &Gradient, radius: Corners) {
         let Some(path) = area.trace(radius) else {
             return;
         };
@@ -60,7 +60,7 @@ impl Renderer {
         });
     }
 
-    pub fn image(&mut self, area: Area, radius: f32, image: Arc<Bitmap>, placement: Area) {
+    pub fn image(&mut self, area: Area, radius: Corners, image: Arc<Bitmap>, placement: Area) {
         // an empty rectangle shows none of the image
         if area.width <= 0.0 || area.height <= 0.0 {
             return;

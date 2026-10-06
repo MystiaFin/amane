@@ -2,7 +2,7 @@ use vello::Scene;
 use vello::kurbo::{self, Join, Stroke};
 use vello::peniko::Fill;
 
-use crate::graphics::{BezierPath, Cap, Color, Area, Transform};
+use crate::graphics::{BezierPath, Cap, Color, Area, Corners, Transform};
 
 use super::convert::{affine, bezier, paint};
 
@@ -50,7 +50,7 @@ fn line_end(cap: Cap) -> kurbo::Cap {
 pub(super) fn rectangle(
     scene: &mut Scene,
     area: Area,
-    radius: f32,
+    radius: Corners,
     transform: Transform,
     color: Color,
 ) {
@@ -64,7 +64,7 @@ pub(super) fn rectangle(
 pub(super) fn border(
     scene: &mut Scene,
     area: Area,
-    radius: f32,
+    radius: Corners,
     thickness: f32,
     transform: Transform,
     color: Color,
@@ -83,7 +83,7 @@ pub(super) fn border(
     );
 
     // the pulled in path curves tighter, but never past a square corner
-    let border_radius = f32::max(radius - half_thickness, 0.0);
+    let border_radius = radius.map(|corner| f32::max(corner - half_thickness, 0.0));
 
     let Some(path) = border_area.trace(border_radius) else {
         return;

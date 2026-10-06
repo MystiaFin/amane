@@ -101,6 +101,7 @@ use amane::*;
 | `.fill(Mask)` | cuts a hole in the rectangle around it |
 | `.radius(12.0)` | rounded corners |
 | `.radius(Full)` | a pill or circle |
+| `.radius_top_left(Full)` | one corner; also `radius_top_right`, `radius_bottom_right`, `radius_bottom_left`. Unset corners stay square. Panics if mixed with `.radius()`. |
 | `.border(2.0, "#cdd6f4")` | an outline along the inside edge |
 | `.opacity(0.5)` | fades it and its child |
 | `.shadow(Shadow::drop("#000").blur(12.0).offset(0.0, 4.0).opacity(0.3))` | a drop shadow |
