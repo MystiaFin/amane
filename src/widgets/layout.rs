@@ -119,8 +119,11 @@ impl Layout {
             sizes.push((length, thickness));
         }
 
-        // Parent-sized children already took the free space, so this is 0 when there are any
-        let free = f32::max(available - used, 0.0);
+        /*
+         * Parent-sized children already took the free space, so this is 0 when there are any;
+         * negative when the children overflow, which center and end spill past the start
+         */
+        let free = available - used;
         let (lead, spread) = self.justify.spread(free, self.children.len());
 
         // justify's spacing comes on top of the fixed gap
