@@ -1,3 +1,4 @@
+#[cfg(target_env = "gnu")]
 use crate::allocator;
 use crate::graphics::font;
 use crate::ipc::IpcHandlers;
@@ -72,6 +73,7 @@ impl App {
             panic!("failed to run: no window set");
         }
 
+        #[cfg(target_env = "gnu")]
         allocator::limit();
 
         if let Some(family) = &self.font {

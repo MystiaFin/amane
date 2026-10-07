@@ -1,3 +1,4 @@
+#[cfg(target_env = "gnu")] // skip glibc tuning if there is no glibc
 mod allocator;
 mod animation;
 mod app;
