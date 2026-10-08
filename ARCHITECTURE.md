@@ -125,10 +125,11 @@ A Service is one global value per type (`src/services.rs`, `src/services/store.r
 - Control calls from input handlers, like setting the volume, run on one shared worker thread (`src/services/worker.rs`), so a slow bus never stalls drawing.
 - A poll that found nothing new marks its write as `quiet`, so it wakes no window.
 
-`Workspaces` doesn't know which compositor is running. `src/compositor.rs` picks a backend from the environment (`NIRI_SOCKET`, `HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`), and every backend hands over the full workspace list after each event:
+`Workspaces` doesn't know which compositor is running. `src/compositor.rs` picks a backend from the environment (`NIRI_SOCKET`, `HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`, `MANGO_INSTANCE_SIGNATURE`), and every backend hands over the full workspace list after each event:
 
 - **niri** only sends what changed, so its backend remembers the rest and rebuilds the list itself.
 - **Hyprland** and **Sway** are asked for the full list again after every event.
+- **Mango** sends the full monitor and tag state on its event stream. Tags become workspaces, with stable ids combining a monitor's slot and the tag number. A monitor keeps its slot after being unplugged. Several tags can be active and focused at once.
 
 The Service only sorts the list and stores it. Adding a compositor means one file in `src/compositor/` and one arm in each `match` in `compositor.rs`.
 
@@ -176,7 +177,7 @@ src/
 ├── dbus.rs, dbus/     a small zbus wrapper: Bus, Method, Signal, Value
 ├── ipc.rs             IpcHandlers and IpcCall
 ├── compositor.rs      picks the workspace backend for the running compositor
-├── compositor/        niri, Hyprland and Sway IPC, used by Workspaces
+├── compositor/        niri, Hyprland, Sway and Mango IPC, used by Workspaces
 ├── process.rs         spawn, output, lines
 ├── files.rs           watch_file, through inotify
 ├── allocator.rs       glibc allocator limits for image decoding

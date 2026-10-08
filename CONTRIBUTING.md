@@ -15,7 +15,7 @@ Pick a template when you open an issue. Blank issues are turned off, because an 
 Amane has two levels of compositor support, so "add support for compositor X" can mean either one:
 
 - **Showing windows** works on any compositor that supports wlr-layer-shell. If your compositor does, Amane already runs there. GNOME doesn't support it.
-- **Compositor-specific services**, like workspaces, need code for each compositor's own IPC. Right now that's niri, Hyprland and Sway (`src/compositor/`).
+- **Compositor-specific services**, like workspaces, need code for each compositor's own IPC. Right now that's niri, Hyprland, Sway and Mango (`src/compositor/`).
 
 For a compositor-specific request, say which service you need and link the compositor's IPC documentation.
 
