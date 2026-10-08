@@ -24,14 +24,11 @@ fn view() -> LayerWindow {
         .align_child(Center, Center)
         .child(Text::new("3").size(14.0).color(Color::BLACK));
 
-    LayerWindow::new()
-        .width(260.0)
-        .height(180.0)
-        .child(
-            Rectangle::new()
-                .width(260.0)
-                .height(180.0)
-                .align_child(Center, Center)
-                .child(Stack::new(children![card, badge])),
-        )
+    LayerWindow::new().width(260.0).height(180.0).child(
+        Rectangle::new()
+            .width(260.0)
+            .height(180.0)
+            .align_child(Center, Center)
+            .child(Stack::new(children![card, badge])),
+    )
 }

@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use ttf_parser::Face;
 
-use crate::graphics::{BezierPath, Cap, Color, Gradient, Area, Corners, Transform};
+use crate::graphics::{Area, BezierPath, Cap, Color, Corners, Gradient, Transform};
 
 pub enum Command {
     // one letter as a picture, at a whole device pixel; x and y are where its baseline starts

@@ -3,10 +3,7 @@ use amane::{
 };
 
 fn main() {
-    App::new()
-        .window_per_monitor(bar)
-        .window(corner)
-        .run();
+    App::new().window_per_monitor(bar).window(corner).run();
 }
 
 // one bar on every monitor, showing which monitor it is on

@@ -1,7 +1,7 @@
 use vello::wgpu::util::{BufferInitDescriptor, DeviceExt};
 use vello::wgpu::{
-    BindGroupDescriptor, BindGroupEntry, BindingResource, BufferUsages, Device, LoadOp,
-    Operations, Queue, RenderPassColorAttachment, RenderPassDescriptor, StoreOp, Texture,
+    BindGroupDescriptor, BindGroupEntry, BindingResource, BufferUsages, Device, LoadOp, Operations,
+    Queue, RenderPassColorAttachment, RenderPassDescriptor, StoreOp, Texture,
 };
 
 use crate::graphics::gpu::texture;

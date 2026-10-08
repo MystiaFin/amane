@@ -68,7 +68,10 @@ pub fn settings(name: &str, password: Option<&str>) -> Argument {
 
     let mut wireless = BTreeMap::new();
 
-    wireless.insert(String::from("ssid"), Argument::Bytes(name.as_bytes().to_vec()));
+    wireless.insert(
+        String::from("ssid"),
+        Argument::Bytes(name.as_bytes().to_vec()),
+    );
 
     let mut groups = BTreeMap::new();
 

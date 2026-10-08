@@ -13,7 +13,11 @@ static SERVICES: LazyLock<Mutex<HashMap<TypeId, &'static (dyn Any + Send + Sync)
 pub fn find<S: Service>() -> &'static RwLock<S> {
     let id = TypeId::of::<S>();
 
-    if let Some(service) = SERVICES.lock().unwrap_or_else(PoisonError::into_inner).get(&id) {
+    if let Some(service) = SERVICES
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .get(&id)
+    {
         return service.downcast_ref().expect("failed to find service");
     }
 
@@ -43,7 +47,10 @@ const RESTART_DELAY: Duration = Duration::from_secs(5);
  */
 fn keep_listening<S: Service>() {
     while panic::catch_unwind(S::listen).is_err() {
-        eprintln!("amane: {} stopped, starting it again", any::type_name::<S>());
+        eprintln!(
+            "amane: {} stopped, starting it again",
+            any::type_name::<S>()
+        );
 
         thread::sleep(RESTART_DELAY);
     }

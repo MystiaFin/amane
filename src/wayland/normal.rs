@@ -8,10 +8,13 @@ use smithay_client_toolkit::shell::{
 };
 use wayland_client::{Connection, QueueHandle};
 
-use crate::window::{CLOSING, REQUESTED};
 use crate::Window;
+use crate::window::{CLOSING, REQUESTED};
 
-use super::{WaylandState, surface::{Role, View}};
+use super::{
+    WaylandState,
+    surface::{Role, View},
+};
 
 impl WaylandState {
     pub fn open_normal(&mut self, name: &'static str, view: fn() -> Window) {

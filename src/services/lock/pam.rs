@@ -26,8 +26,7 @@ struct Response {
 }
 
 // pam calls this back whenever it needs an answer, the password rides along in data
-type Converse =
-    extern "C" fn(c_int, *mut *const Message, *mut *mut Response, *mut c_void) -> c_int;
+type Converse = extern "C" fn(c_int, *mut *const Message, *mut *mut Response, *mut c_void) -> c_int;
 
 #[repr(C)]
 struct Conversation {

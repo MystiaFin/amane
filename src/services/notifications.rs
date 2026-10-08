@@ -94,11 +94,7 @@ impl Notifications {
 
     // the spec closes a notification once an action ran, unless it asked to stay
     fn run_action(&mut self, id: u32, key: &str) {
-        let Some(notification) = self
-            .list
-            .iter()
-            .find(|notification| notification.id == id)
-        else {
+        let Some(notification) = self.list.iter().find(|notification| notification.id == id) else {
             return;
         };
 

@@ -12,7 +12,10 @@ fn socket(name: &str) -> Option<PathBuf> {
     let runtime = env::var_os("XDG_RUNTIME_DIR")?;
     let instance = env::var_os("HYPRLAND_INSTANCE_SIGNATURE")?;
 
-    let path = PathBuf::from(runtime).join("hypr").join(instance).join(name);
+    let path = PathBuf::from(runtime)
+        .join("hypr")
+        .join(instance)
+        .join(name);
 
     Some(path)
 }

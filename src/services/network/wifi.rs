@@ -70,7 +70,9 @@ pub fn access_points(device: &str) -> Vec<AccessPoint> {
 
 // still joining a network, not yet up
 pub fn connecting(device: &str) -> bool {
-    let state = Bus::system().property(NAME, device, DEVICE, "State").number();
+    let state = Bus::system()
+        .property(NAME, device, DEVICE, "State")
+        .number();
 
     (PREPARING..ACTIVATED).contains(&state)
 }

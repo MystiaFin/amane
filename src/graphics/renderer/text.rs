@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use ttf_parser::{Face, GlyphId};
 
-use crate::graphics::{BezierPath, Color, Outline, Area, Renderer, Transform, font};
+use crate::graphics::{Area, BezierPath, Color, Outline, Renderer, Transform, font};
 
 use super::Command;
 

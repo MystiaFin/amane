@@ -1,10 +1,14 @@
 use amane::{
-    App, Center, Color, Full, LayerWindow, Parent, Pointer, Rectangle, Text, Vertical, Window, spawn,
+    App, Center, Color, Full, LayerWindow, Parent, Pointer, Rectangle, Text, Vertical, Window,
+    spawn,
 };
 
 // a bar on top, and a normal window beside it like a settings app would have
 fn main() {
-    App::new().window(bar).normal_window("settings", settings).run();
+    App::new()
+        .window(bar)
+        .normal_window("settings", settings)
+        .run();
 }
 
 fn bar() -> LayerWindow {

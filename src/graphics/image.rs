@@ -141,7 +141,10 @@ pub fn read(path: &Path) -> Option<Bitmap> {
         return decode_jpeg(&bytes);
     }
 
-    if path.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("svg")) {
+    if path
+        .extension()
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("svg"))
+    {
         return svg::rasterize(&bytes);
     }
 

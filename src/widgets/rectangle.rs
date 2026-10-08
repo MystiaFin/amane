@@ -162,11 +162,7 @@ impl Rectangle {
     }
 
     // where the child sits inside the padding, left to right and then top to bottom
-    pub fn align_child(
-        mut self,
-        horizontal: impl Into<Align>,
-        vertical: impl Into<Align>,
-    ) -> Self {
+    pub fn align_child(mut self, horizontal: impl Into<Align>, vertical: impl Into<Align>) -> Self {
         self.child_horizontal = horizontal.into();
         self.child_vertical = vertical.into();
 
@@ -225,15 +221,30 @@ mod tests {
 
     #[test]
     fn corners_set_apart_from_radius() {
-        let rectangle = Rectangle::new().width(10.0).height(10.0).radius_top_left(Full);
+        let rectangle = Rectangle::new()
+            .width(10.0)
+            .height(10.0)
+            .radius_top_left(Full);
 
         assert!(rectangle.radius.is_none());
-        assert_eq!(rectangle.corners, Some([Radius::Full, Radius::Fixed(0.0), Radius::Fixed(0.0), Radius::Fixed(0.0)]));
+        assert_eq!(
+            rectangle.corners,
+            Some([
+                Radius::Full,
+                Radius::Fixed(0.0),
+                Radius::Fixed(0.0),
+                Radius::Fixed(0.0)
+            ])
+        );
     }
 
     #[test]
     #[should_panic(expected = "can't be mixed")]
     fn mixing_radius_and_corners_panics() {
-        let _ = Rectangle::new().width(10.0).height(10.0).radius(Full).radius_top_left(4.0);
+        let _ = Rectangle::new()
+            .width(10.0)
+            .height(10.0)
+            .radius(Full)
+            .radius_top_left(4.0);
     }
 }

@@ -6,9 +6,9 @@ use vello::wgpu::Texture;
 use crate::graphics::renderer::Command;
 use crate::graphics::{Area, Corners, Transform};
 
+use super::Gpu;
 use super::convert::bezier;
 use super::quads::{Clip, Clips};
-use super::Gpu;
 
 /*
  * rectangles, borders and letters go to the quads, anything else to vello;
@@ -157,7 +157,8 @@ impl Gpu {
 
                 let area = device_area(area, transform);
 
-                self.quads.rectangle(area, radius.map(|corner| corner * scale), color, clips);
+                self.quads
+                    .rectangle(area, radius.map(|corner| corner * scale), color, clips);
             }
 
             Command::Border {
@@ -171,8 +172,13 @@ impl Gpu {
 
                 let area = device_area(area, transform);
 
-                self.quads
-                    .border(area, radius.map(|corner| corner * scale), thickness * scale, color, clips);
+                self.quads.border(
+                    area,
+                    radius.map(|corner| corner * scale),
+                    thickness * scale,
+                    color,
+                    clips,
+                );
             }
 
             Command::Glyph {
@@ -345,7 +351,9 @@ fn route(command: &Command) -> Route {
 fn needs_own_canvas(commands: &[Command]) -> bool {
     commands.iter().any(|command| match command {
         Command::Blur { .. } | Command::Cut { .. } | Command::Shader { .. } => true,
-        Command::Group { commands, .. } | Command::Clip { commands, .. } => needs_own_canvas(commands),
+        Command::Group { commands, .. } | Command::Clip { commands, .. } => {
+            needs_own_canvas(commands)
+        }
         _ => false,
     })
 }

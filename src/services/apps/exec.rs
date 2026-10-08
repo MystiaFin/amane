@@ -30,7 +30,10 @@ mod tests {
     #[test]
     fn drops_field_codes_but_keeps_double_percent() {
         assert_eq!(strip_field_codes("firefox %u"), "firefox");
-        assert_eq!(strip_field_codes("code --new-window %F"), "code --new-window");
+        assert_eq!(
+            strip_field_codes("code --new-window %F"),
+            "code --new-window"
+        );
         assert_eq!(strip_field_codes("printf 100%%"), "printf 100%");
     }
 }

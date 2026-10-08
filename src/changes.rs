@@ -39,7 +39,10 @@ pub fn mark_all() {
         eprintln!("change everything");
     }
 
-    CHANGED.lock().unwrap_or_else(PoisonError::into_inner).everything = true;
+    CHANGED
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .everything = true;
 
     ping();
 }

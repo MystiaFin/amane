@@ -20,7 +20,9 @@ static FALLBACKS: LazyLock<Mutex<HashMap<char, Option<&'static Face<'static>>>>>
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub fn set_default(family: &str) {
-    let mut default_family = DEFAULT_FAMILY.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut default_family = DEFAULT_FAMILY
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
 
     *default_family = String::from(family);
 }

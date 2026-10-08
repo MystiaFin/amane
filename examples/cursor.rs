@@ -1,6 +1,6 @@
 use amane::{
-    App, Color, Grab, Keyboard, LayerWindow, NotAllowed, Parent, Pointer, ResizeHorizontal, Rectangle, Row,
-    TextInput, children,
+    App, Color, Grab, Keyboard, LayerWindow, NotAllowed, Parent, Pointer, Rectangle,
+    ResizeHorizontal, Row, TextInput, children,
 };
 
 fn main() {

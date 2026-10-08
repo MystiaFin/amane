@@ -272,9 +272,20 @@ mod tests {
 
         let line = r#"{"WindowOpenedOrChanged":{"window":{"id":7,"title":"foot","app_id":"foot","workspace_id":null,"is_focused":false}}}"#;
 
-        assert!(matches!(parse(line), Some(Event::WindowChanged { id: 7, workspace: None })));
+        assert!(matches!(
+            parse(line),
+            Some(Event::WindowChanged {
+                id: 7,
+                workspace: None
+            })
+        ));
 
         // events amane doesn't use are skipped
-        assert!(parse(r#"{"KeyboardLayoutsChanged":{"keyboard_layouts":{"names":[],"current_idx":0}}}"#).is_none());
+        assert!(
+            parse(
+                r#"{"KeyboardLayoutsChanged":{"keyboard_layouts":{"names":[],"current_idx":0}}}"#
+            )
+            .is_none()
+        );
     }
 }

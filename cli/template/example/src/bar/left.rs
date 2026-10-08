@@ -1,4 +1,6 @@
-use amane::{Center, Color, Monitor, Parent, Rectangle, Row, Service, Text, Widget, Workspace, Workspaces};
+use amane::{
+    Center, Color, Monitor, Parent, Rectangle, Row, Service, Text, Widget, Workspace, Workspaces,
+};
 
 pub fn view(monitor: &Monitor) -> Row {
     let workspaces = Workspaces::read();

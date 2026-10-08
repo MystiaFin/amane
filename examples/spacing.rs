@@ -22,7 +22,12 @@ fn view() -> LayerWindow {
                 .height(100.0)
                 .fill(Color::GREEN)
                 .padding(16.0)
-                .child(Rectangle::new().width(Parent).height(Parent).fill(Color::BLUE)),
+                .child(
+                    Rectangle::new()
+                        .width(Parent)
+                        .height(Parent)
+                        .fill(Color::BLUE)
+                ),
             // a different space per side, with the child in the bottom right corner
             Rectangle::new()
                 .width(Parent)

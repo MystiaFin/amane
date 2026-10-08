@@ -173,7 +173,9 @@ pub fn reads_time(shader: &Path) -> bool {
 
         let is_name_part = |character: char| character.is_alphanumeric() || character == '_';
 
-        let reads = source.split(|character| !is_name_part(character)).any(|word| word == "time");
+        let reads = source
+            .split(|character| !is_name_part(character))
+            .any(|word| word == "time");
 
         known.insert(shader.to_path_buf(), reads);
 
