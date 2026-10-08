@@ -63,7 +63,7 @@ pub fn access_points(device: &str) -> Vec<AccessPoint> {
         access_point.saved = saved.contains(&access_point.ssid);
     }
 
-    access_points.sort_by(|a, b| b.strength.cmp(&a.strength));
+    access_points.sort_by_key(|a| std::cmp::Reverse(a.strength));
 
     access_points
 }

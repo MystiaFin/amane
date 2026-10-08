@@ -96,7 +96,7 @@ fn read_actions(list: &Value) -> (Vec<Action>, bool) {
     let mut actions = Vec::new();
     let mut has_default = false;
 
-    for pair in list.list().chunks_exact(2) {
+    for pair in list.list().as_chunks::<2>().0 {
         let key = pair[0].text();
         let label = pair[1].text();
 

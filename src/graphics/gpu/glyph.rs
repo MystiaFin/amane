@@ -38,6 +38,7 @@ impl Glyph {
 pub(super) type GlyphKey = (usize, u16, u32, u32);
 
 impl Gpu {
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn draw_glyph(
         &mut self,
         scene: &mut Scene,

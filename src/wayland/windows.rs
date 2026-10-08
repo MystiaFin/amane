@@ -91,13 +91,9 @@ impl WaylandState {
 
     // wayland events name the surface they are about, this finds its window
     pub fn window(&mut self, surface: &WlSurface) -> Option<&mut OpenWindow> {
-        for window in &mut self.windows {
-            if window.role.wl_surface() == surface {
-                return Some(window);
-            }
-        }
-
-        None
+        self.windows
+            .iter_mut()
+            .find(|window| window.role.wl_surface() == surface)
     }
 
     // a service or handler may have changed what any of the windows shows

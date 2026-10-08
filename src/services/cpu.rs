@@ -37,8 +37,8 @@ impl Service for Cpu {
         let busy_since = busy.saturating_sub(self.busy);
         let total_since = total.saturating_sub(self.total);
 
-        if total_since > 0 {
-            self.percent = (busy_since * 100 / total_since) as u8;
+        if let Some(percent) = (busy_since * 100).checked_div(total_since) {
+            self.percent = percent as u8;
         }
 
         self.busy = busy;

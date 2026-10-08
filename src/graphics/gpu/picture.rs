@@ -74,7 +74,7 @@ pub fn upload(device: &Device, queue: &Queue, image: &Bitmap) -> Texture {
 fn premultiplied(image: &Bitmap) -> Vec<u8> {
     let mut pixels = image.pixels.to_vec();
 
-    for pixel in pixels.chunks_exact_mut(4) {
+    for pixel in pixels.as_chunks_mut::<4>().0 {
         let alpha = u16::from(pixel[3]);
 
         for channel in &mut pixel[..3] {
