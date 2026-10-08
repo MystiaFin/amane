@@ -49,7 +49,7 @@ impl Gpu {
         self.forget_unpainted();
 
         // presenting attaches the frame to the wayland surface and commits it
-        frame.present();
+        self.queue.present(frame);
 
         true
     }
