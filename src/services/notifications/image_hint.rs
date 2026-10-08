@@ -51,7 +51,8 @@ pub fn remove(image: &str) {
 }
 
 fn folder() -> PathBuf {
-    let runtime_directory = env::var_os("XDG_RUNTIME_DIR").unwrap_or_else(|| env::temp_dir().into());
+    let runtime_directory =
+        env::var_os("XDG_RUNTIME_DIR").unwrap_or_else(|| env::temp_dir().into());
 
     PathBuf::from(runtime_directory).join(FOLDER)
 }
@@ -107,7 +108,11 @@ fn save(hint: &Value) -> Option<PathBuf> {
     encoder.set_color(ColorType::Rgba);
     encoder.set_depth(BitDepth::Eight);
 
-    encoder.write_header().ok()?.write_image_data(&pixels).ok()?;
+    encoder
+        .write_header()
+        .ok()?
+        .write_image_data(&pixels)
+        .ok()?;
 
     Some(path)
 }

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::graphics::{Color, Area, Corners, Renderer};
+use crate::graphics::{Area, Color, Corners, Renderer};
 
 use super::Command;
 
@@ -19,7 +19,14 @@ impl Renderer {
     }
 
     // the shadow fills the rectangle except for a soft hole, so only a rim is left
-    pub fn inner_shadow(&mut self, area: Area, hole: Area, radius: Corners, color: Color, blur: f32) {
+    pub fn inner_shadow(
+        &mut self,
+        area: Area,
+        hole: Area,
+        radius: Corners,
+        color: Color,
+        blur: f32,
+    ) {
         let Some(clip) = area.trace(radius) else {
             return;
         };
@@ -70,7 +77,11 @@ impl Renderer {
         };
 
         // the shader only covers the area, so square corners need no trimming
-        let path = if radius.largest() > 0.0 { Some(outline) } else { None };
+        let path = if radius.largest() > 0.0 {
+            Some(outline)
+        } else {
+            None
+        };
 
         self.commands.push(Command::Shader {
             shader: shader.to_path_buf(),

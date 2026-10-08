@@ -5,8 +5,8 @@ use vello::wgpu::{
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendState,
     BufferBindingType, ColorTargetState, ColorWrites, Device, FilterMode, FragmentState,
     MipmapFilterMode, PipelineLayoutDescriptor, Queue, RenderPipelineDescriptor, Sampler,
-    SamplerBindingType, SamplerDescriptor, ShaderStages, Texture, TextureFormat,
-    TextureSampleType, TextureViewDimension, VertexState, include_wgsl,
+    SamplerBindingType, SamplerDescriptor, ShaderStages, Texture, TextureFormat, TextureSampleType,
+    TextureViewDimension, VertexState, include_wgsl,
 };
 
 use crate::graphics::gpu::atlas::Atlas;

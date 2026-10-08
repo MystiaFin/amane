@@ -75,15 +75,28 @@ mod tests {
             pixels.extend([value, value, value, 255]);
         }
 
-        let image = soften(Bitmap { width, height: 1, pixels: Arc::new(pixels) }, 2);
+        let image = soften(
+            Bitmap {
+                width,
+                height: 1,
+                pixels: Arc::new(pixels),
+            },
+            2,
+        );
 
         let red: Vec<u8> = image.pixels.chunks(4).map(|pixel| pixel[0]).collect();
 
         assert_eq!(red[0], 0);
         assert_eq!(red[15], 255);
 
-        assert!(red[7] > 0 && red[8] < 255, "the edge should soften: {red:?}");
+        assert!(
+            red[7] > 0 && red[8] < 255,
+            "the edge should soften: {red:?}"
+        );
 
-        assert!(red.windows(2).all(|pair| pair[0] <= pair[1]), "should only rise: {red:?}");
+        assert!(
+            red.windows(2).all(|pair| pair[0] <= pair[1]),
+            "should only rise: {red:?}"
+        );
     }
 }

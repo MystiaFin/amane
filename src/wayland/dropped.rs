@@ -2,18 +2,16 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use smithay_client_toolkit::data_device_manager::{
+    WritePipe,
     data_device::DataDeviceHandler,
     data_offer::{DataOfferHandler, DragOffer},
     data_source::DataSourceHandler,
-    WritePipe,
 };
 use wayland_client::{
     Connection, QueueHandle,
     protocol::{
-        wl_data_device::WlDataDevice,
-        wl_data_device_manager::DndAction,
-        wl_data_source::WlDataSource,
-        wl_surface::WlSurface,
+        wl_data_device::WlDataDevice, wl_data_device_manager::DndAction,
+        wl_data_source::WlDataSource, wl_surface::WlSurface,
     },
 };
 
@@ -228,6 +226,12 @@ mod tests {
 
         let files = parse(list);
 
-        assert_eq!(files, [PathBuf::from("/home/me/My Clip.mov"), PathBuf::from("/tmp/a%2")]);
+        assert_eq!(
+            files,
+            [
+                PathBuf::from("/home/me/My Clip.mov"),
+                PathBuf::from("/tmp/a%2")
+            ]
+        );
     }
 }

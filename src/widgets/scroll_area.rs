@@ -1,5 +1,5 @@
-mod targets;
 mod offsets;
+mod targets;
 
 use crate::Size;
 use crate::graphics::{Area, Renderer};

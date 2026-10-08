@@ -65,7 +65,8 @@ impl Service for Bluetooth {
             }
 
             if interfaces.get(DEVICE) != &Value::Nothing {
-                self.devices.push(BluetoothDevice::from_interfaces(path, interfaces));
+                self.devices
+                    .push(BluetoothDevice::from_interfaces(path, interfaces));
             }
         }
 

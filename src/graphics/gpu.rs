@@ -1,21 +1,21 @@
+mod atlas;
 mod blur;
 mod clip;
 mod convert;
 mod cut;
 mod dispatch;
-mod atlas;
-mod glyph;
-mod gradient;
 mod flush;
 mod forget;
-mod present;
-mod image;
+mod glyph;
+mod gradient;
 mod group;
+mod image;
 mod paint;
 mod painted;
 mod pass;
 mod picture;
 mod pool;
+mod present;
 mod quads;
 mod shade;
 mod shader;
@@ -34,7 +34,9 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use vello::peniko::ImageData;
-use vello::wgpu::{BlendState, Device, Queue, Surface, SurfaceConfiguration, Texture, TextureFormat};
+use vello::wgpu::{
+    BlendState, Device, Queue, Surface, SurfaceConfiguration, Texture, TextureFormat,
+};
 
 use crate::graphics::image::Bitmap;
 

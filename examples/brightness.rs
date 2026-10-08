@@ -1,6 +1,6 @@
 use amane::{
-    App, Brightness, Color, Full, Layer, LayerWindow, Parent, Rectangle, Row, Scroll, Service, Text,
-    Vertical, children,
+    App, Brightness, Color, Full, Layer, LayerWindow, Parent, Rectangle, Row, Scroll, Service,
+    Text, Vertical, children,
 };
 
 // scroll over the bar to change the screen brightness

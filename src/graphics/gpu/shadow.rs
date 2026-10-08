@@ -2,7 +2,7 @@ use vello::Scene;
 use vello::kurbo;
 use vello::peniko::{self, Compose, Fill, Mix};
 
-use crate::graphics::{BezierPath, Color, Area, Corners, Transform};
+use crate::graphics::{Area, BezierPath, Color, Corners, Transform};
 
 use super::convert::{affine, bezier, paint};
 

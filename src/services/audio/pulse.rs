@@ -176,9 +176,7 @@ impl Connection {
 
         let mut context = Context::new(&mainloop, "amane")?;
 
-        context
-            .connect(None, FlagSet::NOFLAGS, None)
-            .ok()?;
+        context.connect(None, FlagSet::NOFLAGS, None).ok()?;
 
         let mut connection = Self { mainloop, context };
 

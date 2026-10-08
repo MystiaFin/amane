@@ -46,7 +46,9 @@ fn usage() -> ExitCode {
     eprintln!("  amane dev                           rebuild and restart on every save");
     eprintln!("  amane compile                        build the optimised shell");
     eprintln!("  amane run                            start the compiled shell");
-    eprintln!("  amane clean                          remove the build cache, keep the compiled shell");
+    eprintln!(
+        "  amane clean                          remove the build cache, keep the compiled shell"
+    );
     eprintln!("  amane clean --yes                    the same, without asking first");
     eprintln!("  amane ipc call <name> [arguments...] call a handler in the running shell");
 

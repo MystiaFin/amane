@@ -64,7 +64,10 @@ fn notification_card(notification: &Notification) -> Box<dyn Widget> {
         buttons.push(action_button(notification.id(), action));
     }
 
-    Box::new(Column::new(vec![body, Box::new(Row::new(buttons).gap(4.0))]))
+    Box::new(Column::new(vec![
+        body,
+        Box::new(Row::new(buttons).gap(4.0)),
+    ]))
 }
 
 fn action_button(id: u32, action: &Action) -> Box<dyn Widget> {

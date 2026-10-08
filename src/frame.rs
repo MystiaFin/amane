@@ -122,9 +122,13 @@ mod tests {
         assert_eq!(placed[0], Area::new(20.0, 40.0, 10.0, 10.0));
         assert_eq!(placed[1], Area::new(20.0, 50.0, 10.0, 10.0));
 
-        let spread = Row::new(children![block(10.0, 10.0), block(10.0, 10.0), block(10.0, 10.0)])
-            .width(Parent)
-            .justify(Justify::SpaceBetween);
+        let spread = Row::new(children![
+            block(10.0, 10.0),
+            block(10.0, 10.0),
+            block(10.0, 10.0)
+        ])
+        .width(Parent)
+        .justify(Justify::SpaceBetween);
 
         let placed = areas(&spread, 100, 10);
 

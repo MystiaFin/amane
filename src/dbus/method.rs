@@ -79,7 +79,8 @@ impl Iterator for Methods {
     fn next(&mut self) -> Option<Method> {
         loop {
             // nothing to wait on without a bus
-            let (Some(connection), Some(messages)) = (self.connection, self.messages.as_mut()) else {
+            let (Some(connection), Some(messages)) = (self.connection, self.messages.as_mut())
+            else {
                 return None;
             };
 

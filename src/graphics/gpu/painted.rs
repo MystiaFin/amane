@@ -16,7 +16,12 @@ pub struct Painted {
  */
 impl Gpu {
     // last frame's result for the scene painted at this place, if nothing changed
-    pub(super) fn unchanged(&self, index: usize, scene: &Scene, canvas: &Texture) -> Option<&Texture> {
+    pub(super) fn unchanged(
+        &self,
+        index: usize,
+        scene: &Scene,
+        canvas: &Texture,
+    ) -> Option<&Texture> {
         let Some(Some(painted)) = self.painted.get(index) else {
             return None;
         };
