@@ -6,11 +6,11 @@ I name modules and types here instead of line numbers, so this file doesn't go o
 
 ## The general idea
 
-A desktop shell always has to show live data, like the time, the battery, or which workspace you're on. Most UI toolkits handle this by building the widgets once and keeping them in memory. When the data changes, you write code that finds the right widget and updates it. This is called retained mode, and it's done for performance, because nothing gets rebuilt that doesn't need to be.
+A desktop shell always has to show live data, like the time, the battery, or which workspace you're on. Most UI toolkits handle this by building the widgets once and keeping them in memory. When the data changes, you write code that finds the right widget and updates it. This is called *retained mode*, and it's done for performance, because nothing gets rebuilt that doesn't need to be.
 
 The catch is that you now have two copies of the truth: what the backend knows, and what the widget remembers. You have to keep them in sync yourself, and that sync code is where most bugs live.
 
-Amane's widgets don't remember anything. A view is a plain function that builds the whole window from scratch:
+Amane's widgets don't remember *anything*. A view is a plain function that builds the whole window from scratch:
 
 ```rust
 use amane::{Battery, Full, LayerWindow, Service, Text};
@@ -25,11 +25,11 @@ fn view() -> LayerWindow {
 }
 ```
 
-This is called immediate mode. When something a window shows changes, Amane runs that window's view again, gets a new widget tree, draws it, and throws the old one away. The first draw and every update after it go through the same code, so the screen can't drift away from the data.
+This is called *immediate mode*. When something a window shows changes, Amane runs that window's view again, gets a new widget tree, draws it, and throws the old one away. The first draw and every update after it go through the same code, so the screen can't drift away from the data.
 
 This also means nothing you put in a widget survives to the next frame. Anything that has to last lives outside the tree, in one of three places. A `Service` is a global piece of state per type, like `Battery`, or your own `Counter`. A small table keyed by a name holds things like the scroll position of `ScrollArea::new("my_list", ...)` or the text inside a `TextInput`. And the backend's `OpenWindow` keeps what only the backend needs, like the window's size, its scale and the settings it last sent to the compositor.
 
-I know rebuilding everything sounds expensive. But this is a desktop shell, not a browser. The widget tree of your widgets is small, and building it costs very little next to drawing it. You won't feel it.
+I know rebuilding everything sounds expensive. But this is a desktop shell, not a browser. Your widget tree is small, and building it costs very little next to drawing it. You won't feel it.
 
 I came to this after writing a Quickshell config. My volume slider was jaggy because it waited for the backend to send the new volume back, so I had to build an optimistic UI: the slider kept its own value while dragging, and I had to keep that value and the real one from fighting each other. Amane doesn't make PulseAudio answer any faster, since `Audio::set_volume` still waits for the sound server to announce the change. But if you want the slider to follow your finger, the dragged value is just a variable your view reads. There's no widget holding a second copy that you have to keep in sync.
 
@@ -51,7 +51,7 @@ Everything that touches Wayland or draws runs on one thread, inside one calloop 
 
 The loop sleeps until one of them is ready, then runs that source's callback with `&mut WaylandState`. For the Wayland queue, SCTK turns each compositor message into a call on a handler trait, like `LayerShellHandler::configure` or `CompositorHandler::frame`. Those are wired up with `delegate_dispatch2!` at the bottom of `src/wayland.rs`.
 
-Two Wayland words come up a lot in the rest of this file. A configure is the compositor telling a window it may draw, and at what size. A frame callback is the compositor saying "now is a good time to draw the next frame".
+Two Wayland words come up a lot in the rest of this file. A *configure* is the compositor telling a window it may draw, and at what size. A *frame callback* is the compositor saying "now is a good time to draw the next frame".
 
 ## One frame
 
@@ -93,7 +93,7 @@ Containers hold their children as `Box<dyn Widget>`. `Row` and `Column` share on
 
 A `Layout` measures its children once, when it's built (in `Layout::new` and `set_gap`). That's fine because children never change after that, since the whole tree is rebuilt on the next frame anyway. If any child is `Parent`-sized in a direction, the layout is too. Placing happens later, during `draw`: fixed children get their own size, `Parent` children split whatever is left evenly, and then `justify` and `align` decide where everything sits.
 
-Some builders need a value before they can be used, and those use typestate. `Rectangle::new()` returns a `RectangleNeedsWidth`, `.width()` turns it into a `RectangleNeedsHeight`, and only `.height()` gives you a real `Rectangle`. So forgetting a size is a compile error instead of a blank window. `Canvas` works the same way.
+Some builders need a value before they can be used, and those use *typestate*. `Rectangle::new()` returns a `RectangleNeedsWidth`, `.width()` turns it into a `RectangleNeedsHeight`, and only `.height()` gives you a real `Rectangle`. So forgetting a size is a compile error instead of a blank window. `Canvas` works the same way.
 
 ## Drawing
 
@@ -206,7 +206,7 @@ examples/              one small program per feature
 
 Breaking any of these gives you a crash, a freeze, or a window that silently stops updating.
 
-Struct field order is drop order. Rust drops fields from top to bottom, and some things have to die before others. In `OpenWindow`, `gpu` comes before `fractional`, which comes before `role`, because the GPU draws into the surface and the fractional scale object belongs to that surface. In `WaylandState`, `windows` comes before `connection`. In `WaylandApp`, `state` comes before `event_loop`, because the event loop holds the connection the GPU draws through. Don't reorder these fields.
+Struct field order is drop order. Rust drops fields from top to bottom, and some things have to die before others. In `OpenWindow`, `gpu` comes before `fractional`, which comes before `role`, because the GPU draws into the surface and the fractional scale object belongs to that surface. In `WaylandState`, `windows` comes before `connection`. In `WaylandApp`, `state` comes before `event_loop`, because the event loop holds the connection the GPU draws through. **DO NOT reorder these fields.**
 
 Wayland and drawing stay on the main thread. Other threads never touch `WaylandState`. They mark a change and ping (`changes::mark` or `changes::mark_all`), and the event loop does the actual work.
 
