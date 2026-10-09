@@ -34,10 +34,7 @@ pub fn focus_workspace(id: i64) {
 
 fn focus(id: i64, mut request: impl FnMut(&str) -> Option<String>) -> Option<()> {
     let list = snapshot(&request("get all-monitors")?)?;
-    let workspace = list.iter().find(|workspace| workspace.id == id)?;
-    let output = workspace.output.as_deref()?;
-    let selector = monitor_selector(output)?;
-    let command = focus_command(id, &list)?;
+    let (index, output, selector) = focus_target(id, &list)?;
 
     request(&format!("dispatch focusmon,{selector}"))?;
 
@@ -51,21 +48,17 @@ fn focus(id: i64, mut request: impl FnMut(&str) -> Option<String>) -> Option<()>
         return None;
     }
 
-    request(&command)?;
+    request(&format!("dispatch viewcrossmon,{index},{selector}"))?;
 
     Some(())
 }
 
-fn focus_command(id: i64, list: &[Workspace]) -> Option<String> {
+fn focus_target(id: i64, list: &[Workspace]) -> Option<(u32, &str, String)> {
     let workspace = list.iter().find(|workspace| workspace.id == id)?;
     let output = workspace.output.as_deref()?;
-
     let selector = monitor_selector(output)?;
 
-    Some(format!(
-        "dispatch viewcrossmon,{},{}",
-        workspace.index, selector
-    ))
+    Some((workspace.index, output, selector))
 }
 
 fn monitor_selector(output: &str) -> Option<String> {
@@ -215,7 +208,7 @@ mod tests {
         value["monitors"].as_array_mut().unwrap().pop();
         let remaining = parse(&value.to_string(), &mut outputs).unwrap();
         assert_eq!(original[2].id, remaining[0].id);
-        assert!(focus_command(original[0].id, &remaining).is_none());
+        assert!(focus_target(original[0].id, &remaining).is_none());
 
         let reconnected = parse(MONITORS, &mut outputs).unwrap();
         assert_eq!(original[0].id, reconnected[0].id);
@@ -226,15 +219,15 @@ mod tests {
         let list = parse(MONITORS, &mut Vec::new()).unwrap();
 
         assert_eq!(
-            focus_command(list[1].id, &list).as_deref(),
-            Some("dispatch viewcrossmon,2,^DP-9$")
+            focus_target(list[1].id, &list),
+            Some((2, "DP-9", "^DP-9$".to_string()))
         );
         assert_eq!(
-            focus_command(list[3].id, &list).as_deref(),
-            Some("dispatch viewcrossmon,2,^eDP-1$")
+            focus_target(list[3].id, &list),
+            Some((2, "eDP-1", "^eDP-1$".to_string()))
         );
-        assert!(focus_command(-1, &list).is_none());
-        assert!(focus_command(i64::MAX, &list).is_none());
+        assert!(focus_target(-1, &list).is_none());
+        assert!(focus_target(i64::MAX, &list).is_none());
     }
 
     #[test]
@@ -296,7 +289,7 @@ mod tests {
 
         for name in ["DP-9,1", "DP-9:1", "DP-9\ndispatch view,2", "DP-9\r"] {
             list[0].output = Some(name.to_string());
-            assert!(focus_command(list[0].id, &list).is_none());
+            assert!(focus_target(list[0].id, &list).is_none());
         }
     }
 
@@ -304,17 +297,17 @@ mod tests {
     fn matches_monitor_names_exactly_instead_of_as_regexes() {
         let mut list = parse(MONITORS, &mut Vec::new()).unwrap();
 
-        for (name, command) in [
-            ("DP-1", "dispatch viewcrossmon,1,^DP-1$"),
-            ("DP-10", "dispatch viewcrossmon,1,^DP-10$"),
-            (
-                "Virtual.1+(left)",
-                r"dispatch viewcrossmon,1,^Virtual\.1\+\(left\)$",
-            ),
-            (r"Virtual\[1]", r"dispatch viewcrossmon,1,^Virtual\\\[1\]$"),
+        for (name, selector) in [
+            ("DP-1", "^DP-1$"),
+            ("DP-10", "^DP-10$"),
+            ("Virtual.1+(left)", r"^Virtual\.1\+\(left\)$"),
+            (r"Virtual\[1]", r"^Virtual\\\[1\]$"),
         ] {
             list[0].output = Some(name.to_string());
-            assert_eq!(focus_command(list[0].id, &list).as_deref(), Some(command));
+            assert_eq!(
+                focus_target(list[0].id, &list),
+                Some((1, name, selector.to_string()))
+            );
         }
     }
 
