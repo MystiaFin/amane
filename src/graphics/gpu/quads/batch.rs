@@ -8,12 +8,32 @@ use crate::graphics::{Area, Color, Corners};
 
 use super::clip::NO_CLIP;
 use super::pipeline::picture_group;
-use super::{Clips, LETTER, PICTURE, QUAD_SIZE, Quads, Run, SHAPE};
+use super::{Clip, Clips, LETTER, PICTURE, QUAD_SIZE, Quads, Run, SHAPE};
 
 impl Quads {
     // area and radius in canvas pixels
     pub fn rectangle(&mut self, area: Area, radius: Corners, color: Color, clips: Clips) {
-        self.push(area, (radius, 0.0), color, clips, SHAPE, [0.0; 4], None);
+        self.push(
+            area,
+            (radius, 0.0),
+            rgba(color),
+            clips,
+            SHAPE,
+            [0.0; 4],
+            None,
+        );
+    }
+
+    pub(super) fn mask(&mut self, shape: Clip, strength: f32) {
+        self.push(
+            shape.area,
+            (shape.radius, 0.0),
+            [1.0, 1.0, 1.0, strength],
+            Clips::default(),
+            SHAPE,
+            [0.0; 4],
+            None,
+        );
     }
 
     pub fn border(
@@ -27,7 +47,7 @@ impl Quads {
         self.push(
             area,
             (radius, thickness),
-            color,
+            rgba(color),
             clips,
             SHAPE,
             [0.0; 4],
@@ -69,7 +89,7 @@ impl Quads {
         self.push(
             area,
             (Corners::default(), 0.0),
-            color,
+            rgba(color),
             clips,
             LETTER,
             texels,
@@ -105,7 +125,7 @@ impl Quads {
         self.push(
             area,
             (Corners::default(), 0.0),
-            Color::WHITE,
+            [1.0; 4],
             clips,
             PICTURE,
             corners,
@@ -118,7 +138,7 @@ impl Quads {
         &mut self,
         area: Area,
         (radius, thickness): (Corners, f32),
-        color: Color,
+        color: [f32; 4],
         clips: Clips,
         kind: f32,
         source: [f32; 4],
@@ -126,8 +146,6 @@ impl Quads {
     ) {
         let outer = clips.outer.unwrap_or(NO_CLIP);
         let inner = clips.inner.unwrap_or(NO_CLIP);
-
-        let channel = |value: u8| f32::from(value) / 255.0;
 
         let index = (self.waiting.len() / QUAD_SIZE) as u32;
 
@@ -139,12 +157,7 @@ impl Quads {
             outer.area.width,
             outer.area.height,
         ];
-        let color_row = [
-            channel(color.r),
-            channel(color.g),
-            channel(color.b),
-            channel(color.a),
-        ];
+        let color_row = color;
         let shape_row = [thickness, 0.0, 0.0, kind];
         let source_row = source;
         let inner_clip_row = [
@@ -188,4 +201,8 @@ impl Quads {
             count: 1,
         });
     }
+}
+
+fn rgba(color: Color) -> [f32; 4] {
+    [color.r, color.g, color.b, color.a].map(|channel| f32::from(channel) / 255.0)
 }

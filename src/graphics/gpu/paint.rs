@@ -93,10 +93,18 @@ impl Gpu {
             }
 
             Command::Cut {
-                path,
+                area,
+                radius,
                 transform,
                 strength,
-            } => self.cut(canvas, &path, transform, strength),
+            } => {
+                if let Some(shape) = device_mask(area, radius, transform) {
+                    self.quads
+                        .erase(&self.device, &self.queue, canvas, shape, strength);
+                } else if let Some(path) = area.trace(radius) {
+                    self.cut(canvas, &path, transform, strength);
+                }
+            }
 
             Command::Shader {
                 shader,
@@ -382,4 +390,41 @@ fn device_clip(area: Area, radius: Corners, transform: Transform) -> Option<Clip
         area: device_area(area, transform),
         radius: radius.map(|corner| corner * scale),
     })
+}
+
+fn device_mask(area: Area, radius: Corners, transform: Transform) -> Option<Clip> {
+    let shape = device_clip(area, radius, transform)?;
+
+    // subpixel masks need area coverage; distance-based edges would erase too much
+    if shape.area.width <= 1.0 || shape.area.height <= 1.0 {
+        return None;
+    }
+
+    Some(shape)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scales_masks_in_device_pixels_and_keeps_subpixel_masks_in_vello() {
+        let area = Area::new(10.0, 20.0, 80.0, 80.0);
+        let radius = Corners::from(40.0);
+        let mask = device_mask(area, radius, Transform::from_scale(1.25, 1.25)).unwrap();
+
+        assert_eq!(mask.area, Area::new(12.5, 25.0, 100.0, 100.0));
+        assert_eq!(mask.radius, Corners::from(50.0));
+        assert!(device_mask(area, radius, Transform::from_scale(0.01, 0.01)).is_none());
+        assert!(
+            device_mask(
+                Area::new(4.25, 4.25, 0.5, 0.5),
+                Corners::from(0.25),
+                Transform::IDENTITY,
+            )
+            .is_none()
+        );
+        assert!(device_mask(area, radius, Transform::from_rotate(45.0)).is_none());
+        assert!(device_mask(area, radius, Transform::from_scale(1.0, 2.0)).is_none());
+    }
 }

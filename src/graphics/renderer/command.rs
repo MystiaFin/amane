@@ -101,9 +101,10 @@ pub enum Command {
         amount: f32,
     },
 
-    // erases the inside of the path from what the commands before it drew, strength 1 erases fully
+    // erases the rounded rectangle from what came before, strength 1 erases fully
     Cut {
-        path: BezierPath,
+        area: Area,
+        radius: Corners,
         transform: Transform,
         strength: f32,
     },

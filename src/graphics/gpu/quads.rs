@@ -35,6 +35,7 @@ struct Run {
  */
 pub struct Quads {
     pipeline: RenderPipeline,
+    erase_pipeline: RenderPipeline,
     inputs: BindGroupLayout,
     picture_inputs: BindGroupLayout,
 

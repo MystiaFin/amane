@@ -59,12 +59,13 @@ impl Renderer {
     }
 
     pub fn cut(&mut self, area: Area, radius: Corners, strength: f32) {
-        let Some(path) = area.trace(radius) else {
+        if area.width <= 0.0 || area.height <= 0.0 {
             return;
-        };
+        }
 
         self.commands.push(Command::Cut {
-            path,
+            area,
+            radius,
             transform: self.transform,
             strength,
         });

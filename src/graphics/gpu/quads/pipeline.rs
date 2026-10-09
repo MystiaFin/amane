@@ -36,33 +36,36 @@ impl Quads {
         let module = device.create_shader_module(include_wgsl!("../quads.wgsl"));
 
         // the canvas holds premultiplied colors, so the quads land on it the same way
-        let target = ColorTargetState {
-            format: TextureFormat::Rgba8Unorm,
-            blend: Some(BlendState::PREMULTIPLIED_ALPHA_BLENDING),
-            write_mask: ColorWrites::ALL,
+        let pipeline = |blend| {
+            device.create_render_pipeline(&RenderPipelineDescriptor {
+                label: None,
+                layout: Some(&layout),
+                vertex: VertexState {
+                    module: &module,
+                    entry_point: Some("vertex"),
+                    compilation_options: Default::default(),
+                    buffers: &[],
+                },
+                primitive: Default::default(),
+                depth_stencil: None,
+                multisample: Default::default(),
+                fragment: Some(FragmentState {
+                    module: &module,
+                    entry_point: Some("fragment"),
+                    compilation_options: Default::default(),
+                    targets: &[Some(ColorTargetState {
+                        format: TextureFormat::Rgba8Unorm,
+                        blend: Some(blend),
+                        write_mask: ColorWrites::ALL,
+                    })],
+                }),
+                multiview_mask: None,
+                cache: None,
+            })
         };
 
-        let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
-            label: None,
-            layout: Some(&layout),
-            vertex: VertexState {
-                module: &module,
-                entry_point: Some("vertex"),
-                compilation_options: Default::default(),
-                buffers: &[],
-            },
-            primitive: Default::default(),
-            depth_stencil: None,
-            multisample: Default::default(),
-            fragment: Some(FragmentState {
-                module: &module,
-                entry_point: Some("fragment"),
-                compilation_options: Default::default(),
-                targets: &[Some(target)],
-            }),
-            multiview_mask: None,
-            cache: None,
-        });
+        let erase_pipeline = pipeline(super::super::cut::erase_blend());
+        let pipeline = pipeline(BlendState::PREMULTIPLIED_ALPHA_BLENDING);
 
         // smooth between pixels and between the prepared sizes
         let sampler = device.create_sampler(&SamplerDescriptor {
@@ -81,6 +84,7 @@ impl Quads {
 
         Self {
             pipeline,
+            erase_pipeline,
             inputs,
             picture_inputs,
             sampler,
