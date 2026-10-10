@@ -103,10 +103,7 @@ impl Palette {
 
     // the color the image shows most
     pub fn dominant(&self) -> Color {
-        self.colors
-            .first()
-            .copied()
-            .unwrap_or(FALLBACK_BACKGROUND)
+        self.colors.first().copied().unwrap_or(FALLBACK_BACKGROUND)
     }
 
     // the most vivid color, for highlights and the focused workspace

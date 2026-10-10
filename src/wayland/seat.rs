@@ -1,7 +1,4 @@
-use smithay_client_toolkit::seat::{
-    Capability, SeatHandler, SeatState,
-    pointer::ThemeSpec,
-};
+use smithay_client_toolkit::seat::{Capability, SeatHandler, SeatState, pointer::ThemeSpec};
 use wayland_client::{Connection, QueueHandle, protocol::wl_seat::WlSeat};
 
 use super::WaylandState;

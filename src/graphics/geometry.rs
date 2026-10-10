@@ -130,7 +130,12 @@ impl Corners {
 
     // clockwise from the top left, the order quads.wgsl reads them in
     pub fn to_array(self) -> [f32; 4] {
-        [self.top_left, self.top_right, self.bottom_right, self.bottom_left]
+        [
+            self.top_left,
+            self.top_right,
+            self.bottom_right,
+            self.bottom_left,
+        ]
     }
 }
 

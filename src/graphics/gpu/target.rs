@@ -5,8 +5,8 @@ use vello::wgpu::rwh::{
     RawDisplayHandle, RawWindowHandle, WaylandDisplayHandle, WaylandWindowHandle,
 };
 use vello::wgpu::{
-    Adapter, CompositeAlphaMode, Instance, PresentMode, Surface, SurfaceConfiguration,
-    SurfaceTargetUnsafe, TextureFormat, TextureUsages,
+    Adapter, CompositeAlphaMode, Instance, PresentMode, Surface, SurfaceColorSpace,
+    SurfaceConfiguration, SurfaceTargetUnsafe, TextureFormat, TextureUsages,
 };
 
 // the pointers are libwayland's display and surface, which have to outlive the gpu
@@ -66,6 +66,7 @@ pub(super) fn configure(surface: &Surface, adapter: &Adapter) -> SurfaceConfigur
     SurfaceConfiguration {
         usage: TextureUsages::RENDER_ATTACHMENT,
         format,
+        color_space: SurfaceColorSpace::Auto,
         width: 0,
         height: 0,
         present_mode,

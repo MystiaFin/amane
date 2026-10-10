@@ -4,7 +4,7 @@ use ttf_parser::Face;
 
 use crate::graphics::gpu::picture;
 use crate::graphics::image::Bitmap;
-use crate::graphics::{Color, Area, Corners};
+use crate::graphics::{Area, Color, Corners};
 
 use super::clip::NO_CLIP;
 use super::pipeline::picture_group;
@@ -66,7 +66,15 @@ impl Quads {
             (letter.y + letter.height) as f32,
         ];
 
-        self.push(area, (Corners::default(), 0.0), color, clips, LETTER, texels, None);
+        self.push(
+            area,
+            (Corners::default(), 0.0),
+            color,
+            clips,
+            LETTER,
+            texels,
+            None,
+        );
     }
 
     pub fn forget(&mut self, picture: usize) {
@@ -125,11 +133,26 @@ impl Quads {
 
         // the fields of Quad in quads.wgsl, in the same order
         let area_row = [area.x, area.y, area.width, area.height];
-        let clip_row = [outer.area.x, outer.area.y, outer.area.width, outer.area.height];
-        let color_row = [channel(color.r), channel(color.g), channel(color.b), channel(color.a)];
+        let clip_row = [
+            outer.area.x,
+            outer.area.y,
+            outer.area.width,
+            outer.area.height,
+        ];
+        let color_row = [
+            channel(color.r),
+            channel(color.g),
+            channel(color.b),
+            channel(color.a),
+        ];
         let shape_row = [thickness, 0.0, 0.0, kind];
         let source_row = source;
-        let inner_clip_row = [inner.area.x, inner.area.y, inner.area.width, inner.area.height];
+        let inner_clip_row = [
+            inner.area.x,
+            inner.area.y,
+            inner.area.width,
+            inner.area.height,
+        ];
         let radius_row = radius.to_array();
         let clip_radius_row = outer.radius.to_array();
         let inner_radius_row = inner.radius.to_array();

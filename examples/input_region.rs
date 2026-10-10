@@ -17,8 +17,14 @@ fn view() -> LayerWindow {
         }])
         .child(
             Row::new(children![
-                Rectangle::new().width(100.0).height(Parent).fill(Color::RED),
-                Rectangle::new().width(Parent).height(Parent).fill(Color::BLUE),
+                Rectangle::new()
+                    .width(100.0)
+                    .height(Parent)
+                    .fill(Color::RED),
+                Rectangle::new()
+                    .width(Parent)
+                    .height(Parent)
+                    .fill(Color::BLUE),
             ])
             .width(Parent)
             .height(Parent),
@@ -31,5 +37,10 @@ fn overlay() -> LayerWindow {
         .width(200.0)
         .height(200.0)
         .click_through()
-        .child(Rectangle::new().width(Parent).height(Parent).fill(Color::GREEN))
+        .child(
+            Rectangle::new()
+                .width(Parent)
+                .height(Parent)
+                .fill(Color::GREEN),
+        )
 }

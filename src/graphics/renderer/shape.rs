@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::graphics::image::Bitmap;
-use crate::graphics::{BezierPath, Cap, Color, Gradient, Area, Corners, Renderer, Transform};
+use crate::graphics::{Area, BezierPath, Cap, Color, Corners, Gradient, Renderer, Transform};
 
 use super::Command;
 

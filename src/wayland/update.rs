@@ -1,8 +1,15 @@
-use wayland_client::{Connection, Dispatch, QueueHandle, protocol::wl_region::{self, WlRegion}};
+use wayland_client::{
+    Connection, Dispatch, QueueHandle,
+    protocol::wl_region::{self, WlRegion},
+};
 
 use crate::LayerWindow;
 
-use super::{WaylandState, layer::{self, Settings}, surface::{Content, OpenWindow, Role}};
+use super::{
+    WaylandState,
+    layer::{self, Settings},
+    surface::{Content, OpenWindow, Role},
+};
 
 impl OpenWindow {
     // settings changed by input or services reach the compositor before anything is drawn

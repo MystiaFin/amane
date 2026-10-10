@@ -32,13 +32,17 @@ pub fn run(skip_confirm: bool) -> ExitCode {
 
 // enter, n, or no input at all (end of input in a script) all count as no
 fn confirm() -> bool {
-    print!("the next amane compile or amane dev builds from scratch and takes a few minutes. continue? [y/N] ");
+    print!(
+        "the next amane compile or amane dev builds from scratch and takes a few minutes. continue? [y/N] "
+    );
 
     io::stdout().flush().expect("failed to flush stdout");
 
     let mut answer = String::new();
 
-    io::stdin().read_line(&mut answer).expect("failed to read answer");
+    io::stdin()
+        .read_line(&mut answer)
+        .expect("failed to read answer");
 
     answer.trim().eq_ignore_ascii_case("y")
 }

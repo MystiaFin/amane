@@ -25,7 +25,11 @@ pub fn rasterize(bytes: &[u8]) -> Option<Bitmap> {
     // none for an svg with no size to draw at
     let mut pixmap = Pixmap::new(width, height)?;
 
-    resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
+    resvg::render(
+        &tree,
+        Transform::from_scale(scale, scale),
+        &mut pixmap.as_mut(),
+    );
 
     // tiny-skia keeps premultiplied alpha, a bitmap holds plain alpha
     let mut pixels = Vec::with_capacity(pixmap.data().len());

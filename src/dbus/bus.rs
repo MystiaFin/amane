@@ -51,13 +51,11 @@ impl Bus {
         };
 
         let reply = if arguments.is_empty() {
-            connection
-                .call_method(Some(destination), path, Some(interface), method, &())
+            connection.call_method(Some(destination), path, Some(interface), method, &())
         } else {
             let body = convert::body(arguments);
 
-            connection
-                .call_method(Some(destination), path, Some(interface), method, &body)
+            connection.call_method(Some(destination), path, Some(interface), method, &body)
         };
 
         let Ok(reply) = reply else {

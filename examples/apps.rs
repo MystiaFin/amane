@@ -1,5 +1,5 @@
 use amane::{
-    Apps, App, Color, Column, Image, LayerWindow, Pointer, Rectangle, Row, ScrollArea, Service,
+    App, Apps, Color, Column, Image, LayerWindow, Pointer, Rectangle, Row, ScrollArea, Service,
     Text, Widget, children,
 };
 

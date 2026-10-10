@@ -4,10 +4,15 @@ use crate::Color;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Gradient {
     // 0 degrees runs bottom to top, 90 runs left to right
-    Linear { angle: f32, stops: Vec<(f32, Color)> },
+    Linear {
+        angle: f32,
+        stops: Vec<(f32, Color)>,
+    },
 
     // from the center out to the corners
-    Radial { stops: Vec<(f32, Color)> },
+    Radial {
+        stops: Vec<(f32, Color)>,
+    },
 }
 
 impl Gradient {

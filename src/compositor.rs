@@ -1,4 +1,5 @@
 mod hyprland;
+mod mango;
 mod niri;
 mod sway;
 
@@ -10,6 +11,7 @@ enum Compositor {
     Niri,
     Hyprland,
     Sway,
+    Mango,
 }
 
 // each compositor sets its own variable for the programs it starts
@@ -24,6 +26,10 @@ fn running() -> Option<Compositor> {
 
     if env::var_os("SWAYSOCK").is_some() {
         return Some(Compositor::Sway);
+    }
+
+    if env::var_os("MANGO_INSTANCE_SIGNATURE").is_some() {
+        return Some(Compositor::Mango);
     }
 
     None
@@ -42,6 +48,7 @@ pub fn listen(on_change: impl FnMut(Vec<Workspace>)) {
         Compositor::Niri => niri::listen(on_change),
         Compositor::Hyprland => hyprland::listen(on_change),
         Compositor::Sway => sway::listen(on_change),
+        Compositor::Mango => mango::listen(on_change),
     }
 }
 
@@ -54,5 +61,6 @@ pub fn focus_workspace(id: i64) {
         Compositor::Niri => niri::focus_workspace(id),
         Compositor::Hyprland => hyprland::focus_workspace(id),
         Compositor::Sway => sway::focus_workspace(id),
+        Compositor::Mango => mango::focus_workspace(id),
     }
 }

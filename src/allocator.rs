@@ -31,7 +31,10 @@ pub fn limit() {
     let mapped = unsafe { mallopt(M_MMAP_THRESHOLD, ONE_MEGABYTE) };
     let pooled = unsafe { mallopt(M_ARENA_MAX, POOLS) };
 
-    assert!(mapped == 1 && pooled == 1, "failed to set the allocator's limits");
+    assert!(
+        mapped == 1 && pooled == 1,
+        "failed to set the allocator's limits"
+    );
 
     thread::spawn(trim);
 }

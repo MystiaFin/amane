@@ -29,17 +29,17 @@ pub use dbus::{Argument, Bus, Method, Signal, Value};
 pub use files::watch_file;
 pub use full::Full;
 pub use graphics::{Cap, Color, Gradient, Weight};
-pub use input::{Button, Cursor, Key, Point, Scroll};
 pub use input::cursor_names::{
     Crosshair, Default, Grab, Grabbing, Move, NotAllowed, Pointer, ResizeBottom, ResizeBottomLeft,
     ResizeBottomRight, ResizeHorizontal, ResizeLeft, ResizeRight, ResizeTop, ResizeTopLeft,
     ResizeTopRight, ResizeVertical, Text, Wait,
 };
+pub use input::{Button, Cursor, Key, Point, Scroll};
 pub use ipc::{IpcCall, ipc_socket};
-pub use monitor::Monitor;
 pub use layer_window::{
     Horizontal, InputArea, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone,
 };
+pub use monitor::Monitor;
 pub use placement::{Align, Center, End, Justify, Padding, Size, Start};
 pub use process::{lines, output, spawn};
 pub use services::{

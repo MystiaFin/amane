@@ -65,7 +65,11 @@ fn list() -> LayerWindow {
     ));
 
     for access_point in network.access_points() {
-        let lock = if access_point.secured() { "locked" } else { "open" };
+        let lock = if access_point.secured() {
+            "locked"
+        } else {
+            "open"
+        };
 
         let mark = if access_point.active() { "* " } else { "" };
 

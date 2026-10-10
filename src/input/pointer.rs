@@ -128,7 +128,10 @@ impl Pointer {
             return Cursor::Default;
         };
 
-        self.targets[index].handlers.cursor.unwrap_or(Cursor::Default)
+        self.targets[index]
+            .handlers
+            .cursor
+            .unwrap_or(Cursor::Default)
     }
 
     // click

@@ -4,7 +4,7 @@ use vello::peniko::{Fill, Mix};
 use vello::wgpu::Texture;
 
 use crate::graphics::renderer::Command;
-use crate::graphics::{BezierPath, Color, Area, Corners, Transform};
+use crate::graphics::{Area, BezierPath, Color, Corners, Transform};
 
 use super::Gpu;
 use super::convert::{affine, bezier, paint};

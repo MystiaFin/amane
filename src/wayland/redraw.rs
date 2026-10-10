@@ -126,17 +126,24 @@ impl OpenWindow {
 
                 fractional.viewport.set_destination(width, height);
 
-                (to_real_pixels(self.width, self.scale), to_real_pixels(self.height, self.scale))
+                (
+                    to_real_pixels(self.width, self.scale),
+                    to_real_pixels(self.height, self.scale),
+                )
             }
 
             None => {
                 self.role.wl_surface().set_buffer_scale(self.scale as i32);
 
-                (self.width * self.scale as u32, self.height * self.scale as u32)
+                (
+                    self.width * self.scale as u32,
+                    self.height * self.scale as u32,
+                )
             }
         };
 
-        self.gpu.draw(renderer.finish(), buffer_width, buffer_height)
+        self.gpu
+            .draw(renderer.finish(), buffer_width, buffer_height)
     }
 }
 

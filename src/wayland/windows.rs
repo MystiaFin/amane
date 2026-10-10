@@ -1,12 +1,19 @@
 use std::collections::HashSet;
 
-use wayland_client::{Proxy, protocol::{wl_output::WlOutput, wl_surface::WlSurface}};
+use wayland_client::{
+    Proxy,
+    protocol::{wl_output::WlOutput, wl_surface::WlSurface},
+};
 
 use crate::graphics::Gpu;
 use crate::input::Pointer;
 use crate::{changes, frame};
 
-use super::{WaylandState, layer::{self, Settings}, surface::{Content, OpenWindow, Role, View}};
+use super::{
+    WaylandState,
+    layer::{self, Settings},
+    surface::{Content, OpenWindow, Role, View},
+};
 
 impl WaylandState {
     pub fn open(&mut self, view: View, output: Option<WlOutput>) {

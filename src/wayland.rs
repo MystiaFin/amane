@@ -15,6 +15,10 @@ mod update;
 mod wake;
 mod windows;
 
+use smithay_client_toolkit::reexports::protocols::wp::{
+    fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1,
+    viewporter::client::wp_viewporter::WpViewporter,
+};
 use smithay_client_toolkit::{
     compositor::CompositorState,
     data_device_manager::{DataDeviceManagerState, data_device::DataDevice},
@@ -27,10 +31,6 @@ use smithay_client_toolkit::{
     session_lock::{SessionLock, SessionLockState},
     shell::{wlr_layer::LayerShell, xdg::XdgShell},
     shm::{Shm, ShmHandler},
-};
-use smithay_client_toolkit::reexports::protocols::wp::{
-    fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1,
-    viewporter::client::wp_viewporter::WpViewporter,
 };
 use wayland_client::{
     Connection, QueueHandle,
@@ -114,14 +114,12 @@ impl WaylandApp {
 
         let qh = event_queue.handle();
 
-        let compositor = CompositorState::bind(&globals, &qh)
-            .expect("failed to bind wl_compositor");
+        let compositor =
+            CompositorState::bind(&globals, &qh).expect("failed to bind wl_compositor");
 
-        let layer_shell =
-            LayerShell::bind(&globals, &qh).expect("failed to bind wlr-layer-shell");
+        let layer_shell = LayerShell::bind(&globals, &qh).expect("failed to bind wlr-layer-shell");
 
-        let xdg_shell =
-            XdgShell::bind(&globals, &qh).expect("failed to bind xdg-shell");
+        let xdg_shell = XdgShell::bind(&globals, &qh).expect("failed to bind xdg-shell");
 
         let shm = Shm::bind(&globals, &qh).expect("failed to bind wl_shm");
 

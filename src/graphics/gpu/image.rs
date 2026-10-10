@@ -56,7 +56,9 @@ impl Gpu {
         }
 
         for glyph in self.glyphs.values().flatten() {
-            self.vello.borrow_mut().mark_override_image_dirty(glyph.image());
+            self.vello
+                .borrow_mut()
+                .mark_override_image_dirty(glyph.image());
         }
 
         self.atlas_seen = self.atlas_drops.get();

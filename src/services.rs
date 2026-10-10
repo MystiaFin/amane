@@ -1,4 +1,3 @@
-pub mod store;
 mod apps;
 mod audio;
 mod battery;
@@ -11,8 +10,9 @@ mod memory;
 mod network;
 mod notifications;
 mod palette;
-mod workspace;
+pub mod store;
 mod worker;
+mod workspace;
 mod workspaces;
 mod write;
 

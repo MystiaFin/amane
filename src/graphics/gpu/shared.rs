@@ -56,7 +56,10 @@ fn open(surface: &Surface) -> Shared {
     // a software driver draws on the cpu and keeps every texture in ram, so say which one was picked
     let info = adapter.get_info();
 
-    eprintln!("amane: drawing with {} ({:?}, {:?})", info.name, info.backend, info.device_type);
+    eprintln!(
+        "amane: drawing with {} ({:?}, {:?})",
+        info.name, info.backend, info.device_type
+    );
 
     let (device, queue) =
         wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
