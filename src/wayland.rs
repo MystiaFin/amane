@@ -106,7 +106,7 @@ impl WaylandApp {
         normal_views: Vec<NamedWindow>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
-        handlers: IpcHandlers,
+        handlers: Option<IpcHandlers>,
     ) -> Self {
         let connection = connect();
 
@@ -187,7 +187,9 @@ impl WaylandApp {
             .insert(event_loop.handle())
             .expect("failed to insert Wayland source");
 
-        socket::insert(&event_loop.handle(), handlers);
+        if let Some(handlers) = handlers {
+            socket::insert(&event_loop.handle(), handlers);
+        }
 
         wake::insert(&event_loop.handle());
 
