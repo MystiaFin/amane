@@ -44,6 +44,15 @@ use pass::Pass;
 use shader::Shader;
 use shared::Shared;
 
+// Outlives the backend so cached GPU resources are released after every window.
+pub(crate) struct Session;
+
+impl Drop for Session {
+    fn drop(&mut self) {
+        shared::clear();
+    }
+}
+
 /*
  * the only part of amane that knows how drawing is done,
  * vello draws the shapes and wgpu runs everything else on the gpu

@@ -10,7 +10,7 @@ fn main() {
     if let Err(error) = start() {
         eprintln!("{error}");
     }
-    App::new().normal_window("pam", view).run();
+    App::new().without_ipc().normal_window("pam", view).run();
 }
 
 fn start() -> Result<(), PamError> {

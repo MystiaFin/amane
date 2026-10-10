@@ -81,6 +81,6 @@ For a lock-owned attempt, `Lock::abort()` also clears the lock's checking and fa
 
 ## Example
 
-`cargo run --example pam` opens a normal authentication window. It uses the `login` policy and does not lock or unlock your session. You can select a policy and directory with `AMANE_PAM_SERVICE` and `AMANE_PAM_CONFIG_DIRECTORY`.
+`cargo run --example pam` opens a normal authentication window. It uses the `login` policy and does not lock or unlock your session. The example uses `App::without_ipc()` so it can run alongside your shell without claiming its IPC socket. You can select a policy and directory with `AMANE_PAM_SERVICE` and `AMANE_PAM_CONFIG_DIRECTORY`.
 
 The library tests compile a temporary PAM module and use a temporary policy directory. They exercise conversations, account rejection, cancellation and stale results without checking real credentials or changing system authentication settings.

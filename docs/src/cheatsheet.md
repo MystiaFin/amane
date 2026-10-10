@@ -21,8 +21,9 @@ use amane::*;
 | `.normal_window("name", view)` | adds a normal app window, `fn() -> Window` |
 | `.lock(view)` | sets the lock screen, `fn(&Monitor) -> LayerWindow` |
 | `.ipc("name", handler)` | handles `amane ipc call name`, `fn(&[String]) -> String` |
+| `.without_ipc()` | runs without an IPC socket, alongside another Amane app |
 | `.font("Inter")` | sets the default font family |
-| `.run()` | starts the shell. Never returns. |
+| `.run()` | starts the event loop |
 
 ## LayerWindow
 
