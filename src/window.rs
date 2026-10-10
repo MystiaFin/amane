@@ -115,7 +115,7 @@ thread_local! {
 }
 
 /*
- * the window being drawn, in logical pixels; a compositor can give a
+ * the window being drawn, in widget units, before App's scale factor; a compositor can give a
  * window another size than it asked for, like a tiling one does. 0 by 0
  * before the compositor has said
  */

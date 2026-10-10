@@ -13,7 +13,12 @@ impl OpenWindow {
     pub fn redraw(&mut self) {
         let started = Instant::now();
 
-        let (content, reads) = frame::run_view(|| self.view.run(), self.width, self.height);
+        let (content, reads) = frame::run_view(
+            || self.view.run(),
+            self.width,
+            self.height,
+            self.scale_factor,
+        );
 
         // a later change to one of these services draws this window again
         self.reads = reads;
@@ -38,7 +43,13 @@ impl OpenWindow {
             return;
         };
 
-        let frame = frame::build(root.as_ref(), self.width, self.height, self.scale);
+        let frame = frame::build(
+            root.as_ref(),
+            self.width,
+            self.height,
+            self.scale,
+            self.scale_factor,
+        );
 
         // some widgets read services while drawing
         self.reads.extend(frame.reads);

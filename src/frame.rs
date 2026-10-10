@@ -4,8 +4,9 @@ use std::collections::HashSet;
 use crate::Widget;
 use crate::animation::moving;
 use crate::changes;
-use crate::graphics::{Area, Renderer};
+use crate::graphics::{Area, Renderer, Transform};
 use crate::input::Target;
+use crate::scale::ScaleFactor;
 
 // one window's frame: what the gpu draws, and where the widgets take the pointer
 pub struct Frame {
@@ -23,13 +24,21 @@ pub struct Frame {
  * runs a window's view at the window's size; the services it read come
  * back with it, so a later change to one of them draws the window again
  */
-pub fn run_view<T>(view: impl FnOnce() -> T, width: u32, height: u32) -> (T, HashSet<TypeId>) {
+pub fn run_view<T>(
+    view: impl FnOnce() -> T,
+    width: u32,
+    height: u32,
+    scale_factor: ScaleFactor,
+) -> (T, HashSet<TypeId>) {
     // anything read or set moving before belongs to another window
     changes::take_read();
 
     moving::take();
 
-    crate::window::set_size(width as f32, height as f32);
+    crate::window::set_size(
+        scale_factor.logical(width as f32),
+        scale_factor.logical(height as f32),
+    );
 
     // the view runs again on every redraw, so it shows the services as they are now
     let content = view();
@@ -40,10 +49,20 @@ pub fn run_view<T>(view: impl FnOnce() -> T, width: u32, height: u32) -> (T, Has
 }
 
 // lays the root out in the window, draws it, and collects where it reacts to the pointer
-pub fn build(root: &dyn Widget, width: u32, height: u32, scale: f32) -> Frame {
-    let area = root_area(root, width, height);
+pub fn build(
+    root: &dyn Widget,
+    width: u32,
+    height: u32,
+    scale: f32,
+    scale_factor: ScaleFactor,
+) -> Frame {
+    let area = root_area(
+        root,
+        scale_factor.logical(width as f32),
+        scale_factor.logical(height as f32),
+    );
 
-    let mut renderer = Renderer::new(scale);
+    let mut renderer = Renderer::new(scale * scale_factor.get());
 
     root.draw(&mut renderer, area);
 
@@ -56,6 +75,13 @@ pub fn build(root: &dyn Widget, width: u32, height: u32, scale: f32) -> Frame {
 
     root.collect_targets(area, &mut targets);
 
+    // pointer positions use surface units; undo the global scale before each widget's transform
+    let inverse = Transform::from_scale(scale_factor.logical(1.0), scale_factor.logical(1.0));
+
+    for target in &mut targets {
+        target.inverse = inverse.post_concat(target.inverse);
+    }
+
     Frame {
         renderer,
         targets,
@@ -65,9 +91,9 @@ pub fn build(root: &dyn Widget, width: u32, height: u32, scale: f32) -> Frame {
 }
 
 // the root at its own size, from the window's top left corner
-fn root_area(root: &dyn Widget, width: u32, height: u32) -> Area {
-    let root_width = root.width().resolve(width as f32);
-    let root_height = root.height().resolve(height as f32);
+fn root_area(root: &dyn Widget, width: f32, height: f32) -> Area {
+    let root_width = root.width().resolve(width);
+    let root_height = root.height().resolve(height);
 
     Area::new(0.0, 0.0, root_width, root_height)
 }
@@ -75,11 +101,14 @@ fn root_area(root: &dyn Widget, width: u32, height: u32) -> Area {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::input::Pointer;
     use crate::{Center, Column, End, Justify, Parent, Rectangle, Row, Stack, children};
+    use std::cell::Cell;
+    use std::rc::Rc;
 
     // where each rectangle landed, in the order the tree lists them
     fn areas(root: &dyn Widget, width: u32, height: u32) -> Vec<Area> {
-        let frame = build(root, width, height, 1.0);
+        let frame = build(root, width, height, 1.0, ScaleFactor::default());
 
         let mut areas = Vec::new();
 
@@ -92,6 +121,58 @@ mod tests {
 
     fn block(width: f32, height: f32) -> Rectangle {
         Rectangle::new().width(width).height(height)
+    }
+
+    #[test]
+    fn scaled_views_measure_the_window_in_widget_units() {
+        let (size, _) = run_view(crate::window_size, 300, 150, ScaleFactor::new(1.5));
+
+        assert_eq!(size, (200.0, 100.0));
+    }
+
+    #[test]
+    fn global_scale_keeps_parent_widgets_filling_the_window() {
+        let root = Rectangle::new()
+            .width(Parent)
+            .height(Parent)
+            .fill(crate::Color::BLUE);
+        let frame = build(&root, 300, 150, 1.25, ScaleFactor::new(1.5));
+
+        assert_eq!(frame.targets[0].area, Area::new(0.0, 0.0, 200.0, 100.0));
+
+        assert!(frame.targets[0].contains(299.0, 149.0));
+        assert!(!frame.targets[0].contains(301.0, 151.0));
+    }
+
+    #[test]
+    fn scaled_pointer_undoes_global_scale_before_widget_transforms() {
+        let moved = Rc::new(Cell::new(crate::Point::default()));
+        let dragged = Rc::new(Cell::new(crate::Point::default()));
+        let root = block(40.0, 20.0)
+            .translate(30.0, 10.0)
+            .on_move({
+                let moved = moved.clone();
+                move |point| moved.set(point)
+            })
+            .on_drag({
+                let dragged = dragged.clone();
+                move |point| dragged.set(point)
+            });
+
+        // Wayland pointer positions use surface units, regardless of output DPI.
+        let frame = build(&root, 200, 100, 1.25, ScaleFactor::new(2.0));
+        let mut pointer = Pointer::default();
+        pointer.set_targets(frame.targets);
+        pointer.move_to(80.0, 40.0);
+
+        assert!(pointer.report_motion());
+        assert!(pointer.start_drag());
+        assert_eq!(moved.get(), crate::Point { x: 10.0, y: 10.0 });
+        assert_eq!(dragged.get(), moved.get());
+
+        pointer.move_to(160.0, 60.0);
+        assert!(pointer.drag());
+        assert_eq!(dragged.get(), crate::Point { x: 50.0, y: 20.0 });
     }
 
     #[test]
@@ -180,11 +261,11 @@ mod tests {
 
     #[test]
     fn sees_motion_started_while_drawing() {
-        let (_, _) = run_view(|| (), 10, 10);
+        let (_, _) = run_view(|| (), 10, 10, ScaleFactor::default());
 
-        assert!(build(&Ticking, 10, 10, 1.0).moving);
+        assert!(build(&Ticking, 10, 10, 1.0, ScaleFactor::default()).moving);
 
         // taken by that frame, so the next window starts still
-        assert!(!build(&block(1.0, 1.0), 10, 10, 1.0).moving);
+        assert!(!build(&block(1.0, 1.0), 10, 10, 1.0, ScaleFactor::default()).moving);
     }
 }
