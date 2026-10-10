@@ -47,16 +47,23 @@ impl Gpu {
 
 // keeps only the part of the canvas the shape leaves uncovered, whatever color the shape is
 pub(super) fn erase(device: &Device) -> Pass {
+    Pass::new(
+        device,
+        "composite",
+        TextureFormat::Rgba8Unorm,
+        Some(erase_blend()),
+    )
+}
+
+pub(super) fn erase_blend() -> BlendState {
     let keep_uncovered = BlendComponent {
         src_factor: BlendFactor::Zero,
         dst_factor: BlendFactor::OneMinusSrcAlpha,
         operation: BlendOperation::Add,
     };
 
-    let blend = BlendState {
+    BlendState {
         color: keep_uncovered,
         alpha: keep_uncovered,
-    };
-
-    Pass::new(device, "composite", TextureFormat::Rgba8Unorm, Some(blend))
+    }
 }

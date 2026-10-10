@@ -49,6 +49,14 @@ Each line shows which window drew, the time since its last frame, and how long t
 - **A Service that wakes windows every poll.** Its `update()` returns `true` even when nothing changed. Compare the old and new values, and return whether they differ.
 - **A slow view.** Something in the view is doing real work. Move it into a Service.
 
+## The shell uses too much memory
+
+Fullscreen windows and masks need GPU buffers, which can use system RAM on an integrated GPU. Amane asks the graphics backend to favor lower memory use, but usage still grows with the size and number of windows. Some backends ignore this request.
+
+Rotated or stretched masks, and masks no wider or taller than one device pixel, can require more memory than ordinary rounded masks.
+
+When profiling, check both process memory and GPU memory. Shared buffers can appear in more than one counter, so adding the counters together can overestimate total RAM usage.
+
 ## The lock screen won't unlock
 
 See [Testing safely](lock_screen.md#testing-safely) for how to get back into a locked session.

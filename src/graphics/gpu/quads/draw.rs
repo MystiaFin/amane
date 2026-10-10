@@ -6,11 +6,28 @@ use vello::wgpu::{
 
 use crate::graphics::gpu::texture;
 
-use super::Quads;
+use super::{Clip, Quads};
 
 impl Quads {
     // draws everything gathered onto the canvas, over what is already there
     pub fn draw(&mut self, device: &Device, queue: &Queue, canvas: &Texture) {
+        self.draw_with(device, queue, canvas, false);
+    }
+
+    pub fn erase(
+        &mut self,
+        device: &Device,
+        queue: &Queue,
+        canvas: &Texture,
+        shape: Clip,
+        strength: f32,
+    ) {
+        self.mask(shape, strength);
+
+        self.draw_with(device, queue, canvas, true);
+    }
+
+    fn draw_with(&mut self, device: &Device, queue: &Queue, canvas: &Texture, erase: bool) {
         if self.waiting.is_empty() {
             return;
         }
@@ -79,7 +96,11 @@ impl Quads {
                 ..Default::default()
             });
 
-            pass.set_pipeline(&self.pipeline);
+            pass.set_pipeline(if erase {
+                &self.erase_pipeline
+            } else {
+                &self.pipeline
+            });
 
             pass.set_bind_group(0, &inputs, &[]);
 
@@ -97,5 +118,106 @@ impl Quads {
         }
 
         queue.submit([encoder.finish()]);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::mpsc;
+
+    use vello::wgpu::{
+        BufferDescriptor, BufferUsages, DeviceDescriptor, Extent3d, Instance, InstanceDescriptor,
+        MapMode, PollType, RequestAdapterOptions, TexelCopyBufferInfo, TexelCopyBufferLayout,
+    };
+
+    use crate::graphics::gpu::wait::wait;
+    use crate::graphics::{Area, Color, Corners};
+
+    use super::super::Clips;
+    use super::*;
+
+    #[test]
+    #[ignore = "requires a graphics adapter"]
+    fn erases_rounded_masks_without_changing_later_drawing() {
+        let instance = Instance::new(InstanceDescriptor::new_without_display_handle_from_env());
+        let adapter = wait(instance.request_adapter(&RequestAdapterOptions::default()))
+            .expect("failed to find a gpu");
+        let (device, queue) =
+            wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
+        let canvas = texture::canvas(&device, 16, 16);
+        let mut quads = Quads::new(&device, &queue);
+
+        quads.rectangle(
+            Area::new(0.0, 0.0, 16.0, 16.0),
+            Corners::default(),
+            Color::BLUE,
+            Clips::default(),
+        );
+        quads.draw(&device, &queue, &canvas);
+        quads.erase(
+            &device,
+            &queue,
+            &canvas,
+            Clip {
+                area: Area::new(4.0, 4.0, 8.0, 8.0),
+                radius: Corners::from(4.0),
+            },
+            1.0,
+        );
+        quads.erase(
+            &device,
+            &queue,
+            &canvas,
+            Clip {
+                area: Area::new(0.0, 0.0, 4.0, 4.0),
+                radius: Corners::default(),
+            },
+            0.25,
+        );
+        quads.rectangle(
+            Area::new(0.0, 12.0, 16.0, 4.0),
+            Corners::default(),
+            Color::RED,
+            Clips::default(),
+        );
+        quads.draw(&device, &queue, &canvas);
+
+        let readback = device.create_buffer(&BufferDescriptor {
+            label: None,
+            size: 256 * 16,
+            usage: BufferUsages::COPY_DST | BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+        let mut encoder = device.create_command_encoder(&Default::default());
+        encoder.copy_texture_to_buffer(
+            canvas.as_image_copy(),
+            TexelCopyBufferInfo {
+                buffer: &readback,
+                layout: TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(256),
+                    rows_per_image: Some(16),
+                },
+            },
+            Extent3d {
+                width: 16,
+                height: 16,
+                depth_or_array_layers: 1,
+            },
+        );
+        queue.submit([encoder.finish()]);
+        let (send, receive) = mpsc::channel();
+        readback.slice(..).map_async(MapMode::Read, move |result| {
+            send.send(result).unwrap();
+        });
+        device.poll(PollType::wait_indefinitely()).unwrap();
+        receive.recv().unwrap().unwrap();
+
+        let pixels = readback.slice(..).get_mapped_range().unwrap();
+        let pixel = |x: usize, y: usize| &pixels[y * 256 + x * 4..y * 256 + x * 4 + 4];
+        assert_eq!(pixel(8, 8), [0, 0, 0, 0]);
+        assert_eq!(pixel(4, 4), [0, 0, 255, 255]);
+        assert_eq!(pixel(1, 1), [0, 0, 191, 191]);
+        assert_eq!(pixel(8, 14), [255, 0, 0, 255]);
     }
 }

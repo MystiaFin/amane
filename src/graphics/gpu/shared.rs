@@ -4,8 +4,8 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use vello::wgpu::{
-    Adapter, Device, DeviceDescriptor, DeviceLostReason, Instance, InstanceDescriptor, Queue,
-    RequestAdapterOptions, Surface,
+    Adapter, Device, DeviceDescriptor, DeviceLostReason, Instance, InstanceDescriptor, MemoryHints,
+    Queue, RequestAdapterOptions, Surface,
 };
 use vello::{AaSupport, RendererOptions};
 
@@ -61,8 +61,13 @@ fn open(surface: &Surface) -> Shared {
         info.name, info.backend, info.device_type
     );
 
-    let (device, queue) =
-        wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
+    // shells keep their textures alive, so favor smaller allocation blocks over spare capacity
+    let descriptor = DeviceDescriptor {
+        memory_hints: MemoryHints::MemoryUsage,
+        ..DeviceDescriptor::default()
+    };
+
+    let (device, queue) = wait(adapter.request_device(&descriptor)).expect("failed to open gpu");
 
     // one bad command only loses its frame, the default handler would panic and end the shell
     device.on_uncaptured_error(Arc::new(|error| eprintln!("amane: gpu error: {error}")));
