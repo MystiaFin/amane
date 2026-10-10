@@ -1,10 +1,14 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 #[cfg(target_env = "gnu")]
 use crate::allocator;
-use crate::graphics::font;
+use crate::graphics::{GpuSession, font};
 use crate::ipc::IpcHandlers;
 use crate::wayland::WaylandApp;
 use crate::window::NamedWindow;
 use crate::{LayerWindow, Monitor, Window};
+
+static QUIT: AtomicBool = AtomicBool::new(false);
 
 #[derive(Default)]
 pub struct App {
@@ -16,6 +20,7 @@ pub struct App {
     lock: Option<fn(&Monitor) -> LayerWindow>,
 
     handlers: IpcHandlers,
+    ipc_disabled: bool,
 }
 
 impl App {
@@ -67,6 +72,19 @@ impl App {
         self
     }
 
+    /// Runs without an IPC socket, allowing a standalone app alongside the shell.
+    pub fn without_ipc(mut self) -> Self {
+        self.ipc_disabled = true;
+
+        self
+    }
+
+    /// Asks the event loop to stop, allowing `run()` to return and release its windows.
+    pub fn quit() {
+        QUIT.store(true, Ordering::Relaxed);
+        crate::changes::mark_all();
+    }
+
     pub fn run(self) {
         let no_windows = self.windows.is_empty() && self.normal_windows.is_empty();
 
@@ -81,14 +99,25 @@ impl App {
             font::set_default(family);
         }
 
+        // Created first and dropped last, including when backend startup unwinds.
+        let _gpu = GpuSession;
+
         let mut backend = WaylandApp::new(
             self.windows,
             self.normal_windows,
             self.per_monitor,
             self.lock,
-            self.handlers,
+            if self.ipc_disabled {
+                None
+            } else {
+                Some(self.handlers)
+            },
         );
 
         backend.run();
     }
+}
+
+pub(crate) fn quit_requested() -> bool {
+    QUIT.swap(false, Ordering::Relaxed)
 }

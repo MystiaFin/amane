@@ -55,6 +55,8 @@ You need a Rust toolchain, `pkg-config`, and these libraries with their developm
 | Vulkan loader | `libvulkan1` | `vulkan-icd-loader` |
 | PulseAudio client | `libpulse-dev` | `libpulse` |
 | PAM | `libpam0g-dev` | `pam` |
+| Polkit agent | `libpolkit-agent-1-dev` | `polkit` |
+| GLib / GObject | `libglib2.0-dev` | `glib2` |
 
 Then build and install the command:
 

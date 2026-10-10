@@ -24,6 +24,8 @@
         vulkan-loader
         libpulseaudio
         linux-pam
+        polkit
+        glib
       ];
     in
     {
@@ -48,12 +50,12 @@
         buildInputs = libraries;
 
         # the cli runs cargo on the user's config, so it carries its own toolchain;
-        # pam is linked by name rather than found through pkg-config, so it needs a search path
+        # the native authentication libraries are linked by name, so they need a search path
         postFixup = with pkgs; ''
           wrapProgram $out/bin/amane \
             --prefix PATH : ${lib.makeBinPath [ cargo rustc pkg-config stdenv.cc ]} \
             --prefix PKG_CONFIG_PATH : ${lib.makeSearchPathOutput "dev" "lib/pkgconfig" libraries} \
-            --prefix LIBRARY_PATH : ${lib.makeLibraryPath [ linux-pam ]} \
+            --prefix LIBRARY_PATH : ${lib.makeLibraryPath [ linux-pam polkit glib ]} \
             --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader wayland ]}
         '';
       };
@@ -77,6 +79,8 @@
           vulkan-loader
           libpulseaudio
           linux-pam
+          polkit
+          glib
         ];
 
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
@@ -86,6 +90,7 @@
 
         packages = with pkgs; [
           wayland-utils
+          dbus
         ];
       };
     };
