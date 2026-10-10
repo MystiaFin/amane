@@ -24,6 +24,7 @@ use amane::*;
 | `.without_ipc()` | runs without an IPC socket, alongside another Amane app |
 | `.font("Inter")` | sets the default font family |
 | `.run()` | starts the event loop |
+| `App::quit()` | stops the event loop and lets `run()` return |
 
 ## LayerWindow
 

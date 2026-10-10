@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 #[cfg(target_env = "gnu")]
 use crate::allocator;
 use crate::graphics::{GpuSession, font};
@@ -5,6 +7,8 @@ use crate::ipc::IpcHandlers;
 use crate::wayland::WaylandApp;
 use crate::window::NamedWindow;
 use crate::{LayerWindow, Monitor, Window};
+
+static QUIT: AtomicBool = AtomicBool::new(false);
 
 #[derive(Default)]
 pub struct App {
@@ -75,6 +79,12 @@ impl App {
         self
     }
 
+    /// Asks the event loop to stop, allowing `run()` to return and release its windows.
+    pub fn quit() {
+        QUIT.store(true, Ordering::Relaxed);
+        crate::changes::mark_all();
+    }
+
     pub fn run(self) {
         let no_windows = self.windows.is_empty() && self.normal_windows.is_empty();
 
@@ -106,4 +116,8 @@ impl App {
 
         backend.run();
     }
+}
+
+pub(crate) fn quit_requested() -> bool {
+    QUIT.swap(false, Ordering::Relaxed)
 }

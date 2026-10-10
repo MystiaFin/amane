@@ -43,7 +43,7 @@ I came to this after writing a Quickshell config. My volume slider was jaggy bec
 
 Then the windows open. Per-monitor windows wait until the compositor has described each monitor. A layer window runs its view once at 0 by 0 before its surface even exists, because it needs the settings the view asks for (size, anchor, layer and so on) to create the surface. Nothing is drawn yet. Drawing starts when the compositor sends the first configure.
 
-Finally `WaylandApp::run` starts the event loop. It runs until the last window closes, unless you have per-monitor windows, because those come back when a monitor is plugged in again. Apps listen on the session's IPC socket by default; `App::without_ipc` leaves it unused so a standalone app can run beside the shell.
+Finally `WaylandApp::run` starts the event loop. It runs until the last window closes, unless you have per-monitor windows, because those come back when a monitor is plugged in again. `App::quit` wakes the loop and asks it to stop, letting `App::run` return and release the windows. Apps listen on the session's IPC socket by default; `App::without_ipc` leaves it unused so a standalone app can run beside the shell.
 
 ## The event loop
 

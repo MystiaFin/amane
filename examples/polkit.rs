@@ -1,8 +1,8 @@
 use std::cell::Cell;
 
 use amane::{
-    App, Color, Column, Keyboard, Layer, LayerWindow, Parent, Polkit, PolkitConfig, Rectangle, Row,
-    Service, Text, TextInput, Widget, Zone,
+    App, Color, Column, Key, Keyboard, Layer, LayerWindow, Parent, Pointer, Polkit, PolkitConfig,
+    Rectangle, Row, Service, SpaceBetween, Text, TextInput, Widget, Zone,
 };
 
 thread_local! {
@@ -14,6 +14,7 @@ fn main() {
         eprintln!("{error}");
     }
     App::new().without_ipc().window(view).run();
+    let _ = Polkit::stop();
 }
 
 fn view() -> LayerWindow {
@@ -30,11 +31,42 @@ fn view() -> LayerWindow {
     let mut children: Vec<Box<dyn Widget>> = Vec::new();
     if let Some(error) = polkit.error() {
         children.push(Box::new(
-            Text::new(error.to_string()).color(Color::from("#f38ba8")),
+            Column::new(vec![
+                Box::new(
+                    Column::new(vec![
+                        Box::new(
+                            Text::new("Unable to start Polkit agent")
+                                .size(22.0)
+                                .color(Color::from("#cdd6f4")),
+                        ),
+                        Box::new(
+                            Text::new(error.to_string())
+                                .wrap()
+                                .max_lines(6)
+                                .color(Color::from("#f38ba8")),
+                        ),
+                        Box::new(
+                            Text::new("Resolve the error before retrying. Only one agent can run per login session.")
+                                .wrap()
+                                .max_lines(2)
+                                .color(Color::from("#cdd6f4")),
+                        ),
+                    ])
+                    .gap(12.0),
+                ),
+                Box::new(
+                    Row::new(vec![
+                        button("retry registration", || {
+                            let _ = Polkit::start(PolkitConfig::new());
+                        }),
+                        button("quit", App::quit),
+                    ])
+                    .gap(8.0),
+                ),
+            ])
+            .height(Parent)
+            .justify(SpaceBetween),
         ));
-        children.push(button("retry registration", || {
-            let _ = Polkit::start(PolkitConfig::new());
-        }));
     }
     if let Some(flow) = polkit.flow() {
         let request = flow.id();
@@ -98,14 +130,29 @@ fn view() -> LayerWindow {
             TextInput::set_text("polkit-response", "");
         }));
     }
+    let request = polkit.flow().map(|flow| flow.id());
     LayerWindow::new()
         .width(520.0)
         .height(360.0)
         .namespace("amane-polkit")
         .layer(Layer::Overlay)
         .space(Zone::Ignore)
-        .keyboard(Keyboard::Exclusive)
+        .keyboard(if polkit.error().is_some() {
+            Keyboard::OnDemand
+        } else {
+            Keyboard::Exclusive
+        })
         .visible(polkit.flow().is_some() || polkit.error().is_some())
+        .on_key(move |key| {
+            if key == Key::Escape {
+                if let Some(request) = request {
+                    let _ = Polkit::cancel(request);
+                } else {
+                    App::quit();
+                }
+                TextInput::set_text("polkit-response", "");
+            }
+        })
         .child(
             Rectangle::new()
                 .width(Parent)
@@ -122,6 +169,7 @@ fn button(label: &str, clicked: impl Fn() + 'static) -> Box<dyn Widget> {
             .width(150.0)
             .height(40.0)
             .fill("#cdd6f4")
+            .cursor(Pointer)
             .padding(8.0)
             .child(Text::new(label))
             .on_click(move |_| clicked()),

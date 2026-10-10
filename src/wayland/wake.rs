@@ -1,6 +1,6 @@
 use smithay_client_toolkit::reexports::calloop::{LoopHandle, ping::make_ping};
 
-use crate::changes;
+use crate::{app, changes};
 
 use super::WaylandState;
 
@@ -9,6 +9,11 @@ pub fn insert(handle: &LoopHandle<'static, WaylandState>) {
 
     handle
         .insert_source(source, |_, _, state| {
+            if app::quit_requested() {
+                state.running = false;
+                return;
+            }
+
             state.end_lock_if_unlocked();
 
             state.start_lock_if_asked();

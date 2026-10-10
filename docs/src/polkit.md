@@ -81,4 +81,6 @@ The control functions belong in startup or input handlers. A view reads the serv
 
 `cargo run --example polkit` starts an agent with a dialog for its requests. Run it as your shell's agent with other agents disabled. The example uses `App::without_ipc()` so it can run alongside your shell without claiming its IPC socket.
 
+The agent waits for applications to request authorization; starting it does not begin a password check. If registration fails, the dialog shows the error with **retry registration** and **quit** controls. Another agent already registered for the session must exit before retry can succeed. Click the error dialog to focus it and press Escape, or click **quit**, to close the example. Escape during authentication cancels that request and leaves the agent running.
+
 See the [Polkit agent documentation](https://polkit.pages.freedesktop.org/polkit/polkit.8.html) for how applications request authorization.
