@@ -131,7 +131,14 @@ It's created the first time anything reads or writes it, and it stays until the 
 
 Control calls from input handlers, like `Audio::set_volume`, don't run on the main thread. They go to one shared worker thread (`src/services/worker.rs`) that runs them in order, so a slow bus never stalls drawing. If one of them panics, only that call is lost.
 
-`Workspaces` doesn't know which compositor is running. `src/compositor.rs` picks a backend from the environment (`NIRI_SOCKET`, `HYPRLAND_INSTANCE_SIGNATURE` or `SWAYSOCK`), and every backend hands over the full workspace list after each event. niri only sends what changed, so its backend remembers the rest and rebuilds the list itself. Hyprland and Sway are just asked for the full list again. `Workspaces` sorts the list by monitor and position, and if nothing changed (a window title changing is also a compositor event), it writes quietly.
+`Workspaces` doesn't know which compositor is running. `src/compositor.rs` picks a backend from whichever of these is set:
+
+- niri (`NIRI_SOCKET`)
+- Hyprland (`HYPRLAND_INSTANCE_SIGNATURE`)
+- Sway (`SWAYSOCK`)
+- Mango (`MANGO_INSTANCE_SIGNATURE`)
+
+Every backend hands over the full workspace list after each event. niri only sends what changed, so its backend remembers the rest and rebuilds the list itself. Hyprland and Sway are just asked for the full list again. Mango sends everything every time, and each tag counts as a workspace. `Workspaces` sorts the list by monitor and position, and if nothing changed (a window title changing is also a compositor event), it writes quietly.
 
 To add a compositor, you add one file in `src/compositor/`, its environment variable in `running()`, and one arm in each of the two `match`es (`listen` and `focus_workspace`).
 
@@ -193,7 +200,7 @@ src/
 ├── dbus.rs, dbus/     a small zbus wrapper: Bus, Method, Signal, Value
 ├── ipc.rs             IpcHandlers and IpcCall
 ├── compositor.rs      picks the workspace backend for the running compositor
-├── compositor/        niri, Hyprland and Sway IPC, used by Workspaces
+├── compositor/        niri, Hyprland, Sway and Mango IPC, used by Workspaces
 ├── process.rs         spawn, output, lines
 ├── files.rs           watch_file, through inotify
 ├── allocator.rs       glibc allocator limits for image decoding
