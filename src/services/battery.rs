@@ -74,16 +74,22 @@ impl Battery {
     }
 }
 
-// the first supply whose type is Battery, a laptop's AC adapter is skipped
+// the first battery that powers the computer, an AC adapter or a mouse's battery is skipped
 fn find() -> Option<PathBuf> {
     let entries = fs::read_dir(POWER_SUPPLIES).ok()?;
 
     for entry in entries.flatten() {
         let path = entry.path();
 
-        if read(&path, "type") == "Battery" {
-            return Some(path);
+        if read(&path, "type") != "Battery" {
+            continue;
         }
+
+        if read(&path, "scope") == "Device" {
+            continue;
+        }
+
+        return Some(path);
     }
 
     None
