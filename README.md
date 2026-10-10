@@ -40,7 +40,7 @@ cd amane
 ./install.sh
 ```
 
-If your distro uses another package manager, the script stops and lists what to install yourself: a C compiler, pkg-config, wayland, libxkbcommon, fontconfig, freetype, expat, vulkan-loader, libpulseaudio and linux-pam, with their headers. After that, run `cargo install --path cli`.
+If your distro uses another package manager, the script stops and lists what to install yourself: a C compiler, pkg-config, wayland, libxkbcommon, fontconfig, freetype, expat, vulkan-loader, libpulseaudio, linux-pam, polkit, GLib and GObject, with their headers. After that, run `cargo install --path cli`.
 
 This puts `amane` in `~/.cargo/bin`, so make sure that folder is on your `PATH` too.
 

@@ -41,6 +41,7 @@
 - [Bluetooth](bluetooth.md)
 - [Media Players](media.md)
 - [Notifications](notifications.md)
+- [Polkit Authentication](polkit.md)
 - [Workspaces](workspaces.md)
 - [Apps](apps.md)
 - [Palette](palette.md)

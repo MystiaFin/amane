@@ -31,6 +31,9 @@ pub fn set_waker(wake: impl Fn() + Send + Sync + 'static) {
     if WAKE.set(Box::new(wake)).is_err() {
         panic!("failed to set wake: already set");
     }
+
+    // A service may have changed while the windows and GPU were being initialized.
+    ping();
 }
 
 // asks the event loop to draw every window again, from any thread
@@ -90,4 +93,22 @@ fn ping() {
     };
 
     wake();
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    use super::*;
+
+    #[test]
+    fn installing_the_waker_delivers_changes_made_during_startup() {
+        struct Startup;
+        mark(TypeId::of::<Startup>());
+        let called = Arc::new(AtomicBool::new(false));
+        let callback = called.clone();
+        set_waker(move || callback.store(true, Ordering::SeqCst));
+        assert!(called.load(Ordering::SeqCst));
+    }
 }

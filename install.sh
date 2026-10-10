@@ -11,17 +11,18 @@ fi
 # the libraries come from the same list as flake.nix
 if command -v pacman > /dev/null; then
     sudo pacman -S --needed gcc pkgconf wayland libxkbcommon fontconfig freetype2 expat \
-        vulkan-icd-loader libpulse pam
+        vulkan-icd-loader libpulse pam polkit glib2
 elif command -v apt-get > /dev/null; then
     sudo apt-get install -y build-essential pkg-config libwayland-dev libxkbcommon-dev \
-        libfontconfig-dev libfreetype-dev libexpat1-dev libvulkan1 libpulse-dev libpam0g-dev
+        libfontconfig-dev libfreetype-dev libexpat1-dev libvulkan1 libpulse-dev libpam0g-dev \
+        libpolkit-agent-1-dev libglib2.0-dev
 elif command -v dnf > /dev/null; then
     sudo dnf install -y gcc pkgconf-pkg-config wayland-devel libxkbcommon-devel fontconfig-devel \
-        freetype-devel expat-devel vulkan-loader pulseaudio-libs-devel pam-devel
+        freetype-devel expat-devel vulkan-loader pulseaudio-libs-devel pam-devel polkit-devel glib2-devel
 else
     echo "failed to find pacman, apt-get or dnf, install these yourself:"
     echo "  a c compiler, pkg-config, wayland, libxkbcommon, fontconfig, freetype,"
-    echo "  expat, vulkan-loader, libpulseaudio, linux-pam (with their headers)"
+    echo "  expat, vulkan-loader, libpulseaudio, linux-pam, polkit, glib (with their headers)"
     exit 1
 fi
 

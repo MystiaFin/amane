@@ -21,16 +21,22 @@ pub fn find<S: Service>() -> &'static RwLock<S> {
         return service.downcast_ref().expect("failed to find service");
     }
 
+    // A constructor can read other services, so run it without holding the store mutex.
+    let value = S::new();
+    let mut services = SERVICES.lock().unwrap_or_else(PoisonError::into_inner);
+    // Another thread may have initialized this type while its constructor was running.
+    if let Some(service) = services.get(&id) {
+        return service.downcast_ref().expect("failed to find service");
+    }
+
     /*
      * services stay until the program exits,
      * so leaking gives a reference that is valid forever
      */
-    let service = Box::leak(Box::new(RwLock::new(S::new())));
+    let service = Box::leak(Box::new(RwLock::new(value)));
 
-    SERVICES
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .insert(id, service);
+    services.insert(id, service);
+    drop(services);
 
     // stored first, so the thread's own reads and writes find this same service
     thread::spawn(keep_listening::<S>);
@@ -53,5 +59,35 @@ fn keep_listening<S: Service>() {
         );
 
         thread::sleep(RESTART_DELAY);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Barrier;
+
+    use super::*;
+
+    static CONSTRUCTORS: Barrier = Barrier::new(2);
+
+    struct Concurrent;
+
+    impl Service for Concurrent {
+        fn new() -> Self {
+            CONSTRUCTORS.wait();
+            Self
+        }
+
+        fn listen() {}
+    }
+
+    #[test]
+    fn concurrent_first_use_returns_the_same_service() {
+        let first = thread::spawn(find::<Concurrent>);
+        let second = thread::spawn(find::<Concurrent>);
+        let first = first.join().unwrap();
+        let second = second.join().unwrap();
+        assert!(std::ptr::eq(first, second));
+        assert!(std::ptr::eq(first, find::<Concurrent>()));
     }
 }
