@@ -39,7 +39,8 @@ use wayland_client::{
 };
 
 use crate::ipc::IpcHandlers;
-use crate::{Cursor, LayerWindow, Monitor, Window};
+use crate::window::NamedWindow;
+use crate::{Cursor, LayerWindow, Monitor};
 
 use surface::{OpenWindow, View};
 
@@ -102,7 +103,7 @@ pub struct WaylandApp {
 impl WaylandApp {
     pub fn new(
         views: Vec<fn() -> LayerWindow>,
-        normal_views: Vec<(&'static str, fn() -> Window)>,
+        normal_views: Vec<NamedWindow>,
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: IpcHandlers,

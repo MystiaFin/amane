@@ -77,8 +77,11 @@ impl Default for Window {
     }
 }
 
+// a name and the view that opens that window
+pub(crate) type NamedWindow = (&'static str, fn() -> Window);
+
 // windows asked for from handlers, opened by the event loop when it wakes
-pub static REQUESTED: Mutex<Vec<(&'static str, fn() -> Window)>> = Mutex::new(Vec::new());
+pub static REQUESTED: Mutex<Vec<NamedWindow>> = Mutex::new(Vec::new());
 
 /*
  * opens a normal window later on, like settings from a button or an ipc call;

@@ -3,6 +3,7 @@ use crate::allocator;
 use crate::graphics::font;
 use crate::ipc::IpcHandlers;
 use crate::wayland::WaylandApp;
+use crate::window::NamedWindow;
 use crate::{LayerWindow, Monitor, Window};
 
 #[derive(Default)]
@@ -10,7 +11,7 @@ pub struct App {
     font: Option<String>,
 
     windows: Vec<fn() -> LayerWindow>,
-    normal_windows: Vec<(&'static str, fn() -> Window)>,
+    normal_windows: Vec<NamedWindow>,
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
     lock: Option<fn(&Monitor) -> LayerWindow>,
 
