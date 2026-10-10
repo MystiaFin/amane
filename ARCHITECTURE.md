@@ -63,6 +63,8 @@ Then `update_surface` (in `src/wayland/update.rs`) compares the window settings 
 
 Next, `frame::build` lays the tree out in the window and asks every widget to draw into a `Renderer`. Nothing is drawn yet at this point. The renderer only records a list of `Command`s. Some widgets read Services while drawing too (an image that is still decoding does this), so those reads are added to the window's list. After drawing, `build` collects the input targets, which replace the last frame's targets in the window's `Pointer`. The view's `on_key` replaces the old one the same way.
 
+`App::scale_factor` is separate from the compositor's output scale. The backend keeps surface dimensions in compositor units, scales the window requests, and divides configured dimensions by the app factor for views and layout. Drawing combines both factors. Input targets undo only the app factor, because Wayland pointer positions already account for output scaling. `window_size()` and `Monitor` dimensions therefore use the same units as widgets.
+
 Last, the `Gpu` turns the commands into pixels and presents them, which attaches the buffer to the surface and commits it.
 
 If anything in the frame was still animating, the window asks the compositor for a frame callback in that same commit, so the next frame arrives on the next refresh.

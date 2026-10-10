@@ -3,7 +3,8 @@ use wayland_client::{
     protocol::wl_region::{self, WlRegion},
 };
 
-use crate::LayerWindow;
+use crate::scale::ScaleFactor;
+use crate::{InputArea, LayerWindow};
 
 use super::{
     WaylandState,
@@ -53,7 +54,7 @@ impl OpenWindow {
          * a commit without a buffer also shows a hidden window again,
          * the compositor answers with a configure and drawing starts there
          */
-        layer::apply(layer_surface, &settings);
+        layer::apply(layer_surface, &settings, self.scale_factor);
 
         self.role.commit();
     }
@@ -78,6 +79,7 @@ impl OpenWindow {
         let region = self.compositor.create_region(&self.qh, ());
 
         for area in areas {
+            let area = scaled_region(*area, self.scale_factor);
             region.add(area.x, area.y, area.width, area.height);
         }
 
@@ -102,6 +104,30 @@ impl OpenWindow {
     }
 }
 
+// round outward so a fractional scale does not leave the edge of a clickable area out
+fn scaled_region(area: InputArea, scale_factor: ScaleFactor) -> InputArea {
+    let factor = f64::from(scale_factor.get());
+    let x = (f64::from(area.x) * factor).floor() as i32;
+    let y = (f64::from(area.y) * factor).floor() as i32;
+    let right = ((f64::from(area.x) + f64::from(area.width)) * factor).ceil() as i32;
+    let bottom = ((f64::from(area.y) + f64::from(area.height)) * factor).ceil() as i32;
+
+    InputArea {
+        x,
+        y,
+        width: if area.width > 0 {
+            right.saturating_sub(x)
+        } else {
+            0
+        },
+        height: if area.height > 0 {
+            bottom.saturating_sub(y)
+        } else {
+            0
+        },
+    }
+}
+
 // a region never sends events, but wayland-client still needs somewhere to send them
 impl Dispatch<WlRegion, ()> for WaylandState {
     fn event(
@@ -112,5 +138,39 @@ impl Dispatch<WlRegion, ()> for WaylandState {
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fractional_input_regions_cover_their_edges_and_preserve_empty_areas() {
+        let area = InputArea {
+            x: 1,
+            y: -1,
+            width: 3,
+            height: 2,
+        };
+
+        assert_eq!(scaled_region(area, ScaleFactor::default()), area);
+        assert_eq!(
+            scaled_region(area, ScaleFactor::new(1.5)),
+            InputArea {
+                x: 1,
+                y: -2,
+                width: 5,
+                height: 4
+            },
+        );
+
+        let empty = InputArea {
+            width: 0,
+            height: 0,
+            ..area
+        };
+        let scaled = scaled_region(empty, ScaleFactor::new(1.5));
+        assert_eq!((scaled.width, scaled.height), (0, 0));
     }
 }

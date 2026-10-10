@@ -30,7 +30,10 @@ impl WaylandState {
         xdg_window.set_title(window.title.clone());
         xdg_window.set_app_id("amane");
 
-        let size = (window.width.round() as u32, window.height.round() as u32);
+        let size = (
+            self.scale_factor.pixels(window.width),
+            self.scale_factor.pixels(window.height),
+        );
 
         // the same smallest and biggest size is how a window says it cannot be resized
         if !window.resizable {

@@ -39,6 +39,7 @@ use wayland_client::{
 };
 
 use crate::ipc::IpcHandlers;
+use crate::scale::ScaleFactor;
 use crate::window::NamedWindow;
 use crate::{Cursor, LayerWindow, Monitor};
 
@@ -50,6 +51,8 @@ struct WaylandState {
 
     // each of these gets a window on every monitor, including ones plugged in later
     per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
+
+    scale_factor: ScaleFactor,
 
     // keys do not say which window they are for, so the window that has focus is kept
     keyboard_focus: Option<WlSurface>,
@@ -107,6 +110,7 @@ impl WaylandApp {
         per_monitor: Vec<fn(&Monitor) -> LayerWindow>,
         lock_view: Option<fn(&Monitor) -> LayerWindow>,
         handlers: IpcHandlers,
+        scale_factor: ScaleFactor,
     ) -> Self {
         let connection = connect();
 
@@ -134,6 +138,8 @@ impl WaylandApp {
             windows: Vec::new(),
 
             per_monitor,
+
+            scale_factor,
 
             keyboard_focus: None,
 

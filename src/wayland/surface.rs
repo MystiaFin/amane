@@ -13,6 +13,7 @@ use wayland_client::{
 
 use crate::graphics::Gpu;
 use crate::input::{KeyHandler, Pointer};
+use crate::scale::ScaleFactor;
 use crate::{InputArea, LayerWindow, Monitor, Widget, Window};
 
 use super::{
@@ -35,6 +36,8 @@ pub struct OpenWindow {
     pub height: u32,
 
     pub scale: f32,
+
+    pub scale_factor: ScaleFactor,
 
     pub frame_requested: bool,
 
@@ -120,8 +123,8 @@ impl OpenWindow {
     fn asked_size(&self) -> (u32, u32) {
         match &self.role {
             Role::Layer { settings, .. } => {
-                let width = layer::to_pixels(settings.width);
-                let height = layer::to_pixels(settings.height);
+                let width = layer::to_pixels(settings.width, self.scale_factor);
+                let height = layer::to_pixels(settings.height, self.scale_factor);
 
                 (width, height)
             }

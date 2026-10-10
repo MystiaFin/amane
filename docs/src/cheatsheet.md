@@ -22,6 +22,7 @@ use amane::*;
 | `.lock(view)` | sets the lock screen, `fn(&Monitor) -> LayerWindow` |
 | `.ipc("name", handler)` | handles `amane ipc call name`, `fn(&[String]) -> String` |
 | `.font("Inter")` | sets the default font family |
+| `.scale_factor(1.4)` | scales all windows and widgets; defaults to `1.0` ([Scaling](scaling.md)) |
 | `.run()` | starts the shell. Never returns. |
 
 ## LayerWindow

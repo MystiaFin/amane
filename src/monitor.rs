@@ -3,6 +3,7 @@
 pub struct Monitor {
     pub name: String,
 
+    // dimensions in widget units, with the compositor and App scale factors already accounted for
     pub width: u32,
     pub height: u32,
 }
