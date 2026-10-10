@@ -244,7 +244,8 @@ use amane::*;
 | `Workspaces` | `list` | `focus` |
 | `Apps` | `list` | `launch` on each `DesktopApp` |
 | `Palette` | `colors`, `dominant`, `accent`, `background`, `foreground`, `on_accent`, `light` | `open` |
-| `Lock` | `checking`, `failed` | `start`, `unlock` |
+| [`Pam`](pam.md) | `active`, `messages`, `prompt`, `result` | `start`, `respond`, `abort` |
+| [`Lock`](lock_screen.md) | `checking`, `failed` | `start`, `unlock`, `authenticate`, `abort` |
 
 ## Commands, files, IPC, D-Bus
 
