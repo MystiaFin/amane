@@ -19,7 +19,15 @@ struct Bus {
 impl Bus {
     fn new() -> Self {
         let mut child = Process::new("dbus-daemon")
-            .args(["--session", "--nofork", "--print-address=1"])
+            .args([
+                concat!(
+                    "--config-file=",
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/src/services/polkit/test-bus.conf"
+                ),
+                "--nofork",
+                "--print-address=1",
+            ])
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
@@ -27,6 +35,10 @@ impl Bus {
         BufReader::new(child.stdout.take().unwrap())
             .read_line(&mut address)
             .unwrap();
+        assert!(
+            !address.trim().is_empty(),
+            "private test bus failed to start"
+        );
         Self {
             child,
             address: address.trim().into(),
