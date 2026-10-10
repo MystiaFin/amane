@@ -30,5 +30,9 @@ resvg = { version = "0.48.1", default-features = false }
 [dev-dependencies]
 chrono = "0.4"
 
+[lints.clippy]
+# keep the zero-denominator guard explicit
+manual_checked_ops = "allow"
+
 [workspace]
 members = ["cli", "cli/template/example"]
