@@ -79,6 +79,6 @@ The control functions belong in startup or input handlers. A view reads the serv
 
 ## Example
 
-`cargo run --example polkit` starts an agent with a dialog for its requests. Run it as your shell's agent with other agents disabled. Like the other examples, it uses Amane's IPC socket, so stop your usual Amane shell before running it separately.
+`cargo run --example polkit` starts an agent with a dialog for its requests. Run it as your shell's agent with other agents disabled. The example uses `App::without_ipc()` so it can run alongside your shell without claiming its IPC socket.
 
 See the [Polkit agent documentation](https://polkit.pages.freedesktop.org/polkit/polkit.8.html) for how applications request authorization.

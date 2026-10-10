@@ -44,6 +44,11 @@ pub fn get(surface: &Surface) -> Shared {
     SHARED.with_borrow_mut(|shared| shared.get_or_insert_with(|| open(surface)).clone())
 }
 
+pub fn clear() {
+    // wgpu's destruction uses thread locals, so finish before thread-local teardown begins.
+    drop(SHARED.with_borrow_mut(Option::take));
+}
+
 fn open(surface: &Surface) -> Shared {
     let adapter_options = RequestAdapterOptions {
         compatible_surface: Some(surface),

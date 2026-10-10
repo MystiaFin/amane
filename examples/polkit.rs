@@ -13,7 +13,7 @@ fn main() {
     if let Err(error) = Polkit::start(PolkitConfig::new()) {
         eprintln!("{error}");
     }
-    App::new().window(view).run();
+    App::new().without_ipc().window(view).run();
 }
 
 fn view() -> LayerWindow {
