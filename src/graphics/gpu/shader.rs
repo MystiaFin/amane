@@ -39,8 +39,8 @@ pub struct Shader {
 
 impl Shader {
     // .glsl and .frag files are glsl, anything else is wgsl
-    pub fn load(device: &Device, path: &Path) -> Self {
-        let source = fs::read_to_string(path).expect("failed to read shader");
+    pub fn load(device: &Device, path: &Path) -> std::io::Result<Self> {
+        let source = fs::read_to_string(path)?;
 
         let extension = path.extension().and_then(|extension| extension.to_str());
 
@@ -78,7 +78,7 @@ impl Shader {
 
         let pipeline = pipeline(device, &inputs, &vertex, &fragment);
 
-        Self { pipeline, inputs }
+        Ok(Self { pipeline, inputs })
     }
 }
 
@@ -129,6 +129,30 @@ fn pipeline(
         multiview_mask: None,
         cache: None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::graphics::gpu::wait::wait;
+    use vello::wgpu::{DeviceDescriptor, Instance, InstanceDescriptor, RequestAdapterOptions};
+
+    #[test]
+    #[ignore = "requires a graphics adapter"]
+    fn missing_shader_returns_read_error() {
+        let instance = Instance::new(InstanceDescriptor::new_without_display_handle_from_env());
+        let adapter = wait(instance.request_adapter(&RequestAdapterOptions::default()))
+            .expect("failed to find a gpu");
+        let (device, _) =
+            wait(adapter.request_device(&DeviceDescriptor::default())).expect("failed to open gpu");
+
+        // A child of a regular file cannot exist, regardless of the working directory.
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("Cargo.toml")
+            .join("missing.wgsl");
+        let result = Shader::load(&device, &path);
+        assert!(result.is_err(), "an unreadable shader must return an error");
+    }
 }
 
 fn uniform(binding: u32, visibility: ShaderStages) -> BindGroupLayoutEntry {

@@ -32,6 +32,23 @@ impl Gpu {
         outline: Option<&graphics::BezierPath>,
         transform: Transform,
     ) {
+        // Remember failed reads too, so redraws neither retry nor repeat the error.
+        if !self.shaders.contains_key(shader) {
+            let compiled = match Shader::load(&self.device, shader) {
+                Ok(compiled) => Some(compiled),
+                Err(error) => {
+                    eprintln!("amane: failed to read shader {}: {error}", shader.display());
+                    None
+                }
+            };
+
+            self.shaders.insert(PathBuf::from(shader), compiled);
+        }
+
+        if self.shaders[shader].is_none() {
+            return;
+        }
+
         let Some(outline) = outline else {
             self.draw_shader(canvas, shader, values, area, transform);
 
@@ -57,14 +74,9 @@ impl Gpu {
         area: Area,
         transform: Transform,
     ) {
-        // compiled the first time a path is drawn, then kept
-        if !self.shaders.contains_key(shader) {
-            let compiled = Shader::load(&self.device, shader);
-
-            self.shaders.insert(PathBuf::from(shader), compiled);
-        }
-
-        let shader = &self.shaders[shader];
+        let Some(shader) = &self.shaders[shader] else {
+            return;
+        };
 
         let time = START.elapsed().as_secs_f32();
 

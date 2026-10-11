@@ -74,8 +74,8 @@ pub struct Gpu {
     atlas_drops: Rc<Cell<u64>>,
     atlas_seen: u64,
 
-    // custom shaders, compiled once and kept by the path they were read from
-    shaders: HashMap<PathBuf, Shader>,
+    // custom shaders, loaded once per path; None remembers an unreadable file
+    shaders: HashMap<PathBuf, Option<Shader>>,
 
     // finished window-sized textures waiting to be reused
     spare: Vec<Texture>,
