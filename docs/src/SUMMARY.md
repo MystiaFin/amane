@@ -32,6 +32,7 @@
 
 - [Multiple Windows and Monitors](windows.md)
 - [Lock Screen](lock_screen.md)
+- [Login Greeters with greetd](greetd.md)
 
 # Built-in Services
 
