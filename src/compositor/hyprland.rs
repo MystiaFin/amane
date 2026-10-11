@@ -7,10 +7,10 @@ use serde_json::Value;
 
 use crate::Workspace;
 
-// Checks if Hyprland is in lua mode
+// check if hyprland is in lua mode
 pub fn is_hyprland_lua_mode() -> bool {
-    // idea: take output from 'configProvider'
-    // by running `hyprctl status`
+    // idea: run `hyprctl status` and get the value
+    // from 'configProvider'
     if let Ok(output) = Command::new("hyprctl").arg("status").output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         for line in stdout.lines() {
@@ -19,7 +19,10 @@ pub fn is_hyprland_lua_mode() -> bool {
             }
         }
     }
+    // or its not in lua mode
+    return false;
 }
+
 
 
 // hyprland keeps its sockets in a folder named after the running instance
@@ -59,7 +62,7 @@ pub fn focus_workspace(id: i64) {
     if is_hyprland_lua_mode() {
         let _ = request(&format!("dispatch hl.dsp.focus({{ workspace = {target:?} }})"));
     } else {
-        let reply = request(&format!("dispatch workspace {target}"));
+        let _ = request(&format!("dispatch workspace {target}"));
     }
 }
 
