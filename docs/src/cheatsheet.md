@@ -246,6 +246,7 @@ use amane::*;
 | `Apps` | `list` | `launch` on each `DesktopApp` |
 | `Palette` | `colors`, `dominant`, `accent`, `background`, `foreground`, `on_accent`, `light` | `open` |
 | `Lock` | `checking`, `failed` | `start`, `unlock` |
+| `Greetd` | `connection`, `connected`, `status`, `message`, `error` | `connect`, `authenticate`, `respond`, `acknowledge`, `cancel`, `start_session` |
 
 ## Commands, files, IPC, D-Bus
 

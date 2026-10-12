@@ -4,6 +4,7 @@ mod battery;
 mod bluetooth;
 mod brightness;
 mod cpu;
+mod greetd;
 mod lock;
 mod media;
 mod memory;
@@ -29,6 +30,9 @@ pub use battery::Battery;
 pub use bluetooth::{Bluetooth, BluetoothDevice};
 pub use brightness::Brightness;
 pub use cpu::Cpu;
+pub use greetd::{
+    AuthenticationMessage, AuthenticationMessageType, Greetd, GreetdConnection, GreetdStatus,
+};
 pub use lock::Lock;
 pub use media::{Media, MediaPlayer};
 pub use memory::Memory;
