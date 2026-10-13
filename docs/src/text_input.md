@@ -120,7 +120,9 @@ While an input has focus:
 - `Escape` takes focus away, and then also reaches the window's `on_key`.
 - `Up`, `Down`, and `Tab` skip the input and go straight to the window's `on_key`, so a list under a search box can be moved through with the arrow keys.
 
-Holding a key down doesn't repeat it yet.
+Holding a character key, `Space`, `Backspace`, `Left`, or `Right` repeats the edit using the compositor's keyboard repeat delay and rate. Repetition stops when you release the key or the input loses focus. A held key does not start repeating into another input when focus changes.
+
+`Enter` and `Escape` act once per press. Repeated keys do not reach the window's `on_key`.
 
 ## Password fields
 

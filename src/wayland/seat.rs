@@ -1,5 +1,9 @@
-use smithay_client_toolkit::seat::{Capability, SeatHandler, SeatState, pointer::ThemeSpec};
-use wayland_client::{Connection, QueueHandle, protocol::wl_seat::WlSeat};
+use smithay_client_toolkit::seat::{
+    Capability, SeatHandler, SeatState, keyboard::KeyboardData, pointer::ThemeSpec,
+};
+use wayland_client::{Connection, Proxy, QueueHandle, protocol::wl_seat::WlSeat};
+
+use crate::input::focus;
 
 use super::WaylandState;
 
@@ -71,6 +75,10 @@ impl SeatHandler for WaylandState {
             }
 
             Capability::Keyboard => {
+                self.keyboard_repeat.cancel(&self.loop_handle);
+                self.keyboard_focus = None;
+                focus::clear();
+
                 if let Some(keyboard) = self.keyboard_device.take() {
                     keyboard.release();
                 }
@@ -80,5 +88,15 @@ impl SeatHandler for WaylandState {
         }
     }
 
-    fn remove_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, _: WlSeat) {}
+    fn remove_seat(&mut self, connection: &Connection, qh: &QueueHandle<Self>, seat: WlSeat) {
+        let owns_keyboard = self
+            .keyboard_device
+            .as_ref()
+            .and_then(|keyboard| keyboard.data::<KeyboardData<Self, ()>>())
+            .is_some_and(|keyboard| keyboard.seat() == &seat);
+
+        if owns_keyboard {
+            self.remove_capability(connection, qh, seat, Capability::Keyboard);
+        }
+    }
 }

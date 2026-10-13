@@ -1,5 +1,7 @@
+pub(super) mod repeat;
+
 use smithay_client_toolkit::seat::keyboard::{
-    KeyEvent, KeyboardHandler, Keysym, Modifiers, RawModifiers,
+    KeyEvent, KeyboardHandler, Keymap, Keysym, Modifiers, RawModifiers, RepeatInfo,
 };
 use wayland_client::{
     Connection, QueueHandle,
@@ -35,6 +37,7 @@ impl KeyboardHandler for WaylandState {
         _: u32,
     ) {
         self.keyboard_focus = None;
+        self.keyboard_repeat.cancel(&self.loop_handle);
 
         // keys stop arriving, so no text input can stay focused
         focus::clear();
@@ -57,7 +60,15 @@ impl KeyboardHandler for WaylandState {
         let key = to_key(&event);
 
         // a focused text input takes the key before the window's on_key sees it
-        if focus::send(key) {
+        let taken = focus::send(key, event.raw_code);
+        self.keyboard_repeat.press(
+            event,
+            taken && focus::repeats(key),
+            &self.loop_handle,
+            Self::repeat_text_input,
+        );
+
+        if taken {
             self.request_frame_on(&surface);
 
             return;
@@ -77,15 +88,18 @@ impl KeyboardHandler for WaylandState {
         self.request_frame_on(&surface);
     }
 
-    // only sent to keyboards made with key repeat, which this one is not
     fn repeat_key(
         &mut self,
         _: &Connection,
         _: &QueueHandle<Self>,
-        _: &WlKeyboard,
+        keyboard: &WlKeyboard,
         _: u32,
-        _: KeyEvent,
+        event: KeyEvent,
     ) {
+        if self.keyboard_device.as_ref() == Some(keyboard) {
+            let event = self.keyboard_repeat.native(event);
+            self.repeat_text_input(event);
+        }
     }
 
     fn release_key(
@@ -94,8 +108,11 @@ impl KeyboardHandler for WaylandState {
         _: &QueueHandle<Self>,
         _: &WlKeyboard,
         _: u32,
-        _: KeyEvent,
+        event: KeyEvent,
     ) {
+        focus::release(event.raw_code);
+        self.keyboard_repeat
+            .release(event.raw_code, &self.loop_handle);
     }
 
     fn update_modifiers(
@@ -105,9 +122,52 @@ impl KeyboardHandler for WaylandState {
         _: &WlKeyboard,
         _: u32,
         _: Modifiers,
-        _: RawModifiers,
-        _: u32,
+        modifiers: RawModifiers,
+        group: u32,
     ) {
+        self.keyboard_repeat.modifiers(modifiers, group);
+    }
+
+    fn update_repeat_info(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &WlKeyboard,
+        info: RepeatInfo,
+    ) {
+        self.keyboard_repeat
+            .configure(info, &self.loop_handle, Self::repeat_text_input);
+    }
+
+    fn update_keymap(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        _: &WlKeyboard,
+        keymap: Keymap<'_>,
+    ) {
+        self.keyboard_repeat.cancel(&self.loop_handle);
+        self.keyboard_repeat.keymap(&keymap.as_string());
+    }
+}
+
+impl WaylandState {
+    pub fn repeat_text_input(&mut self, event: KeyEvent) -> bool {
+        let Some(surface) = self.keyboard_focus.clone() else {
+            return false;
+        };
+
+        if self.keyboard_device.is_none()
+            || self.window(&surface).is_none()
+            || !focus::has_repeat(event.raw_code)
+        {
+            return false;
+        }
+
+        if focus::repeat(to_key(&event), event.raw_code) {
+            self.request_frame_on(&surface);
+        }
+        true
     }
 }
 

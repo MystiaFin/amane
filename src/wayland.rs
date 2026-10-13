@@ -24,7 +24,10 @@ use smithay_client_toolkit::{
     data_device_manager::{DataDeviceManagerState, data_device::DataDevice},
     delegate_dispatch2, delegate_registry,
     output::OutputState,
-    reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
+    reexports::{
+        calloop::{EventLoop, LoopHandle},
+        calloop_wayland_source::WaylandSource,
+    },
     registry::{ProvidesRegistryState, RegistryState},
     registry_handlers,
     seat::{SeatState, pointer::ThemedPointer},
@@ -43,6 +46,7 @@ use crate::scale::ScaleFactor;
 use crate::window::NamedWindow;
 use crate::{Cursor, LayerWindow, Monitor};
 
+use keyboard::repeat::Repeat;
 use surface::{OpenWindow, View};
 
 struct WaylandState {
@@ -83,6 +87,7 @@ struct WaylandState {
     // kept so they can be released when the mouse or keyboard is unplugged
     pointer_device: Option<ThemedPointer<()>>,
     keyboard_device: Option<WlKeyboard>,
+    keyboard_repeat: Repeat,
 
     // files dragged in from other programs, none when the compositor lacks it
     data_device_manager: Option<DataDeviceManagerState>,
@@ -92,6 +97,8 @@ struct WaylandState {
     cursor_shown: Option<Cursor>,
 
     qh: QueueHandle<WaylandState>,
+
+    loop_handle: LoopHandle<'static, WaylandState>,
 
     running: bool,
 }
@@ -133,6 +140,8 @@ impl WaylandApp {
 
         let data_device_manager = DataDeviceManagerState::bind(&globals, &qh).ok();
 
+        let event_loop = EventLoop::try_new().expect("failed to create event loop");
+
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
             windows: Vec::new(),
@@ -163,11 +172,14 @@ impl WaylandApp {
             pointer_device: None,
             cursor_shown: None,
             keyboard_device: None,
+            keyboard_repeat: Repeat::default(),
 
             data_device_manager,
             data_device: None,
 
             qh,
+
+            loop_handle: event_loop.handle(),
 
             running: true,
         };
@@ -186,8 +198,6 @@ impl WaylandApp {
 
         // a Lock::start before run() has no event loop to wake yet
         state.start_lock_if_asked();
-
-        let event_loop = EventLoop::try_new().expect("failed to create event loop");
 
         WaylandSource::new(connection, event_queue)
             .insert(event_loop.handle())
