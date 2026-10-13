@@ -14,6 +14,7 @@
 - [Views](views.md)
 - [Layer Windows](layer_windows.md)
 - [Layout](layout.md)
+- [Scaling](scaling.md)
 - [State and Services](services.md)
 - [Input](input.md)
 - [Animation](animation.md)

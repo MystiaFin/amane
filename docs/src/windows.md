@@ -62,7 +62,7 @@ fn bar(monitor: &Monitor) -> LayerWindow {
 }
 ```
 
-The view takes a `&Monitor`, with the monitor's `name` (like `"DP-1"`), `width`, and `height`. Amane opens one window for each monitor when it starts, opens a new one when a monitor is plugged in, and closes it when the monitor is unplugged.
+The view takes a `&Monitor`, with the monitor's `name` (like `"DP-1"`), `width`, and `height`. Its dimensions use the same units as widgets, accounting for both the compositor's scale and [the app's scale factor](scaling.md). Amane opens one window for each monitor when it starts, opens a new one when a monitor is plugged in, and closes it when the monitor is unplugged.
 
 Use the monitor to show different things on different screens:
 
@@ -149,7 +149,7 @@ Both work from anywhere: input handlers, IPC handlers, or a Service's thread.
 
 ## The real window size
 
-A compositor can give a window another size than it asked for. Inside a view, `window_size()` gives the size the window really has, in pixels:
+A compositor can give a window another size than it asked for. Inside a view, `window_size()` gives the size the window really has, in widget units before [the app's scale factor](scaling.md):
 
 ```rust,ignore
 let (width, height) = window_size();

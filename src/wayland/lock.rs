@@ -34,7 +34,7 @@ impl WaylandState {
             return;
         };
 
-        let view = View::Monitor(view, output::describe(&info));
+        let view = View::Monitor(view, output::describe(&info, self.scale_factor));
 
         let surface = self.compositor.create_surface(&self.qh);
 

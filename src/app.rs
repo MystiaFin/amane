@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use crate::allocator;
 use crate::graphics::{GpuSession, font};
 use crate::ipc::IpcHandlers;
+use crate::scale::ScaleFactor;
 use crate::wayland::WaylandApp;
 use crate::window::NamedWindow;
 use crate::{LayerWindow, Monitor, Window};
@@ -13,6 +14,7 @@ static QUIT: AtomicBool = AtomicBool::new(false);
 #[derive(Default)]
 pub struct App {
     font: Option<String>,
+    scale_factor: ScaleFactor,
 
     windows: Vec<fn() -> LayerWindow>,
     normal_windows: Vec<NamedWindow>,
@@ -30,6 +32,15 @@ impl App {
 
     pub fn font(mut self, family: &str) -> Self {
         self.font = Some(String::from(family));
+
+        self
+    }
+
+    /// Scales every window and its widgets, in addition to the monitor's scale.
+    ///
+    /// The default is `1.0`. Panics if the factor is not positive and finite.
+    pub fn scale_factor(mut self, factor: f32) -> Self {
+        self.scale_factor = ScaleFactor::new(factor);
 
         self
     }
@@ -112,6 +123,7 @@ impl App {
             } else {
                 Some(self.handlers)
             },
+            self.scale_factor,
         );
 
         backend.run();
@@ -120,4 +132,16 @@ impl App {
 
 pub(crate) fn quit_requested() -> bool {
     QUIT.swap(false, Ordering::Relaxed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_invalid_scale_factors_before_connecting() {
+        for factor in [0.0, -1.0, f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+            assert!(std::panic::catch_unwind(|| App::new().scale_factor(factor)).is_err());
+        }
+    }
 }

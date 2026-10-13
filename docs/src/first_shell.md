@@ -5,10 +5,10 @@ This page gets a bar on your screen, then changes it while it runs.
 ## 1. Create the config
 
 ```sh
-amane startup
+amane new
 ```
 
-This creates `~/.config/amane/src/main.rs` (or `$XDG_CONFIG_HOME/amane/src/main.rs`) with a small bar in it. If the file already exists, `startup` stops and leaves it alone.
+It asks where the shell should go. Press Enter to use the default, `~/.config/amane` (or `$XDG_CONFIG_HOME/amane`). This page assumes the default. It creates `src/main.rs` there with a small bar in it. If the file already exists, `new` stops and leaves it alone.
 
 ## 2. Start it in dev mode
 
@@ -107,7 +107,7 @@ Then start it with:
 amane run
 ```
 
-`amane run` never builds. It only starts the shell `amane compile` saved, so after editing your shell, run `amane compile` again. To start your shell when you log in, run `amane run` from your compositor's startup config. For niri:
+`amane run` starts your shell in the background, so you can close the terminal. It never builds. It only starts the shell `amane compile` saved, so after editing your shell, run `amane compile --restart` to build and swap in the new shell in one go. To start your shell when you log in, run `amane run` from your compositor's startup config. For niri:
 
 ```kdl
 spawn-at-startup "amane" "run"

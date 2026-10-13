@@ -24,7 +24,7 @@ impl WaylandState {
          * last ones; a window that starts hidden never gets a configure, so it never
          * draws, and what its first view read is all that can wake it to show
          */
-        let (content, reads) = frame::run_view(|| view.run(), 0, 0);
+        let (content, reads) = frame::run_view(|| view.run(), 0, 0, self.scale_factor);
 
         // normal windows open in open_normal
         let Content::Layer(window) = content else {
@@ -39,6 +39,7 @@ impl WaylandState {
             output.as_ref(),
             &self.qh,
             &settings,
+            self.scale_factor,
         );
 
         let role = Role::Layer {
@@ -74,6 +75,8 @@ impl WaylandState {
             height: 0,
 
             scale: 1.0,
+
+            scale_factor: self.scale_factor,
 
             frame_requested: false,
             last_frame: None,

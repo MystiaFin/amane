@@ -36,21 +36,37 @@ fn request(command: &str) -> Option<String> {
 }
 
 pub fn focus_workspace(id: i64) {
-    if id >= 0 {
-        let _ = request(&format!("dispatch workspace {id}"));
-
+    let Some(target) = target_of(id) else {
         return;
+    };
+
+    let reply = request(&format!("dispatch workspace {target}"));
+
+    if reply.as_deref() == Some("ok") {
+        return;
+    }
+
+    /*
+     * since 0.56 a lua config reads dispatch as lua, so the line above
+     * only gets a syntax error back; {:?} quotes the target as a string
+     * with escapes lua reads the same way
+     */
+    let _ = request(&format!("dispatch hl.dsp.focus({{ workspace = {target:?} }})"));
+}
+
+// what both dispatch forms accept, a number or name:<name>
+fn target_of(id: i64) -> Option<String> {
+    if id >= 0 {
+        return Some(id.to_string());
     }
 
     /*
      * named workspaces have negative ids, and a negative
      * number here means that many workspaces back instead
      */
-    let Some(name) = name_of(id) else {
-        return;
-    };
+    let name = name_of(id)?;
 
-    let _ = request(&format!("dispatch workspace name:{name}"));
+    Some(format!("name:{name}"))
 }
 
 fn name_of(id: i64) -> Option<String> {

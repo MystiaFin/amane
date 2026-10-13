@@ -64,20 +64,32 @@ nix profile install github:MystiaFin/amane
 
 ## Commands
 
-Your shell lives in `~/.config/amane/src/main.rs`. If you set `XDG_CONFIG_HOME`, Amane uses `$XDG_CONFIG_HOME/amane` instead.
+Your shell lives in `~/.config/amane/src/main.rs` by default. If you set `XDG_CONFIG_HOME`, Amane uses `$XDG_CONFIG_HOME/amane` instead. To keep it somewhere else, like a dotfiles repository, see `amane new` and `amane target` below.
 
-### amane startup
+### amane new
 
-Creates `~/.config/amane/src/main.rs` with a small starter shell. If that file already exists, it stops with an error, so it never overwrites your shell.
+Creates a small starter shell. It asks where to put it: press Enter for `~/.config/amane`, or pick another folder. Give the folder on the command line to skip the question. If the shell files already exist there, it stops with an error, so it never overwrites your shell.
 
 ```sh
-amane startup
+amane new
+amane new ~/dotfiles/amane
 ```
 
 For a full example bar instead, split over several files with workspace buttons for each monitor, add `--example`. It also stops if any of its files already exist.
 
 ```sh
-amane startup --example
+amane new --example
+```
+
+`amane startup` still works for now, but it's deprecated. Use `amane new`.
+
+### amane target
+
+Tells Amane where your shell is when it's not in `~/.config/amane`, for example after you moved the folder or cloned your dotfiles on a new machine. The folder needs a `src/main.rs`. Amane remembers it on this machine, and `amane dev` and `amane compile` build from there from then on. Without a folder, it prints the one Amane uses now.
+
+```sh
+amane target ~/dotfiles/amane
+amane target
 ```
 
 ### amane dev
@@ -96,12 +108,26 @@ Builds your shell and saves it as `~/.cache/amane/amane-shell`, without starting
 amane compile
 ```
 
+`--restart` also restarts the running shell with the new build, like `amane restart`. If the build fails, the old shell keeps running.
+
+```sh
+amane compile --restart
+```
+
 ### amane run
 
-Starts the shell `amane compile` saved. It never builds, so after editing your shell, run `amane compile` first.
+Starts the shell `amane compile` saved, in the background. Your terminal is free right away, and closing it doesn't stop the shell. It never builds, so after editing your shell, run `amane compile` first. If a shell is already running, it stops with an error instead of starting a second one.
 
 ```sh
 amane run
+```
+
+### amane restart
+
+Stops the shell `amane run` started, then starts the one `amane compile` saved. If none was running, it just starts one. It leaves the shell from `amane dev` alone.
+
+```sh
+amane restart
 ```
 
 ### amane clean
@@ -115,7 +141,7 @@ amane clean --yes
 
 ## Example
 
-This is the starter config that `amane startup` creates. It puts a 30 pixel blue bar at the top of the screen with some text in it.
+This is the starter config that `amane new` creates. It puts a 30 pixel blue bar at the top of the screen with some text in it.
 
 ```rust
 use amane::{App, Color, Full, Layer, LayerWindow, Parent, Rectangle, Text, Vertical};

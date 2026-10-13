@@ -2,26 +2,32 @@
 
 | Command | What it does |
 |---|---|
-| `amane startup` | Creates `~/.config/amane/src/main.rs` from a template, plus a `Cargo.toml` for your editor. Never overwrites an existing shell file. |
-| `amane startup --example` | Creates a full example bar in `~/.config/amane/src/`, split over several files, with workspace buttons for each monitor. Never overwrites an existing file. |
+| `amane new` | Asks where your shell should go (Enter for `~/.config/amane`), then creates `src/main.rs` there from a template, plus a `Cargo.toml` for your editor. Never overwrites an existing shell file. |
+| `amane new <folder>` | Same, in that folder, without asking. Amane remembers the folder, like `amane target`. |
+| `amane new [folder] --example` | Creates a full example bar instead, split over several files, with workspace buttons for each monitor. Never overwrites an existing file. |
+| `amane target <folder>` | Points Amane at a shell that already exists somewhere else, for example after moving it or cloning your dotfiles. The folder needs a `src/main.rs`. |
+| `amane target` | Prints the folder Amane builds your shell from. |
 | `amane dev` | Builds your shell, starts it, and rebuilds and restarts it on every save. |
 | `amane compile` | Builds your shell and saves it as `~/.cache/amane/amane-shell`, without starting it. |
-| `amane run` | Starts the shell `amane compile` saved. Never builds. |
+| `amane compile --restart` | Same as `amane compile`, then restarts the running shell with the new build, like `amane restart`. Restarts nothing if the build fails. |
+| `amane run` | Starts the shell `amane compile` saved in the background and gives your terminal back, so closing the terminal doesn't stop it. Never builds. Stops with an error if a shell is already running. |
+| `amane restart` | Stops the shell `amane run` started, then starts the one `amane compile` saved. Starts it anyway if none was running. Leaves the shell from `amane dev` alone. |
 | `amane clean` | Deletes the build output in `~/.cache/amane/project/`. Keeps the compiled shell, so `amane run` still works. Asks before deleting. |
 | `amane clean --yes` | Same as `amane clean`, without asking first. |
 | `amane ipc call <name> [arguments...]` | Calls a handler in the running shell. See [IPC](ipc.md). |
 
 ## Where things live
 
-- **Your shell:** `~/.config/amane/src/`. `main.rs` is the entry point. You can add more files next to it and load them with `mod`, like in any Rust program.
-- **Editor support:** `~/.config/amane/Cargo.toml`. `amane startup` writes it and every build refreshes it, so rust-analyzer finds Amane and completes its types in any editor. Don't edit it. It holds paths for this machine only, so if you keep your shell in git, ignore `Cargo.toml`, `Cargo.lock` and `target/`.
+- **Your shell:** `~/.config/amane/src/`, or the folder you gave `amane new` or `amane target`. `main.rs` is the entry point. You can add more files next to it and load them with `mod`, like in any Rust program.
+- **Which folder:** `amane target` prints it. A folder other than the default is saved in `~/.local/state/amane/config-path`, per machine, so it stays out of your dotfiles. Run `amane target` again on each new machine.
+- **Editor support:** `Cargo.toml` next to your `src/`. `amane new` writes it and every build refreshes it, so rust-analyzer finds Amane and completes its types in any editor. Don't edit it. It holds paths for this machine only, so if you keep your shell in git, ignore `Cargo.toml`, `Cargo.lock` and `target/`.
 - **Build files:** `~/.cache/amane/`.
   - `library/` holds the copy of Amane unpacked from the command.
   - `project/` holds the Cargo project generated around your `main.rs`.
   - `project/target/` holds the build output.
   - `amane-shell` is the shell `amane compile` saved, the one `amane run` starts.
 
-Both paths follow `XDG_CONFIG_HOME` and `XDG_CACHE_HOME` when they're set.
+These paths follow `XDG_CONFIG_HOME`, `XDG_STATE_HOME` and `XDG_CACHE_HOME` when they're set.
 
 You never edit anything in the cache folder. Deleting it is safe. The next build makes it again, from scratch.
 

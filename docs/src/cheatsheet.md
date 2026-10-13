@@ -23,6 +23,7 @@ use amane::*;
 | `.ipc("name", handler)` | handles `amane ipc call name`, `fn(&[String]) -> String` |
 | `.without_ipc()` | runs without an IPC socket, alongside another Amane app |
 | `.font("Inter")` | sets the default font family |
+| `.scale_factor(1.4)` | scales all windows and widgets; defaults to `1.0` ([Scaling](scaling.md)) |
 | `.run()` | starts the event loop |
 | `App::quit()` | stops the event loop and lets `run()` return |
 
@@ -269,10 +270,13 @@ use amane::*;
 
 | Command | Does |
 |---|---|
-| `amane startup` | creates `~/.config/amane/src/main.rs` |
+| `amane new [folder]` | creates a starter shell, asks where without a folder |
+| `amane target [folder]` | shows or sets the folder your shell lives in |
 | `amane dev` | rebuilds and restarts on every save |
 | `amane compile` | builds the shell `amane run` starts |
-| `amane run` | starts the compiled shell, never builds |
+| `amane compile --restart` | builds, then restarts the running shell |
+| `amane run` | starts the compiled shell in the background, never builds |
+| `amane restart` | stops the running shell, starts the compiled one |
 | `amane clean` | deletes the build output, keeps the compiled shell, asks first |
 | `amane clean --yes` | the same, without asking |
 | `amane ipc call <name> [args...]` | calls an IPC handler |

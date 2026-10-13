@@ -5,6 +5,7 @@ use smithay_client_toolkit::seat::pointer::{
 use wayland_client::{Connection, QueueHandle, protocol::wl_pointer::WlPointer};
 
 use crate::input::PIXELS_PER_LINE;
+use crate::scale::ScaleFactor;
 use crate::{Button, Cursor, Scroll};
 
 use super::WaylandState;
@@ -97,7 +98,7 @@ impl WaylandState {
                 horizontal,
                 vertical,
                 ..
-            } => pointer.scroll(to_scroll(horizontal, vertical)),
+            } => pointer.scroll(to_scroll(horizontal, vertical, window.scale_factor)),
         }
     }
 
@@ -137,14 +138,14 @@ fn to_button(code: u32) -> Option<Button> {
     }
 }
 
-fn to_scroll(horizontal: &AxisScroll, vertical: &AxisScroll) -> Scroll {
+fn to_scroll(horizontal: &AxisScroll, vertical: &AxisScroll, scale_factor: ScaleFactor) -> Scroll {
     Scroll {
-        x: lines(horizontal),
-        y: lines(vertical),
+        x: lines(horizontal, scale_factor),
+        y: lines(vertical, scale_factor),
     }
 }
 
-fn lines(axis: &AxisScroll) -> f32 {
+fn lines(axis: &AxisScroll, scale_factor: ScaleFactor) -> f32 {
     // a wheel reports its steps in 120ths, which is exact
     if axis.value120 != 0 {
         return axis.value120 as f32 / 120.0;
@@ -156,7 +157,7 @@ fn lines(axis: &AxisScroll) -> f32 {
     }
 
     // a touchpad only reports pixels
-    let pixels = axis.absolute as f32;
+    let pixels = scale_factor.logical(axis.absolute as f32);
 
     pixels / PIXELS_PER_LINE
 }
@@ -183,5 +184,34 @@ fn icon(cursor: Cursor) -> CursorIcon {
         Cursor::ResizeBottomRight => CursorIcon::SeResize,
         Cursor::ResizeHorizontal => CursorIcon::EwResize,
         Cursor::ResizeVertical => CursorIcon::NsResize,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scale_converts_touchpad_pixels_but_preserves_wheel_steps() {
+        let factor = ScaleFactor::new(2.0);
+        let touchpad = AxisScroll {
+            absolute: 30.0,
+            ..AxisScroll::default()
+        };
+        let wheel = AxisScroll {
+            absolute: 30.0,
+            value120: 120,
+            ..AxisScroll::default()
+        };
+        let old_wheel = AxisScroll {
+            absolute: 30.0,
+            discrete: 1,
+            ..AxisScroll::default()
+        };
+
+        assert_eq!(lines(&touchpad, factor), 1.0);
+        assert_eq!(lines(&touchpad, ScaleFactor::default()), 2.0);
+        assert_eq!(lines(&wheel, factor), 1.0);
+        assert_eq!(lines(&old_wheel, factor), 1.0);
     }
 }

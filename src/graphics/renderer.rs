@@ -87,3 +87,29 @@ impl Renderer {
         self.transform = outer;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scale::ScaleFactor;
+    use crate::{Color, Parent, Rectangle};
+
+    #[test]
+    fn frames_combine_global_and_output_scales_in_drawing() {
+        let root = Rectangle::new()
+            .width(Parent)
+            .height(Parent)
+            .fill(Color::BLUE);
+        let frame = crate::frame::build(&root, 300, 150, 1.25, ScaleFactor::new(1.5));
+        let commands = frame.renderer.finish();
+        let Command::Rectangle {
+            area, transform, ..
+        } = commands[0]
+        else {
+            panic!("expected a rectangle");
+        };
+
+        assert_eq!(area, Area::new(0.0, 0.0, 200.0, 100.0));
+        assert_eq!(transform.map(area.width, area.height), (375.0, 187.5));
+    }
+}

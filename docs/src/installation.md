@@ -9,7 +9,7 @@ The repository is a flake. Its package wraps `amane` with everything it needs at
 To try it without installing:
 
 ```sh
-nix run github:MystiaFin/amane -- startup
+nix run github:MystiaFin/amane -- new
 ```
 
 To install it for your user:

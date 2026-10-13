@@ -2,9 +2,9 @@ use std::fs;
 use std::process::ExitCode;
 
 use crate::cargo;
-use crate::{paths, project};
+use crate::{paths, project, restart};
 
-pub fn run() -> ExitCode {
+pub fn run(restart: bool) -> ExitCode {
     let project = project::prepare();
 
     if !cargo::build(&project) {
@@ -24,6 +24,10 @@ pub fn run() -> ExitCode {
     fs::rename(&fresh, &shell).expect("failed to replace shell");
 
     println!("built {}", shell.display());
+
+    if restart {
+        return restart::run();
+    }
 
     ExitCode::SUCCESS
 }

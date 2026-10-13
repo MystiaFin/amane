@@ -1,5 +1,8 @@
+use std::os::unix::net::UnixStream;
 use std::os::unix::process::CommandExt;
-use std::process::{Command, ExitCode};
+use std::process::{Command, ExitCode, Stdio};
+
+use amane::ipc_socket;
 
 use crate::paths;
 
@@ -13,10 +16,29 @@ pub fn run() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    // exec replaces this process, so it only returns when the shell could not start
-    let error = Command::new(&shell).exec();
+    // the shell's own "already running" error goes to /dev/null, so it is checked here
+    if UnixStream::connect(ipc_socket()).is_ok() {
+        eprintln!("amane is already running, use `amane restart` to restart it");
 
-    eprintln!("failed to run {}: {error}", shell.display());
+        return ExitCode::FAILURE;
+    }
 
-    ExitCode::FAILURE
+    /*
+     * its own process group keeps ctrl+c and closing the terminal
+     * away from the shell, and a closed terminal would make prints fail
+     */
+    let started = Command::new(&shell)
+        .process_group(0)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn();
+
+    if let Err(error) = started {
+        eprintln!("failed to run {}: {error}", shell.display());
+
+        return ExitCode::FAILURE;
+    }
+
+    ExitCode::SUCCESS
 }

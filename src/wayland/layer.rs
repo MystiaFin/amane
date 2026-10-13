@@ -10,6 +10,7 @@ use wayland_client::{
     protocol::{wl_output::WlOutput, wl_surface::WlSurface},
 };
 
+use crate::scale::ScaleFactor;
 use crate::{Horizontal, Keyboard, Layer, LayerWindow, Margin, Vertical, WindowSize, Zone};
 
 use super::WaylandState;
@@ -83,6 +84,7 @@ pub fn create(
     output: Option<&WlOutput>,
     qh: &QueueHandle<WaylandState>,
     settings: &Settings,
+    scale_factor: ScaleFactor,
 ) -> LayerSurface {
     // with no output given, the compositor chooses the monitor
     let layer_surface = layer_shell.create_layer_surface(
@@ -93,7 +95,7 @@ pub fn create(
         output,
     );
 
-    apply(&layer_surface, settings);
+    apply(&layer_surface, settings, scale_factor);
 
     // a window that starts hidden makes this first commit once it is shown
     if settings.visible {
@@ -104,27 +106,35 @@ pub fn create(
 }
 
 // the requests only take effect with the next commit
-pub fn apply(layer_surface: &LayerSurface, settings: &Settings) {
+pub fn apply(layer_surface: &LayerSurface, settings: &Settings, scale_factor: ScaleFactor) {
     layer_surface.set_layer(to_layer(settings.layer));
 
-    layer_surface.set_size(to_pixels(settings.width), to_pixels(settings.height));
+    layer_surface.set_size(
+        to_pixels(settings.width, scale_factor),
+        to_pixels(settings.height, scale_factor),
+    );
 
     layer_surface.set_anchor(to_anchor(settings));
 
     let margin = settings.margin;
 
-    layer_surface.set_margin(margin.top, margin.right, margin.bottom, margin.left);
+    layer_surface.set_margin(
+        scale_factor.coordinate(margin.top),
+        scale_factor.coordinate(margin.right),
+        scale_factor.coordinate(margin.bottom),
+        scale_factor.coordinate(margin.left),
+    );
 
     layer_surface.set_keyboard_interactivity(to_interactivity(settings.keyboard));
 
-    layer_surface.set_exclusive_zone(to_exclusive_zone(settings));
+    layer_surface.set_exclusive_zone(to_exclusive_zone(settings, scale_factor));
 }
 
 // 0 tells the compositor to stretch between the anchored edges
-pub fn to_pixels(size: WindowSize) -> u32 {
+pub fn to_pixels(size: WindowSize, scale_factor: ScaleFactor) -> u32 {
     match size {
         WindowSize::Full => 0,
-        WindowSize::Fixed(pixels) => pixels.round() as u32,
+        WindowSize::Fixed(pixels) => scale_factor.pixels(pixels),
     }
 }
 
@@ -172,22 +182,52 @@ fn to_interactivity(keyboard: Keyboard) -> KeyboardInteractivity {
     }
 }
 
-fn to_exclusive_zone(settings: &Settings) -> i32 {
+fn to_exclusive_zone(settings: &Settings, scale_factor: ScaleFactor) -> i32 {
     match settings.zone {
-        Zone::Reserve => measure_thickness(settings),
+        Zone::Reserve => measure_thickness(settings, scale_factor),
         Zone::Respect => 0,
         Zone::Ignore => -1,
     }
 }
 
 // a bar on the left or right edge is as thick as its width, any other bar as its height
-fn measure_thickness(settings: &Settings) -> i32 {
+fn measure_thickness(settings: &Settings, scale_factor: ScaleFactor) -> i32 {
     let size = match (settings.horizontal, settings.width) {
         (Horizontal::Left | Horizontal::Right, WindowSize::Fixed(_)) => settings.width,
         _ => settings.height,
     };
 
-    let reserved = to_pixels(size);
+    let reserved = to_pixels(size, scale_factor);
 
     i32::try_from(reserved).expect("failed to convert reserved space")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Full;
+
+    #[test]
+    fn scaling_preserves_full_and_exclusive_zone_sentinels() {
+        let factor = ScaleFactor::new(1.4);
+        let bar = LayerWindow::new()
+            .width(Full)
+            .height(30.0)
+            .space(Zone::Reserve);
+        let mut settings = Settings::from(&bar);
+
+        assert_eq!(to_pixels(settings.width, factor), 0);
+        assert_eq!(to_pixels(settings.height, factor), 42);
+        assert_eq!(to_exclusive_zone(&settings, factor), 42);
+
+        settings.zone = Zone::Respect;
+        assert_eq!(to_exclusive_zone(&settings, factor), 0);
+        settings.zone = Zone::Ignore;
+        assert_eq!(to_exclusive_zone(&settings, factor), -1);
+
+        settings.zone = Zone::Reserve;
+        settings.horizontal = Horizontal::Left;
+        settings.width = WindowSize::Fixed(20.0);
+        assert_eq!(to_exclusive_zone(&settings, ScaleFactor::new(1.5)), 30);
+    }
 }

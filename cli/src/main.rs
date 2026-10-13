@@ -4,10 +4,12 @@ mod clean;
 mod compile;
 mod dev;
 mod library;
+mod new;
 mod paths;
 mod project;
+mod restart;
 mod run;
-mod startup;
+mod target;
 mod watch;
 
 use std::env;
@@ -19,13 +21,29 @@ fn main() -> ExitCode {
     let words: Vec<&str> = arguments.iter().map(String::as_str).collect();
 
     match words.as_slice() {
-        ["startup"] => startup::run(false),
+        ["new"] => new::run(None, false),
 
-        ["startup", "--example"] => startup::run(true),
+        ["new", "--example"] => new::run(None, true),
 
-        ["compile"] => compile::run(),
+        ["new", folder] => new::run(Some(folder), false),
+
+        ["new", folder, "--example"] => new::run(Some(folder), true),
+
+        ["startup"] => startup(false),
+
+        ["startup", "--example"] => startup(true),
+
+        ["target"] => target::run(None),
+
+        ["target", folder] => target::run(Some(folder)),
+
+        ["compile"] => compile::run(false),
+
+        ["compile", "--restart"] => compile::run(true),
 
         ["run"] => run::run(),
+
+        ["restart"] => restart::run(),
 
         ["dev"] => dev::run(),
 
@@ -39,13 +57,27 @@ fn main() -> ExitCode {
     }
 }
 
+// the old name for `amane new`, kept for a while so existing setups don't break
+fn startup(example: bool) -> ExitCode {
+    eprintln!(
+        "warning: `amane startup` is deprecated and will be removed, use `amane new` instead"
+    );
+
+    new::run(None, example)
+}
+
 fn usage() -> ExitCode {
     eprintln!("usage:");
-    eprintln!("  amane startup                        create ~/.config/amane/src/main.rs");
-    eprintln!("  amane startup --example              create a full example bar instead");
+    eprintln!("  amane new [folder]                   create a shell, in ~/.config/amane by default");
+    eprintln!("  amane new [folder] --example         create a full example bar instead");
+    eprintln!("  amane target [folder]                show or set the folder your shell lives in");
     eprintln!("  amane dev                           rebuild and restart on every save");
     eprintln!("  amane compile                        build the optimised shell");
+    eprintln!("  amane compile --restart              build it, then restart the running shell");
     eprintln!("  amane run                            start the compiled shell");
+    eprintln!(
+        "  amane restart                        stop the running shell and start the compiled one"
+    );
     eprintln!(
         "  amane clean                          remove the build cache, keep the compiled shell"
     );

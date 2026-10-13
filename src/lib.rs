@@ -16,6 +16,7 @@ mod macros;
 mod monitor;
 mod placement;
 mod process;
+mod scale;
 mod services;
 mod style;
 mod timing;
