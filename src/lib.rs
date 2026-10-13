@@ -46,8 +46,9 @@ pub use process::{lines, output, spawn};
 pub use services::{
     AccessPoint, Action, Apps, Audio, Battery, Bluetooth, BluetoothDevice, Brightness, Cpu,
     DesktopApp, Link, Lock, Media, MediaPlayer, Memory, Network, Notification, Notifications,
-    Palette, Polkit, PolkitCompletion, PolkitConfig, PolkitError, PolkitFlow, PolkitIdentity,
-    PolkitMessage, PolkitPrompt, PolkitResult, Service, Urgency, Workspace, Workspaces,
+    Palette, Pam, PamConfig, PamError, PamMessage, PamMessageKind, PamResult, Polkit,
+    PolkitCompletion, PolkitConfig, PolkitError, PolkitFlow, PolkitIdentity, PolkitMessage,
+    PolkitPrompt, PolkitResult, Service, Urgency, Workspace, Workspaces,
 };
 pub use style::{Fill, Image, Mask, Radius, Shadow};
 pub use widgets::{

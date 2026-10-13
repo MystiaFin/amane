@@ -10,6 +10,7 @@ mod memory;
 mod network;
 mod notifications;
 mod palette;
+mod pam;
 mod polkit;
 pub mod store;
 mod worker;
@@ -36,6 +37,7 @@ pub use memory::Memory;
 pub use network::{AccessPoint, Link, Network};
 pub use notifications::{Action, Notification, Notifications, Urgency};
 pub use palette::Palette;
+pub use pam::{Pam, PamConfig, PamError, PamMessage, PamMessageKind, PamResult};
 pub use polkit::{
     Polkit, PolkitCompletion, PolkitConfig, PolkitError, PolkitFlow, PolkitIdentity, PolkitMessage,
     PolkitPrompt, PolkitResult,

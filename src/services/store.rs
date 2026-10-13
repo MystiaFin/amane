@@ -74,6 +74,7 @@ mod tests {
 
     impl Service for Concurrent {
         fn new() -> Self {
+            // Force both callers past the initial lookup before either publishes a value.
             CONSTRUCTORS.wait();
             Self
         }

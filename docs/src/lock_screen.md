@@ -62,7 +62,7 @@ This sets up the lock screen, but doesn't lock anything yet. [Locking the sessio
 
 - `App::lock` takes a view that's shown on every monitor while the session is locked. Like `window_per_monitor`, it gets the `&Monitor` it's on.
 - While the session is locked, the compositor shows only the lock screen, sends it all keys, and keeps every other window hidden. The lock screen's size, anchors, and layer are ignored. It always covers the whole monitor.
-- `Lock::unlock(password)` checks the password through PAM (with the `login` service, as your user). That can take a few seconds, so it runs on its own thread. If the password is right, the session unlocks. If not, the screen stays locked.
+- `Lock::unlock(password)` checks the password through PAM (with the `login` service, as your user). That can take a few seconds, so it runs on its own thread. Authentication and account checks must both pass before the session unlocks. Otherwise, the screen stays locked.
 - The `Lock` Service tells the view what's happening, through `checking()` and `failed()`.
 
 ## Locking the session
@@ -99,16 +99,32 @@ binds {
 }
 ```
 
+## Interactive authentication
+
+For a configurable policy or a conversation with separate responses, start authentication from a handler:
+
+```rust,ignore
+Lock::authenticate(PamConfig::new("my-shell"))?;
+```
+
+Read the `Pam` Service in your lock view to show information, error messages and the current prompt. Answer each prompt with `Pam::respond(prompt.id(), response)`, hiding input when its kind is `PamMessageKind::Prompt { visible: false }`. See [PAM Authentication](pam.md) for a response handler and result types.
+
+`Lock::authenticate` authenticates the current `$USER`, and rejects a configuration selecting another user. Both authentication and account checks must succeed for that same user to unlock. Standalone `Pam::start` does not unlock.
+
+`Lock::abort()` cancels the lock's attempt and keeps the session locked. If a native module is still working, the PAM worker remains active until it returns; wait for `Pam::read().active()` to become false before retrying.
+
 ## Lock reference
 
 | Function | Meaning |
 |---|---|
-| `Lock::read().checking()` | a password is being checked right now |
-| `Lock::read().failed()` | the last password was wrong |
+| `Lock::read().checking()` | authentication is running |
+| `Lock::read().failed()` | the last attempt was rejected or failed |
 | `Lock::start()` | locks the session |
 | `Lock::unlock(password)` | checks a password, and unlocks if it's right |
+| `Lock::authenticate(config)` | starts interactive authentication, and unlocks on success |
+| `Lock::abort()` | cancels authentication and keeps the session locked |
 
-Only one password is checked at a time. Calling `unlock` while a check is running does nothing. Each new lock starts clean, without the last lock's `failed` state.
+Only one PAM attempt runs at a time. Calling `unlock` while a check is running does nothing; `authenticate` returns `PamError::Busy`. The password convenience function supplies the same password to every prompt. Use interactive authentication when a policy asks for different responses. Each new lock starts clean, without the last lock's `failed` state.
 
 ## Testing safely
 
