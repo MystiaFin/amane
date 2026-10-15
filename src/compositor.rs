@@ -2,6 +2,7 @@ mod hyprland;
 mod mango;
 mod niri;
 mod sway;
+mod umbriel;
 
 use std::env;
 
@@ -12,6 +13,7 @@ enum Compositor {
     Hyprland,
     Sway,
     Mango,
+    Umbriel,
 }
 
 // each compositor sets its own variable for the programs it starts
@@ -32,6 +34,10 @@ fn running() -> Option<Compositor> {
         return Some(Compositor::Mango);
     }
 
+    if env::var_os("UMBRIEL_SOCKET").is_some() {
+        return Some(Compositor::Umbriel);
+    }
+
     None
 }
 
@@ -49,6 +55,7 @@ pub fn listen(on_change: impl FnMut(Vec<Workspace>)) {
         Compositor::Hyprland => hyprland::listen(on_change),
         Compositor::Sway => sway::listen(on_change),
         Compositor::Mango => mango::listen(on_change),
+        Compositor::Umbriel => umbriel::listen(on_change),
     }
 }
 
@@ -62,5 +69,6 @@ pub fn focus_workspace(id: i64) {
         Compositor::Hyprland => hyprland::focus_workspace(id),
         Compositor::Sway => sway::focus_workspace(id),
         Compositor::Mango => mango::focus_workspace(id),
+        Compositor::Umbriel => umbriel::focus_workspace(id),
     }
 }
