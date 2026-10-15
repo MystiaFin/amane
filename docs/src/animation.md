@@ -76,10 +76,49 @@ Animation::new(0.0)
 - `easing` decides how the speed changes along the way:
 
 | Easing | Motion |
-|---|---|
+| --- | --- |
 | `Out` | starts fast, slows down as it arrives. This is the default, and feels right for most UI. |
 | `InOut` | starts slow, speeds up, slows down again. Good for big movements. |
 | `Linear` | the same speed the whole way |
+
+## Spring motion
+
+Springs use a physics based approach to movement. It continues moving until the animation settles (i.e. both the distance from the target and the velocity are approximately `zero`).
+
+To create an animation with spring physics, you can define it using `stiffness`, `damping_ratio`, and `mass`.
+
+```rust,ignore
+// Any duration set will be silently ignored.
+Animation::new(0.0)
+    .spring(Spring::new(
+        stiffness: 700,
+        damping_ratio: 0.9,
+        mass: 1.0
+    ))
+```
+
+Tweaking these values directly can be a bit unintuitive. A simpler approach is to create a spring by defining its bounciness:
+
+```rust, ignore
+Animation::new(0.0)
+    .duration(Duration::from_millis(400))
+    .spring_bounciness(0.8)
+```
+
+- `duration` defines how the animation should feel.
+ Shorter durations will make the animation feel faster. Larger durations will make the animation feel slower. It does not represent the actual duration of the animation.
+- `bounciness` defines how much the animation will bounce. Values further away from 0.0 will lead to a greater bounciness.
+ Accepts values between `-1.0` and `1.0` non-inclusive.
+
+There are two sets of predefined `Spring` values inspired by [Material Design 3](https://m3.material.io/styles/motion/overview/specs):
+
+- `Spatial` springs are recommended for animations that move something on the screen. For example position, rotation, size and rounded corners. This spring slightly overshoots the target value before bouncing back into place.
+- `Effects` are used to animate properties such as colors and opacity where there shouldn't be any overshoot.
+
+```rust,ignore
+Animation::new(0.0)
+    .spring(Spring::FAST_SPATIAL)
+```
 
 ## Changing direction halfway
 
@@ -210,4 +249,7 @@ Stop calling `request_frame()` once the motion is done, so the window can rest. 
 ## Terms
 
 - **Easing:** the curve that maps time passed to distance traveled.
+- **Stiffness:** The strength of the spring. Higher values will lead to a snappy, bouncy animation.
+- **Damping ratio:** Used to calculate the amount of friction/damping the spring will be subjected to. Values closer to `0.0` will bounce more and take longer settle.
+- **Mass:** The weight of the animation. An animation with a higher mass will move slower and take longer to settle. It's recommended to set it to `1.0`.
 - **Frame callback:** the compositor's signal that it's ready for the next frame. Amane waits for it, so animations run at the monitor's refresh rate.
