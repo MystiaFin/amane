@@ -2,6 +2,7 @@
 mod allocator;
 mod animation;
 mod app;
+mod cache;
 mod changes;
 mod compositor;
 mod dbus;

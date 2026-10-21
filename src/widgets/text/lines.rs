@@ -4,7 +4,7 @@ use swash::zeno::Bounds;
 use crate::graphics::font;
 
 // how text that is too wide for its area gets handled
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct Rules {
     pub wrap: bool,
     pub elide: bool,

@@ -1,3 +1,4 @@
+mod cached;
 mod lines;
 
 use swash::FontRef;
@@ -86,7 +87,7 @@ impl Text {
     pub fn height_in(&self, width: f32) -> f32 {
         let font = self.face();
 
-        let arranged = lines::arrange(&self.content, font, self.size, width, self.rules);
+        let arranged = cached::split_into_lines(&self.content, font, self.size, width, self.rules);
 
         lines::stack_height(font, self.size, arranged.len())
     }
@@ -104,12 +105,12 @@ impl Widget for Text {
         }
 
         if self.tight {
-            let (left, right) = lines::ink(&self.content, self.face(), self.size);
+            let (left, right) = cached::find_ink(&self.content, self.face(), self.size);
 
             return Size::Fixed(right - left);
         }
 
-        Size::Fixed(lines::measure(&self.content, self.face(), self.size))
+        Size::Fixed(cached::measure(&self.content, self.face(), self.size))
     }
 
     fn height(&self) -> Size {
@@ -131,14 +132,15 @@ impl Widget for Text {
 
         // the ink starts at the area's left edge, not the pen
         let area = if self.tight {
-            let (left, _) = lines::ink(&self.content, font, self.size);
+            let (left, _) = cached::find_ink(&self.content, font, self.size);
 
             Area::new(area.x - left, area.y, area.width, area.height)
         } else {
             area
         };
 
-        let arranged = lines::arrange(&self.content, font, self.size, area.width, self.rules);
+        let arranged =
+            cached::split_into_lines(&self.content, font, self.size, area.width, self.rules);
 
         let line_height = lines::height(font, self.size);
         let spacing = lines::spacing(font, self.size);
