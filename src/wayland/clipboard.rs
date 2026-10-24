@@ -1,3 +1,5 @@
+use crate::{Clipboard, Service};
+
 use std::io::{self, Read};
 use std::os::fd::AsFd;
 use std::thread;
@@ -71,7 +73,7 @@ impl Dispatch<ExtDataControlDeviceV1, ()> for WaylandState {
             if read.is_err() {
                 return;
             }
-            eprintln!("copied: {text}");
+            Clipboard::write().add(text);
         });
     }
     event_created_child!(WaylandState, ExtDataControlDeviceV1, [
