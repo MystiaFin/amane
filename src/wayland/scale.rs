@@ -1,10 +1,12 @@
 use smithay_client_toolkit::reexports::protocols::wp::fractional_scale::v1::client::{
-    wp_fractional_scale_manager_v1::{self, WpFractionalScaleManagerV1},
-    wp_fractional_scale_v1::{self, WpFractionalScaleV1},
+    wp_fractional_scale_manager_v1::{
+        Event as FractionalScaleManagerEvent, WpFractionalScaleManagerV1,
+    },
+    wp_fractional_scale_v1::{Event as FractionalScaleEvent, WpFractionalScaleV1},
 };
 use smithay_client_toolkit::reexports::protocols::wp::viewporter::client::{
-    wp_viewport::{self, WpViewport},
-    wp_viewporter::{self, WpViewporter},
+    wp_viewport::{Event as ViewportEvent, WpViewport},
+    wp_viewporter::{Event as ViewporterEvent, WpViewporter},
 };
 use wayland_client::{Connection, Dispatch, QueueHandle, protocol::wl_surface::WlSurface};
 
@@ -48,12 +50,12 @@ impl Dispatch<WpFractionalScaleV1, WlSurface> for WaylandState {
     fn event(
         state: &mut Self,
         _: &WpFractionalScaleV1,
-        event: wp_fractional_scale_v1::Event,
+        event: FractionalScaleEvent,
         surface: &WlSurface,
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
-        let wp_fractional_scale_v1::Event::PreferredScale { scale } = event else {
+        let FractionalScaleEvent::PreferredScale { scale } = event else {
             return;
         };
 
@@ -72,7 +74,7 @@ impl Dispatch<WpFractionalScaleManagerV1, ()> for WaylandState {
     fn event(
         _: &mut Self,
         _: &WpFractionalScaleManagerV1,
-        _: wp_fractional_scale_manager_v1::Event,
+        _: FractionalScaleManagerEvent,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
@@ -84,7 +86,7 @@ impl Dispatch<WpViewporter, ()> for WaylandState {
     fn event(
         _: &mut Self,
         _: &WpViewporter,
-        _: wp_viewporter::Event,
+        _: ViewporterEvent,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
@@ -96,7 +98,7 @@ impl Dispatch<WpViewport, ()> for WaylandState {
     fn event(
         _: &mut Self,
         _: &WpViewport,
-        _: wp_viewport::Event,
+        _: ViewportEvent,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
