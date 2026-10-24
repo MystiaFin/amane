@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 use std::os::fd::AsFd;
+use std::thread;
 
 use smithay_client_toolkit::reexports::protocols::ext::data_control::v1::client::{
     ext_data_control_device_v1::{
@@ -59,17 +60,19 @@ impl Dispatch<ExtDataControlDeviceV1, ()> for WaylandState {
         // the receive request has to reach the other app before it can write anything
         let _ = connection.flush();
 
-        let mut text = String::new();
-
-        let read = reader.read_to_string(&mut text);
-
         offer.destroy();
 
-        if read.is_err() {
-            return;
-        }
+        // a slow app, or amane itself once it copies, must not freeze the shell while it writes
+        thread::spawn(move || {
+            let mut text = String::new();
 
-        eprintln!("copied: {text}");
+            let read = reader.read_to_string(&mut text);
+
+            if read.is_err() {
+                return;
+            }
+            eprintln!("copied: {text}");
+        });
     }
     event_created_child!(WaylandState, ExtDataControlDeviceV1, [
         EVT_DATA_OFFER_OPCODE => (ExtDataControlOfferV1, ()),
