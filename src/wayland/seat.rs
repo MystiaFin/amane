@@ -8,7 +8,9 @@ impl SeatHandler for WaylandState {
         &mut self.seat
     }
 
-    fn new_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, _: WlSeat) {}
+    fn new_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, seat: WlSeat) {
+        self.create_clipboard_device(&seat);
+    }
 
     fn new_capability(
         &mut self,
@@ -80,5 +82,9 @@ impl SeatHandler for WaylandState {
         }
     }
 
-    fn remove_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, _: WlSeat) {}
+    fn remove_seat(&mut self, _: &Connection, _: &QueueHandle<Self>, _: WlSeat) {
+        if let Some(device) = self.clipboard_device.take() {
+            device.destroy();
+        }
+    }
 }

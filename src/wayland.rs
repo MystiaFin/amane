@@ -1,3 +1,4 @@
+mod clipboard;
 mod compositor;
 mod dropped;
 mod keyboard;
@@ -15,6 +16,10 @@ mod update;
 mod wake;
 mod windows;
 
+use smithay_client_toolkit::reexports::protocols::ext::data_control::v1::client::{
+    ext_data_control_device_v1::ExtDataControlDeviceV1,
+    ext_data_control_manager_v1::ExtDataControlManagerV1,
+};
 use smithay_client_toolkit::reexports::protocols::wp::{
     fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1,
     viewporter::client::wp_viewporter::WpViewporter,
@@ -88,6 +93,10 @@ struct WaylandState {
     data_device_manager: Option<DataDeviceManagerState>,
     data_device: Option<DataDevice>,
 
+    // sees and sets the clipboard without focus, none when the compositor lacks it
+    clipboard_manager: Option<ExtDataControlManagerV1>,
+    clipboard_device: Option<ExtDataControlDeviceV1>,
+
     // what the pointer was last set to on one of the windows, none after it leaves
     cursor_shown: Option<Cursor>,
 
@@ -133,6 +142,8 @@ impl WaylandApp {
 
         let data_device_manager = DataDeviceManagerState::bind(&globals, &qh).ok();
 
+        let clipboard_manager = globals.bind(&qh, 1..=1, ()).ok();
+
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
             windows: Vec::new(),
@@ -167,10 +178,18 @@ impl WaylandApp {
             data_device_manager,
             data_device: None,
 
+            clipboard_manager,
+            clipboard_device: None,
+
             qh,
 
             running: true,
         };
+
+        // seats that exist at startup never reach new_seat
+        for seat in state.seat.seats() {
+            state.create_clipboard_device(&seat);
+        }
 
         for view in views {
             state.open(View::Plain(view), None);
