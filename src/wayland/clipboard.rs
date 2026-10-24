@@ -1,7 +1,12 @@
+use std::io::{self, Read};
+use std::os::fd::AsFd;
+
 use smithay_client_toolkit::reexports::protocols::ext::data_control::v1::client::{
-    ext_data_control_device_v1::{self, ExtDataControlDeviceV1},
-    ext_data_control_manager_v1::{self, ExtDataControlManagerV1},
-    ext_data_control_offer_v1::{self, ExtDataControlOfferV1},
+    ext_data_control_device_v1::{
+        EVT_DATA_OFFER_OPCODE, Event as DeviceEvent, ExtDataControlDeviceV1,
+    },
+    ext_data_control_manager_v1::{Event as ManagerEvent, ExtDataControlManagerV1},
+    ext_data_control_offer_v1::{Event as OfferEvent, ExtDataControlOfferV1},
 };
 use wayland_client::{
     Connection, Dispatch, QueueHandle, event_created_child, protocol::wl_seat::WlSeat,
@@ -9,12 +14,14 @@ use wayland_client::{
 
 use super::WaylandState;
 
+const MIME_TEXT_FORMAT: &str = "text/plain;charset=utf-8";
+
 // the manager never sends events, but wayland-client still needs somewhere to send them
 impl Dispatch<ExtDataControlManagerV1, ()> for WaylandState {
     fn event(
         _: &mut Self,
         _: &ExtDataControlManagerV1,
-        _: ext_data_control_manager_v1::Event,
+        _: ManagerEvent,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
@@ -26,14 +33,46 @@ impl Dispatch<ExtDataControlDeviceV1, ()> for WaylandState {
     fn event(
         _: &mut Self,
         _: &ExtDataControlDeviceV1,
-        _: ext_data_control_device_v1::Event,
+        event: DeviceEvent,
         _: &(),
-        _: &Connection,
+        connection: &Connection,
         _: &QueueHandle<Self>,
     ) {
+        let DeviceEvent::Selection { id } = event else {
+            return;
+        };
+
+        // none when the clipboard was emptied
+        let Some(offer) = id else {
+            return;
+        };
+
+        let Ok((mut reader, writer)) = io::pipe() else {
+            return;
+        };
+
+        offer.receive(String::from(MIME_TEXT_FORMAT), writer.as_fd());
+
+        // the reader only finishes once every write end is closed, ours included
+        drop(writer);
+
+        // the receive request has to reach the other app before it can write anything
+        let _ = connection.flush();
+
+        let mut text = String::new();
+
+        let read = reader.read_to_string(&mut text);
+
+        offer.destroy();
+
+        if read.is_err() {
+            return;
+        }
+
+        eprintln!("copied: {text}");
     }
     event_created_child!(WaylandState, ExtDataControlDeviceV1, [
-        ext_data_control_device_v1::EVT_DATA_OFFER_OPCODE => (ExtDataControlOfferV1, ()),
+        EVT_DATA_OFFER_OPCODE => (ExtDataControlOfferV1, ()),
     ]);
 }
 
@@ -41,7 +80,7 @@ impl Dispatch<ExtDataControlOfferV1, ()> for WaylandState {
     fn event(
         _: &mut Self,
         _: &ExtDataControlOfferV1,
-        _: ext_data_control_offer_v1::Event,
+        _: OfferEvent,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
