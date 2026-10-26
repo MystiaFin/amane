@@ -7,9 +7,9 @@ use crate::animation::moving;
 use crate::graphics::{Area, Corners, Renderer, image};
 use crate::input::Target;
 use crate::style::Kind;
-use crate::{Fill, Image, Radius, Size, Widget};
+use crate::{Fill, Image, Size, Widget};
 
-use super::{Rectangle, child, targets, transform};
+use super::{Rectangle, child, corners, targets, transform};
 
 thread_local! {
     // read once per shader file, a shader's source doesn't change while the shell runs
@@ -38,18 +38,7 @@ impl Widget for Rectangle {
 
 // the drawing as if the rectangle were not rotated, scaled or moved
 fn draw_in_place(rectangle: &Rectangle, renderer: &mut Renderer, area: Area) {
-    let resolve = |radius: Radius| radius.resolve(area.width, area.height);
-
-    let radius = match rectangle.corners {
-        Some([top_left, top_right, bottom_right, bottom_left]) => Corners {
-            top_left: resolve(top_left),
-            top_right: resolve(top_right),
-            bottom_right: resolve(bottom_right),
-            bottom_left: resolve(bottom_left),
-        },
-
-        None => Corners::from(resolve(rectangle.radius.unwrap_or(Radius::Fixed(0.0)))),
-    };
+    let radius = corners::resolve(rectangle.rounding, area);
 
     renderer.blur(area, radius, rectangle.blur);
 

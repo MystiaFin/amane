@@ -1,4 +1,5 @@
 mod child;
+mod corners;
 mod draw;
 mod targets;
 mod transform;
@@ -7,34 +8,47 @@ use std::path::PathBuf;
 
 use crate::graphics::{Color, VALUE_ROWS};
 use crate::input::Handlers;
-use crate::{Align, Fill, Padding, Radius, Shadow, Size};
+use crate::{Align, Fill, Padding, Shadow, Size};
 
 use super::Widget;
+
+use corners::Rounding;
 
 pub struct Rectangle {
     pub(crate) width: Size,
     pub(crate) height: Size,
-    pub(crate) fill: Fill,
-    pub(crate) radius: Option<Radius>,
 
-    // clockwise from the top left, set apart from radius and never together with it
-    pub(crate) corners: Option<[Radius; 4]>,
+    // how it looks
+    pub(crate) fill: Fill,
+    pub(crate) rounding: Rounding,
     pub(crate) border_thickness: f32,
     pub(crate) border_color: Color,
-    pub(crate) blur: f32,
-    pub(crate) opacity: f32,
     pub(crate) shadow: Option<Shadow>,
+
+    // what's drawn behind it is blurred this far, in logical pixels, 0 for none
+    pub(crate) blur: f32,
+
+    // 0 is invisible, 1 fully shown
+    pub(crate) opacity: f32,
+
+    // a fragment shader drawn over the fill, and the numbers it reads
     pub(crate) shader: Option<PathBuf>,
     pub(crate) shader_values: Vec<[f32; 4]>,
+
+    // what sits inside it, and where
     pub(crate) child: Option<Box<dyn Widget>>,
+    pub(crate) padding: Padding,
+    pub(crate) child_horizontal: Align,
+    pub(crate) child_vertical: Align,
     pub(crate) clip: bool,
+
+    // moves the drawing around its center without changing the layout; rotation is in degrees
     pub(crate) rotation: f32,
     pub(crate) scale: f32,
     pub(crate) translate_x: f32,
     pub(crate) translate_y: f32,
-    pub(crate) padding: Padding,
-    pub(crate) child_horizontal: Align,
-    pub(crate) child_vertical: Align,
+
+    // clicks, hovers and scrolls
     pub(crate) handlers: Handlers,
 }
 
@@ -45,55 +59,45 @@ pub struct RectangleNeedsHeight {
 }
 
 impl Rectangle {
+    // hands out a builder that needs a width, then a height, so neither can be forgotten
     #[allow(clippy::new_ret_no_self)]
     pub fn new() -> RectangleNeedsWidth {
         RectangleNeedsWidth
     }
 
+    // what every rectangle starts as, once it has a size
+    fn from_size(width: Size, height: Size) -> Self {
+        Self {
+            width,
+            height,
+
+            fill: Fill::Color(Color::TRANSPARENT),
+            rounding: Rounding::Square,
+            border_thickness: 0.0,
+            border_color: Color::TRANSPARENT,
+            shadow: None,
+            blur: 0.0,
+            opacity: 1.0,
+            shader: None,
+            shader_values: Vec::new(),
+
+            child: None,
+            padding: Padding::default(),
+            child_horizontal: Align::Start,
+            child_vertical: Align::Start,
+            clip: false,
+
+            rotation: 0.0,
+            scale: 1.0,
+            translate_x: 0.0,
+            translate_y: 0.0,
+
+            handlers: Handlers::default(),
+        }
+    }
+
     pub fn fill(mut self, fill: impl Into<Fill>) -> Self {
         self.fill = fill.into();
-
-        self
-    }
-
-    // every corner alike; can't be mixed with the radius_ corner methods
-    pub fn radius(mut self, radius: impl Into<Radius>) -> Self {
-        assert!(
-            self.corners.is_none(),
-            "radius and radius_<corner> can't be mixed on one Rectangle"
-        );
-
-        self.radius = Some(radius.into());
-
-        self
-    }
-
-    pub fn radius_top_left(self, radius: impl Into<Radius>) -> Self {
-        self.corner(0, radius.into())
-    }
-
-    pub fn radius_top_right(self, radius: impl Into<Radius>) -> Self {
-        self.corner(1, radius.into())
-    }
-
-    pub fn radius_bottom_right(self, radius: impl Into<Radius>) -> Self {
-        self.corner(2, radius.into())
-    }
-
-    pub fn radius_bottom_left(self, radius: impl Into<Radius>) -> Self {
-        self.corner(3, radius.into())
-    }
-
-    // corners left unset stay square
-    fn corner(mut self, index: usize, radius: Radius) -> Self {
-        assert!(
-            self.radius.is_none(),
-            "radius and radius_<corner> can't be mixed on one Rectangle"
-        );
-
-        let corners = self.corners.get_or_insert([Radius::Fixed(0.0); 4]);
-
-        corners[index] = radius;
 
         self
     }
@@ -105,12 +109,14 @@ impl Rectangle {
         self
     }
 
+    // blurs what's drawn behind the rectangle, in logical pixels
     pub fn blur(mut self, amount: f32) -> Self {
         self.blur = amount;
 
         self
     }
 
+    // 0 is invisible, 1 fully shown
     pub fn opacity(mut self, opacity: f32) -> Self {
         self.opacity = opacity;
 
@@ -187,64 +193,6 @@ impl RectangleNeedsWidth {
 
 impl RectangleNeedsHeight {
     pub fn height(self, height: impl Into<Size>) -> Rectangle {
-        Rectangle {
-            width: self.width,
-            height: height.into(),
-            radius: None,
-            corners: None,
-            fill: Fill::Color(Color::TRANSPARENT),
-            border_thickness: 0.0,
-            border_color: Color::TRANSPARENT,
-            blur: 0.0,
-            opacity: 1.0,
-            shadow: None,
-            shader: None,
-            shader_values: Vec::new(),
-            child: None,
-            clip: false,
-            rotation: 0.0,
-            scale: 1.0,
-            translate_x: 0.0,
-            translate_y: 0.0,
-            padding: Padding::default(),
-            child_horizontal: Align::Start,
-            child_vertical: Align::Start,
-            handlers: Handlers::default(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::Full;
-
-    #[test]
-    fn corners_set_apart_from_radius() {
-        let rectangle = Rectangle::new()
-            .width(10.0)
-            .height(10.0)
-            .radius_top_left(Full);
-
-        assert!(rectangle.radius.is_none());
-        assert_eq!(
-            rectangle.corners,
-            Some([
-                Radius::Full,
-                Radius::Fixed(0.0),
-                Radius::Fixed(0.0),
-                Radius::Fixed(0.0)
-            ])
-        );
-    }
-
-    #[test]
-    #[should_panic(expected = "can't be mixed")]
-    fn mixing_radius_and_corners_panics() {
-        let _ = Rectangle::new()
-            .width(10.0)
-            .height(10.0)
-            .radius(Full)
-            .radius_top_left(4.0);
+        Rectangle::from_size(self.width, height.into())
     }
 }
