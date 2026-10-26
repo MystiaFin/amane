@@ -24,6 +24,7 @@ use smithay_client_toolkit::reexports::protocols::wp::{
     fractional_scale::v1::client::wp_fractional_scale_manager_v1::WpFractionalScaleManagerV1,
     viewporter::client::wp_viewporter::WpViewporter,
 };
+use smithay_client_toolkit::reexports::protocols_misc::zwp_input_method_v2::client::zwp_input_method_manager_v2::ZwpInputMethodManagerV2;
 use smithay_client_toolkit::{
     compositor::CompositorState,
     data_device_manager::{DataDeviceManagerState, data_device::DataDevice},
@@ -48,6 +49,7 @@ use crate::scale::ScaleFactor;
 use crate::window::NamedWindow;
 use crate::{Cursor, LayerWindow, Monitor};
 
+use clipboard::ClipboardPaste;
 use surface::{OpenWindow, View};
 
 struct WaylandState {
@@ -97,6 +99,12 @@ struct WaylandState {
     clipboard_manager: Option<ExtDataControlManagerV1>,
     clipboard_device: Option<ExtDataControlDeviceV1>,
 
+    // types a clipboard entry into the focused app, none when the compositor lacks it
+    input_method_manager: Option<ZwpInputMethodManagerV2>,
+
+    // the paste being typed, which holds the seat's only input method until it's done
+    clipboard_paste: Option<ClipboardPaste>,
+
     // what the pointer was last set to on one of the windows, none after it leaves
     cursor_shown: Option<Cursor>,
 
@@ -144,6 +152,8 @@ impl WaylandApp {
 
         let clipboard_manager = globals.bind(&qh, 1..=1, ()).ok();
 
+        let input_method_manager = globals.bind(&qh, 1..=1, ()).ok();
+
         // windows per monitor are opened once the compositor describes each monitor
         let mut state = WaylandState {
             windows: Vec::new(),
@@ -180,6 +190,9 @@ impl WaylandApp {
 
             clipboard_manager,
             clipboard_device: None,
+
+            input_method_manager,
+            clipboard_paste: None,
 
             qh,
 
