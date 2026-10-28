@@ -62,6 +62,9 @@ type Key = (PathBuf, Option<(u32, u32)>, u32);
 static LOADED: LazyLock<Mutex<HashMap<Key, Option<Arc<Bitmap>>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
+// the widest and tallest monitors seen so far, in real pixels, 0 before the first
+static LARGEST_SCREEN: Mutex<(u32, u32)> = Mutex::new((0, 0));
+
 /*
  * decoding a large image takes long enough to drop frames, so it happens
  * on its own thread; until it is done this gives none and the image is
@@ -97,9 +100,15 @@ fn decode(key: Key) {
         return;
     };
 
+    /*
+     * no window can show more pixels than its monitor has, so an image
+     * without a thumbnail still shrinks to cover the largest one
+     */
+    let target = cover.or_else(largest_screen);
+
     // only the small copy is kept, the full size one is dropped here
-    let image = match cover {
-        Some((width, height)) => shrink::to_cover(image, *width, *height),
+    let image = match target {
+        Some((width, height)) => shrink::to_cover(image, width, height),
         None => image,
     };
 
@@ -112,6 +121,28 @@ fn decode(key: Key) {
         .insert(key, Some(Arc::new(image)));
 
     changes::mark(TypeId::of::<Decoded>());
+}
+
+/*
+ * called for every monitor before its windows open, so images decoded
+ * for them already know how big they can ever be shown
+ */
+pub fn note_screen(width: u32, height: u32) {
+    let mut largest = LARGEST_SCREEN.lock().unwrap_or_else(PoisonError::into_inner);
+
+    largest.0 = largest.0.max(width);
+    largest.1 = largest.1.max(height);
+}
+
+// none before any monitor is known, then the image keeps its own size
+fn largest_screen() -> Option<(u32, u32)> {
+    let (width, height) = *LARGEST_SCREEN.lock().unwrap_or_else(PoisonError::into_inner);
+
+    if width == 0 || height == 0 {
+        return None;
+    }
+
+    Some((width, height))
 }
 
 /*
@@ -171,16 +202,17 @@ fn decode_png(bytes: &[u8]) -> Option<Bitmap> {
     let bitmap = Bitmap {
         width: frame.width,
         height: frame.height,
-        pixels: Arc::new(expand(&pixels, frame.color_type)),
+        pixels: Arc::new(expand(pixels, frame.color_type)),
     };
 
     Some(bitmap)
 }
 
 // fills in the channels a png left out, so every pixel is red, green, blue, alpha
-fn expand(pixels: &[u8], color_type: ColorType) -> Vec<u8> {
+fn expand(pixels: Vec<u8>, color_type: ColorType) -> Vec<u8> {
     match color_type {
-        ColorType::Rgba => pixels.to_vec(),
+        // already four channels, so the decoded buffer is kept instead of copied
+        ColorType::Rgba => pixels,
 
         ColorType::Rgb => pixels
             .as_chunks::<3>()

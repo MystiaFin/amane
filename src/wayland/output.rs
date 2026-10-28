@@ -5,6 +5,7 @@ use wayland_client::{
 };
 
 use crate::Monitor;
+use crate::graphics::image;
 use crate::scale::ScaleFactor;
 
 use super::{WaylandState, surface::View};
@@ -21,6 +22,8 @@ impl OutputHandler for WaylandState {
         };
 
         let monitor = describe(&info, self.scale_factor);
+
+        note_pixels(&info);
 
         let views = self.per_monitor.clone();
 
@@ -40,6 +43,8 @@ impl OutputHandler for WaylandState {
         };
 
         let monitor = describe(&info, self.scale_factor);
+
+        note_pixels(&info);
 
         for window in &mut self.windows {
             if window.output.as_ref() != Some(&output) {
@@ -81,18 +86,34 @@ pub fn describe(info: &OutputInfo, scale_factor: ScaleFactor) -> Monitor {
     }
 }
 
+// the monitor's real pixels, which no window on it can draw more of
+fn note_pixels(info: &OutputInfo) {
+    let Some(mode) = info.modes.iter().find(|mode| mode.current) else {
+        return;
+    };
+
+    let (width, height) = rotated(mode.dimensions, info.transform);
+
+    image::note_screen(width as u32, height as u32);
+}
+
+// a monitor turned on its side swaps its width and height
+fn rotated((width, height): (i32, i32), transform: Transform) -> (i32, i32) {
+    match transform {
+        Transform::_90 | Transform::_270 | Transform::Flipped90 | Transform::Flipped270 => {
+            (height, width)
+        }
+        _ => (width, height),
+    }
+}
+
 fn logical_mode_size(
     (width, height): (i32, i32),
     transform: Transform,
     output_scale: i32,
 ) -> (f32, f32) {
     // outputs without xdg-output only give us the physical mode
-    let (width, height) = match transform {
-        Transform::_90 | Transform::_270 | Transform::Flipped90 | Transform::Flipped270 => {
-            (height, width)
-        }
-        _ => (width, height),
-    };
+    let (width, height) = rotated((width, height), transform);
 
     (
         width as f32 / output_scale as f32,
