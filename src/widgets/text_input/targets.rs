@@ -10,13 +10,16 @@ pub fn collect_targets(text_input: &TextInput, area: Area, targets: &mut Vec<Tar
     let id = text_input.id;
     let on_key = key_handler(text_input);
 
+    // clicks come after drawing, so the window is noted now
+    let window = focus::drawing();
+
     // the handler holds this redraw's on_change and on_submit, so a focused input takes the new one
     if focus::has(id) || text_input.focused {
-        focus::set(id, on_key.clone());
+        focus::set(window, id, on_key.clone());
     }
 
     let on_click = move |_: Button| {
-        focus::set(id, on_key.clone());
+        focus::set(window, id, on_key.clone());
     };
 
     let handlers = Handlers {

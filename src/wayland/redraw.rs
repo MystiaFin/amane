@@ -1,9 +1,11 @@
 use std::time::Instant;
 
 use smithay_client_toolkit::compositor::FrameCallbackData;
+use wayland_client::Proxy;
 
 use crate::frame;
 use crate::graphics::Renderer;
+use crate::input::focus;
 use crate::timing::{self, Timing};
 
 use super::surface::OpenWindow;
@@ -42,6 +44,9 @@ impl OpenWindow {
 
             return;
         };
+
+        // text inputs drawn now belong to this window
+        focus::start_drawing(self.role.wl_surface().id().protocol_id());
 
         let frame = frame::build(
             root.as_ref(),

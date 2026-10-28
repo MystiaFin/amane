@@ -2,8 +2,7 @@ use smithay_client_toolkit::seat::keyboard::{
     KeyEvent, KeyboardHandler, Keysym, Modifiers, RawModifiers,
 };
 use wayland_client::{
-    Connection, QueueHandle,
-    protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
+    Connection, Proxy, QueueHandle, protocol::{wl_keyboard::WlKeyboard, wl_surface::WlSurface},
 };
 
 use crate::Key;
@@ -54,10 +53,11 @@ impl KeyboardHandler for WaylandState {
             return;
         };
 
+        let window = surface.id().protocol_id();
         let key = to_key(&event);
 
         // a focused text input takes the key before the window's on_key sees it
-        if focus::send(key) {
+        if focus::send(window, key) {
             self.request_frame_on(&surface);
 
             return;
