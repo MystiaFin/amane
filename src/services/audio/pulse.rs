@@ -37,6 +37,35 @@ pub struct Level {
     pub muted: bool,
 }
 
+/*
+ * one stream an app plays, like a browser tab or a song; apps
+ * the sound server plays itself, like a loopback, aren't listed
+ */
+pub struct Stream {
+    // the sound server's number for the stream, which the controls address it by
+    pub index: u32,
+
+    // every channel's level, so a new level keeps the stream's channel count
+    pub volumes: ChannelVolumes,
+
+    // what the app calls itself, like "Firefox"
+    pub app: String,
+
+    // a freedesktop icon name like "firefox", only when the app gives one
+    pub icon: Option<String>,
+
+    // the program's file name like "firefox"
+    pub binary: Option<String>,
+
+    // the process playing it, a helper process for electron apps; none when the app doesn't say
+    pub process: Option<u32>,
+
+    // 0 to 100
+    pub volume: u8,
+
+    pub muted: bool,
+}
+
 // what pulse reports for a default device, before converting to percent
 #[derive(Clone, Copy)]
 struct Levels {
@@ -121,9 +150,40 @@ pub fn set_muted(device: Device, muted: bool) {
     });
 }
 
+// in the order they started, oldest first
+pub fn streams() -> Vec<Stream> {
+    with_connection(Connection::streams)
+}
+
+pub fn set_stream_volume(stream: &Stream, volume: u8) {
+    with_connection(|connection| {
+        // every channel gets the same level, like a single volume slider does
+        let mut volumes = stream.volumes;
+        let channels = volumes.len();
+
+        volumes.set(channels, level(volume));
+
+        let mut introspect = connection.context.introspect();
+
+        let operation = introspect.set_sink_input_volume(stream.index, &volumes, None);
+
+        connection.wait(operation);
+    });
+}
+
+pub fn set_stream_muted(stream: &Stream, muted: bool) {
+    with_connection(|connection| {
+        let mut introspect = connection.context.introspect();
+
+        let operation = introspect.set_sink_input_mute(stream.index, muted, None);
+
+        connection.wait(operation);
+    });
+}
+
 /*
- * calls changed after every change to an output, an input or the
- * default choice, and never returns; it keeps its own
+ * calls changed after every change to an output, an input, an app's
+ * stream or the default choice, and never returns; it keeps its own
  * connection, so changed can still use read()
  */
 pub fn watch(mut changed: impl FnMut()) {
@@ -150,7 +210,10 @@ fn follow(mut connection: Connection, changed: &mut impl FnMut()) {
         .context
         .set_subscribe_callback(Some(Box::new(move |_, _, _| marked.set(true))));
 
-    let interests = InterestMaskSet::SINK | InterestMaskSet::SOURCE | InterestMaskSet::SERVER;
+    let interests = InterestMaskSet::SINK
+        | InterestMaskSet::SOURCE
+        | InterestMaskSet::SINK_INPUT
+        | InterestMaskSet::SERVER;
 
     connection.context.subscribe(interests, |_| {});
 
@@ -232,6 +295,46 @@ impl Connection {
                 self.wait(operation);
             }
         }
+
+        found.take()
+    }
+
+    fn streams(&mut self) -> Vec<Stream> {
+        let found = Rc::new(RefCell::new(Vec::new()));
+        let list = Rc::clone(&found);
+
+        let introspect = self.context.introspect();
+
+        let operation = introspect.get_sink_input_info_list(move |result| {
+            let ListResult::Item(input) = result else {
+                return;
+            };
+
+            // a stream with no client was made by a module, like a loopback
+            if input.client.is_none() {
+                return;
+            }
+
+            let Some(app) = input.proplist.get_str("application.name") else {
+                return;
+            };
+
+            list.borrow_mut().push(Stream {
+                index: input.index,
+                volumes: input.volume,
+                app,
+                icon: input.proplist.get_str("application.icon_name"),
+                binary: input.proplist.get_str("application.process.binary"),
+                process: input
+                    .proplist
+                    .get_str("application.process.id")
+                    .and_then(|id| id.parse().ok()),
+                volume: percent(input.volume.avg()),
+                muted: input.mute,
+            });
+        });
+
+        self.wait(operation);
 
         found.take()
     }

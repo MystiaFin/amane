@@ -45,10 +45,10 @@ pub use monitor::Monitor;
 pub use placement::{Align, Center, End, Justify, Padding, Size, Start};
 pub use process::{lines, output, spawn};
 pub use services::{
-    AccessPoint, Action, Apps, Audio, Battery, Bluetooth, BluetoothDevice, Brightness, Clipboard,
-    Cpu, DesktopApp, Link, Lock, Media, MediaPlayer, Memory, Network, Notification, Notifications,
-    Palette, Pam, PamConfig, PamError, PamMessage, PamMessageKind, PamResult, Service, Urgency,
-    Workspace, Workspaces,
+    AccessPoint, Action, Apps, Audio, AudioApp, Battery, Bluetooth, BluetoothDevice, Brightness,
+    Clipboard, Cpu, DesktopApp, Link, Lock, Media, MediaPlayer, Memory, Network, Notification,
+    Notifications, Palette, Pam, PamConfig, PamError, PamMessage, PamMessageKind, PamResult,
+    Service, Urgency, Workspace, Workspaces,
 };
 pub use style::{Fill, Image, Mask, Radius, Shadow};
 pub use widgets::{

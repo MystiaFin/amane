@@ -1,4 +1,7 @@
+mod app;
 mod pulse;
+
+pub use app::AudioApp;
 
 use crate::Service;
 use crate::services::worker;
@@ -16,6 +19,9 @@ pub struct Audio {
     microphone_volume: u8,
 
     microphone_muted: bool,
+
+    // the apps playing sound right now
+    apps: Vec<AudioApp>,
 }
 
 // event-driven, the sound server announces every volume change
@@ -45,12 +51,20 @@ impl Service for Audio {
         self.microphone_volume = input.volume;
         self.microphone_muted = input.muted;
 
-        (
+        let apps = app::group(&pulse::streams());
+
+        let apps_changed = apps != self.apps;
+
+        self.apps = apps;
+
+        let levels = (
             self.volume,
             self.muted,
             self.microphone_volume,
             self.microphone_muted,
-        ) != before
+        );
+
+        levels != before || apps_changed
     }
 
     // the sound server also announces changes to devices nothing shows
@@ -82,6 +96,10 @@ impl Audio {
         self.microphone_muted
     }
 
+    pub fn apps(&self) -> &[AudioApp] {
+        &self.apps
+    }
+
     // anything above 100 is treated as 100
     pub fn set_volume(volume: u8) {
         worker::run(move || pulse::set_volume(Device::Output, volume.min(100)));
@@ -99,6 +117,40 @@ impl Audio {
     pub fn toggle_microphone_mute() {
         worker::run(|| toggle(Device::Input));
     }
+
+    // every stream the app plays gets the level; anything above 100 is treated as 100
+    pub fn set_app_volume(app: &AudioApp, volume: u8) {
+        let app = app.clone();
+
+        worker::run(move || {
+            for stream in app_streams(&app) {
+                pulse::set_stream_volume(&stream, volume.min(100));
+            }
+        });
+    }
+
+    // mutes all of the app's streams, or unmutes them once they all are
+    pub fn toggle_app_mute(app: &AudioApp) {
+        let app = app.clone();
+
+        worker::run(move || {
+            let streams = app_streams(&app);
+
+            let muted = streams.iter().all(|stream| stream.muted);
+
+            for stream in &streams {
+                pulse::set_stream_muted(stream, !muted);
+            }
+        });
+    }
+}
+
+fn app_streams(app: &AudioApp) -> Vec<pulse::Stream> {
+    let mut streams = pulse::streams();
+
+    streams.retain(|stream| app.plays(stream));
+
+    streams
 }
 
 fn toggle(device: Device) {

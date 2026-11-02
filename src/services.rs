@@ -26,7 +26,7 @@ use std::time::Duration;
 use crate::changes;
 
 pub use apps::{Apps, DesktopApp};
-pub use audio::Audio;
+pub use audio::{Audio, AudioApp};
 pub use battery::Battery;
 pub use bluetooth::{Bluetooth, BluetoothDevice};
 pub use brightness::Brightness;
