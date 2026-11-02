@@ -1,4 +1,4 @@
-use crate::{Argument, Bus, Value};
+use crate::{Argument, Bus, Signal, Value};
 
 const PATH: &str = "/org/mpris/MediaPlayer2";
 
@@ -51,6 +51,25 @@ pub fn identity(player: &str) -> String {
     String::from(root.get("Identity").text())
 }
 
+/*
+ * waits for each change a player announces, like play, pause or a new
+ * track, and never ends unless the bus can't be reached
+ */
+pub fn changes() -> impl Iterator<Item = Signal> {
+    let signals = Bus::session().signals("org.freedesktop.DBus.Properties", "PropertiesChanged");
+
+    signals.filter(is_player_change)
+}
+
+// other programs announce their own properties too; the changed interface comes first
+fn is_player_change(signal: &Signal) -> bool {
+    let Some(interface) = signal.arguments().first() else {
+        return false;
+    };
+
+    signal.path() == PATH && interface.text() == INTERFACE
+}
+
 pub fn send(player: &str, method: &str) {
     Bus::session().call(player, PATH, INTERFACE, method, &[]);
 }
@@ -65,4 +84,50 @@ fn get_all(player: &str, interface: &str) -> Value {
         "GetAll",
         &arguments,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn signal(path: &str, arguments: Vec<Value>) -> Signal {
+        Signal {
+            sender: String::from(":1.42"),
+            path: String::from(path),
+            arguments,
+        }
+    }
+
+    #[test]
+    fn reads_a_player_change() {
+        let change = signal(
+            PATH,
+            vec![Value::Text(String::from(INTERFACE)), Value::Nothing],
+        );
+
+        assert!(is_player_change(&change));
+    }
+
+    #[test]
+    fn skips_a_change_to_another_interface() {
+        let change = signal(PATH, vec![Value::Text(String::from(ROOT_INTERFACE))]);
+
+        assert!(!is_player_change(&change));
+    }
+
+    #[test]
+    fn skips_a_change_on_another_path() {
+        let change = signal(
+            "/org/freedesktop/NetworkManager",
+            vec![Value::Text(String::from(INTERFACE))],
+        );
+
+        assert!(!is_player_change(&change));
+    }
+
+    #[test]
+    fn skips_a_change_without_arguments() {
+        assert!(!is_player_change(&signal(PATH, Vec::new())));
+        assert!(!is_player_change(&signal(PATH, vec![Value::Number(3.0)])));
+    }
 }

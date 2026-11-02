@@ -2,7 +2,7 @@
 
 `Media` shows what's playing and controls playback, in any player that supports MPRIS: Spotify, mpv, Firefox and Chromium tabs, VLC, and most others.
 
-It polls once a second, because players don't announce their position while a track plays.
+Players announce play, pause and track changes, so those show up right away. The position isn't announced while a track plays, so `Media` also polls once a second.
 
 ## A now-playing widget
 

@@ -1,6 +1,7 @@
 mod mpris;
 mod player;
 
+use std::thread;
 use std::time::Duration;
 
 use crate::Service;
@@ -17,8 +18,8 @@ pub struct Media {
 }
 
 /*
- * polled, because players don't announce
- * the position while a track plays
+ * polled, because players don't announce the position while a track
+ * plays; play, pause and new tracks are announced, so those show at once
  */
 impl Service for Media {
     fn new() -> Self {
@@ -53,6 +54,29 @@ impl Service for Media {
         *self = fresh;
 
         true
+    }
+
+    fn listen() {
+        thread::spawn(|| {
+            for _ in mpris::changes() {
+                refresh();
+            }
+        });
+
+        loop {
+            thread::sleep(Self::interval());
+
+            refresh();
+        }
+    }
+}
+
+// a read that found nothing new redraws nothing
+fn refresh() {
+    let mut media = Media::write();
+
+    if !media.update() {
+        media.quiet();
     }
 }
 
