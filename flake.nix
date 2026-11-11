@@ -79,9 +79,11 @@
           linux-pam
         ];
 
+        # libxkbcommon is opened at runtime by winit, for the lab's window
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
           pkgs.vulkan-loader
           pkgs.wayland
+          pkgs.libxkbcommon
         ];
 
         packages = with pkgs; [

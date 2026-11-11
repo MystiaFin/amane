@@ -35,4 +35,4 @@ chrono = "0.4"
 manual_checked_ops = "allow"
 
 [workspace]
-members = ["cli", "cli/template/example"]
+members = ["cli", "cli/template/example", "lab"]

@@ -1,0 +1,12 @@
+[package]
+name = "lab"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+# a plain window for trying the new painter on its own, without the rest of amane
+[dependencies]
+wgpu = "30.0"
+# only opens the window, the painter never sees it
+winit = "0.30.13"

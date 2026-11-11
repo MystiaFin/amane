@@ -25,7 +25,6 @@ mod shape;
 mod shared;
 mod target;
 mod texture;
-mod v2;
 mod wait;
 
 use std::cell::{Cell, RefCell};
