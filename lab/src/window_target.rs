@@ -42,7 +42,7 @@ impl WindowTarget {
 
         let config = configure(&surface, &adapter);
 
-        let painter = Painter::new(device.clone(), queue.clone());
+        let painter = Painter::new(device.clone(), queue.clone(), config.format);
 
         Self {
             device,
